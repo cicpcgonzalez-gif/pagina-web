@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "rifas-mobile",
+    "slug": "megarifasapps",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "jsEngine": "hermes",
+    "newArchEnabled": false,
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "d217637f-70ce-446b-8763-76a51b14b0a7"
+      }
+    },
+    "android": {
+      "package": "com.rifas.mobile"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "owner": "megarifasapps-organization"
+  }
+}
