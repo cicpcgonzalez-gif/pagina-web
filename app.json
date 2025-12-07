@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "rifas-mobile",
+    "name": "MegaRifas",
     "slug": "megarifasapps",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -16,10 +16,13 @@
       }
     },
     "android": {
-      "package": "com.rifas.mobile"
+      "package": "com.megarifas.app",
+      "versionCode": 2
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.megarifas.app",
+      "buildNumber": "1.0.1"
     },
     "owner": "megarifasapps-organization"
   }

@@ -65,6 +65,7 @@ const SECURE_KEYS = {
 };
 
 const getProjectId = () => Constants?.expoConfig?.extra?.eas?.projectId || Constants?.easConfig?.projectId || null;
+const formatTicketNumber = (value) => String(value ?? '').padStart(5, '0');
 
 const setSecureItem = async (key, value) => {
   if (!value) return SecureStore.deleteItemAsync(key);
@@ -915,7 +916,7 @@ function AuthScreen({ onAuth }) {
             numbersAnim.setValue(0);
             Animated.spring(numbersAnim, { toValue: 1, friction: 6, useNativeDriver: true }).start();
             const positive = nums.length <= 1 ? '¡Tu número ya está en juego!' : '¡Tus números ya están en juego!';
-            Alert.alert('Compra confirmada', `${positive}\nNúmeros: ${nums.join(', ')}`);
+            Alert.alert('Compra confirmada', `${positive}\nNúmeros: ${nums.map(formatTicketNumber).join(', ')}`);
             setPaymentStep(1);
             setManualProof(null);
           } else {
@@ -1063,7 +1064,7 @@ function AuthScreen({ onAuth }) {
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 }}>
                     {assignedNumbers.map((n) => (
                       <View key={n} style={styles.ticketGlow}>
-                        <Text style={{ color: '#0b1224', fontWeight: '900' }}>#{String(n).padStart(4, '0')}</Text>
+                        <Text style={{ color: '#0b1224', fontWeight: '900' }}>#{formatTicketNumber(n)}</Text>
                       </View>
                     ))}
                   </View>
@@ -1127,7 +1128,13 @@ function AuthScreen({ onAuth }) {
                           </View>
                           <View style={{ flex: 1 }}>
                             <Text style={styles.muted}>Números</Text>
-                            <Text style={{ color: '#e2e8f0', fontWeight: '800' }}>{item.numbers?.join(', ') || '—'}</Text>
+                            <Text style={{ color: '#e2e8f0', fontWeight: '800' }}>
+                              {Array.isArray(item.numbers)
+                                ? item.numbers.map(formatTicketNumber).join(', ')
+                                : item.numbers
+                                ? formatTicketNumber(item.numbers)
+                                : '—'}
+                            </Text>
                           </View>
                           <View style={styles.miniBadge}>
                             <Text style={{ color: '#fbbf24', fontWeight: '800' }}>{Math.round(progress * 100)}%</Text>
@@ -1212,7 +1219,7 @@ function AuthScreen({ onAuth }) {
         const showReceipt = (item) => {
           Alert.alert(
             'Recibo',
-            `Rifa: ${item.raffleTitle || ''}\nTicket: ${item.number ?? '—'}\nEstado: ${item.status}\nFecha: ${item.createdAt ? new Date(item.createdAt).toLocaleString() : ''}\nVía: ${item.via || ''}`
+            `Rifa: ${item.raffleTitle || ''}\nTicket: ${item.number ? formatTicketNumber(item.number) : '—'}\nEstado: ${item.status}\nFecha: ${item.createdAt ? new Date(item.createdAt).toLocaleString() : ''}\nVía: ${item.via || ''}`
           );
         };
 
@@ -1290,7 +1297,11 @@ function AuthScreen({ onAuth }) {
                           <Text style={styles.muted}>Monto: {amount !== null && amount !== undefined ? `VES ${amount}` : '—'}</Text>
                           <Text style={styles.muted}>Ref: {p.reference || '—'}</Text>
                           <Text style={styles.muted}>Fecha: {p.createdAt ? new Date(p.createdAt).toLocaleString() : '—'}</Text>
-                          {p.numbers ? <Text style={styles.muted}>Números: {Array.isArray(p.numbers) ? p.numbers.join(', ') : p.numbers}</Text> : null}
+                          {p.numbers ? (
+                            <Text style={styles.muted}>
+                              Números: {Array.isArray(p.numbers) ? p.numbers.map(formatTicketNumber).join(', ') : p.numbers}
+                            </Text>
+                          ) : null}
                           {p.via ? <Text style={styles.muted}>Vía: {p.via}</Text> : null}
                           {p.note ? <Text style={styles.muted}>{p.note}</Text> : null}
                         </View>
@@ -1329,7 +1340,7 @@ function AuthScreen({ onAuth }) {
                           <Text style={styles.itemTitle}>{item.raffleTitle || item.raffleId}</Text>
                           <Text style={styles.ghostPill}>{item.status}</Text>
                         </View>
-                        <Text style={styles.muted}>Ticket: {item.number ?? '—'}</Text>
+                        <Text style={styles.muted}>Ticket: {item.number ? formatTicketNumber(item.number) : '—'}</Text>
                         <Text style={styles.muted}>Fecha: {item.createdAt ? new Date(item.createdAt).toLocaleString() : '—'}</Text>
                         <Text style={styles.link}>Ver recibo</Text>
                       </TouchableOpacity>
@@ -1699,7 +1710,7 @@ function AdminScreen({ api }) {
     setClosingId(raffleId);
     const { res, data } = await api(`/raffles/${raffleId}/close`, { method: 'POST' });
     if (res.ok) {
-      Alert.alert('Rifa cerrada', `Ticket ganador: ${data.winner?.number}`);
+      Alert.alert('Rifa cerrada', `Ticket ganador: ${data.winner?.number ? formatTicketNumber(data.winner.number) : '—'}`);
       loadRaffles();
       loadTickets();
     } else {
@@ -1844,7 +1855,7 @@ function AdminScreen({ api }) {
                       />
                     </View>
                   )}
-                  {item.numbers ? <Text style={styles.muted}>Asignados: {item.numbers.join(', ')}</Text> : null}
+                  {item.numbers ? <Text style={styles.muted}>Asignados: {item.numbers.map(formatTicketNumber).join(', ')}</Text> : null}
                 </View>
               )}
               ListEmptyComponent={<Text>No hay pagos manuales.</Text>}
@@ -1992,7 +2003,7 @@ function AdminScreen({ api }) {
               renderItem={({ item }) => (
                 <View style={[styles.card, { borderColor: '#cbd5e1' }]}> 
                   <Text style={styles.itemTitle}>Rifa: {item.raffleTitle || item.raffleId}</Text>
-                  <Text style={styles.muted}>Ticket: {item.number ?? '—'}</Text>
+                  <Text style={styles.muted}>Ticket: {item.number ? formatTicketNumber(item.number) : '—'}</Text>
                   <Text style={styles.muted}>Estado: {item.status}</Text>
                   {item.buyer ? (
                     <Text style={styles.muted}>
