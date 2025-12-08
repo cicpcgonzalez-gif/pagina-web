@@ -7,6 +7,10 @@ let token: string | null = null;
 export const api = axios.create({
   baseURL: ENV.apiUrl,
   timeout: ENV.timeout,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
 });
 
 api.interceptors.request.use(async (config) => {
