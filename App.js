@@ -30,7 +30,9 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { StatusBar } from 'expo-status-bar';
 import Constants from 'expo-constants';
-import { API_URL } from './config';
+import { ENV } from './src/config/env';
+
+const API_URL = ENV.apiUrl;
 
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();

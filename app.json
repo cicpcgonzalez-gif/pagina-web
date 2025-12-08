@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "jsEngine": "hermes",
-    "newArchEnabled": false,
     "assetBundlePatterns": [
       "**/*"
     ],

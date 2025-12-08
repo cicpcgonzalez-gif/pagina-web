@@ -6,39 +6,25 @@ let token: string | null = null;
 
 export const api = axios.create({
   baseURL: ENV.apiUrl,
-  timeout: 30000,
+  timeout: ENV.timeout,
 });
 
 api.interceptors.request.use(async (config) => {
   if (!token) token = await SecureStore.getItemAsync('jwt_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
-  const fullUrl = (config.baseURL || '') + (config.url || '');
-  console.log('[AXIOS REQUEST]', {
-    url: fullUrl,
-    method: config.method,
-    headers: config.headers,
-    token: token,
-  });
   return config;
 });
 
 api.interceptors.response.use(
   response => response,
-  err => {
-    console.log('[AXIOS ERROR]', {
-      message: err.message,
-      config: err.config,
-      code: err.code,
-      response: err.response,
-      request: err.request,
-    });
-      if (err.response) {
-        throw new Error(err.response.data?.message || 'Error en la API');
-      } else if (err.request) {
-        throw new Error('No se pudo conectar con el servidor');
-      } else {
-        throw new Error('Error desconocido');
-      }
+  error => {
+    if (error.response) {
+      throw new Error(error.response.data?.message || 'Error en la API');
+    } else if (error.request) {
+      throw new Error('No se pudo conectar con el servidor');
+    } else {
+      throw new Error('Error desconocido');
+    }
   }
 );
 
