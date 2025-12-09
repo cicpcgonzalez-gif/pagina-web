@@ -77,7 +77,7 @@ export default function RaffleDetailScreen({ route, navigation, api }) {
       numbersAnim.setValue(0);
       Animated.spring(numbersAnim, { toValue: 1, friction: 6, useNativeDriver: true }).start();
       const positive = nums.length <= 1 ? '¡Tu número ya está en juego!' : '¡Tus números ya están en juego!';
-      Alert.alert('Compra confirmada', `${positive}\nNúmeros: ${nums.map(formatTicketNumber).join(', ')}`);
+      Alert.alert('Compra confirmada', `${positive}\nNúmeros: ${nums.map(n => formatTicketNumber(n, current.digits)).join(', ')}`);
       setPaymentStep(1);
       setManualProof(null);
     } else {
@@ -321,13 +321,13 @@ export default function RaffleDetailScreen({ route, navigation, api }) {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 }}>
               {assignedNumbers.map((n) => (
                 <View key={n} style={styles.ticketGlow}>
-                  <Text style={{ color: '#0b1224', fontWeight: '900' }}>#{formatTicketNumber(n)}</Text>
+                  <Text style={{ color: '#0b1224', fontWeight: '900' }}>#{formatTicketNumber(n, current.digits)}</Text>
                 </View>
               ))}
             </View>
             <TouchableOpacity 
               style={[styles.button, { backgroundColor: '#25D366', marginTop: 12 }]}
-              onPress={() => Linking.openURL(`https://wa.me/${current.support?.whatsapp || ''}?text=Hola, ya tengo mis tickets para la rifa ${current.title}: ${assignedNumbers.map(formatTicketNumber).join(', ')}`)}
+              onPress={() => Linking.openURL(`https://wa.me/${current.support?.whatsapp || ''}?text=Hola, ya tengo mis tickets para la rifa ${current.title}: ${assignedNumbers.map(n => formatTicketNumber(n, current.digits)).join(', ')}`)}
             >
               <Ionicons name="logo-whatsapp" size={18} color="#fff" />
               <Text style={{ color: '#fff', fontWeight: 'bold', marginLeft: 8 }}>Confirmar por WhatsApp</Text>

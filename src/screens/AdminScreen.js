@@ -23,7 +23,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { palette } from '../theme';
 import { FilledButton, OutlineButton } from '../components/UI';
 
-const formatTicketNumber = (value) => String(value ?? '').padStart(4, '0');
+const formatTicketNumber = (value, digits = 4) => String(value ?? '').padStart(digits, '0');
 
 const ProgressBar = ({ progress, color }) => (
   <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 3, marginVertical: 8, overflow: 'hidden' }}>
@@ -102,7 +102,7 @@ export default function AdminScreen({ api, user }) {
   const [tickets, setTickets] = useState([]);
   const [ticketsLoading, setTicketsLoading] = useState(false);
   const [ticketFilters, setTicketFilters] = useState({ raffleId: '', status: '', from: '', to: '' });
-  const [raffleForm, setRaffleForm] = useState({ id: null, title: '', price: '', description: '', totalTickets: '', startDate: '', endDate: '', securityCode: '', lottery: '', instantWins: '', terms: '' });
+  const [raffleForm, setRaffleForm] = useState({ id: null, title: '', price: '', description: '', totalTickets: '', digits: 4, startDate: '', endDate: '', securityCode: '', lottery: '', instantWins: '', terms: '' });
   const [raffleErrors, setRaffleErrors] = useState({});
   const [savingRaffle, setSavingRaffle] = useState(false);
   const [showLotteryModal, setShowLotteryModal] = useState(false);
@@ -573,6 +573,7 @@ export default function AdminScreen({ api, user }) {
       price: String(raffle.price || ''),
       description: raffle.description || '',
       totalTickets: raffle.totalTickets ? String(raffle.totalTickets) : '',
+      digits: raffle.digits || 4,
       startDate: raffle.startDate ? raffle.startDate.slice(0, 10) : '',
       endDate: raffle.endDate ? raffle.endDate.slice(0, 10) : '',
       lottery: raffle.lottery || '',
@@ -626,6 +627,7 @@ export default function AdminScreen({ api, user }) {
       price: Number(raffleForm.price),
       description: raffleForm.description,
       totalTickets: raffleForm.totalTickets ? Number(raffleForm.totalTickets) : undefined,
+      digits: raffleForm.digits,
       startDate: raffleForm.startDate,
       endDate: raffleForm.endDate,
       securityCode: raffleForm.securityCode,
@@ -694,7 +696,7 @@ export default function AdminScreen({ api, user }) {
     setClosingId(raffleId);
     const { res, data } = await api(`/raffles/${raffleId}/close`, { method: 'POST' });
     if (res.ok) {
-      Alert.alert('Rifa cerrada', `Ticket ganador: ${data.winner?.number ? formatTicketNumber(data.winner.number) : '—'}`);
+      Alert.alert('Rifa cerrada', `Ticket ganador: ${data.winner?.number ? formatTicketNumber(data.winner.number, raffles.find(r => r.id === raffleId)?.digits) : '—'}`);
       loadRaffles();
       loadTickets();
     } else {
@@ -806,6 +808,40 @@ export default function AdminScreen({ api, user }) {
                   </View>
                 </View>
               </Modal>
+
+              <Text style={{ color: palette.secondary, fontWeight: 'bold', marginTop: 10, marginBottom: 4 }}>Tipo de Rifa (Dígitos)</Text>
+              <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
+                <TouchableOpacity 
+                  onPress={() => setRaffleForm(s => ({ ...s, digits: 4 }))} 
+                  style={{ 
+                    flex: 1, 
+                    padding: 12, 
+                    backgroundColor: raffleForm.digits === 4 ? palette.primary : 'rgba(255,255,255,0.1)', 
+                    borderRadius: 8, 
+                    alignItems: 'center',
+                    borderWidth: 1,
+                    borderColor: raffleForm.digits === 4 ? palette.primary : 'rgba(255,255,255,0.2)'
+                  }}
+                >
+                  <Text style={{ color: '#fff', fontWeight: 'bold' }}>4 Dígitos (Tradicional)</Text>
+                  <Text style={{ color: '#cbd5e1', fontSize: 10 }}>0000 - 9999</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={() => setRaffleForm(s => ({ ...s, digits: 7 }))} 
+                  style={{ 
+                    flex: 1, 
+                    padding: 12, 
+                    backgroundColor: raffleForm.digits === 7 ? palette.primary : 'rgba(255,255,255,0.1)', 
+                    borderRadius: 8, 
+                    alignItems: 'center',
+                    borderWidth: 1,
+                    borderColor: raffleForm.digits === 7 ? palette.primary : 'rgba(255,255,255,0.2)'
+                  }}
+                >
+                  <Text style={{ color: '#fff', fontWeight: 'bold' }}>7 Dígitos (Millonaria)</Text>
+                  <Text style={{ color: '#cbd5e1', fontSize: 10 }}>0.000.000 - 9.999.999</Text>
+                </TouchableOpacity>
+              </View>
 
               <TextInput style={styles.input} placeholder="Total tickets" value={raffleForm.totalTickets} onChangeText={(v) => setRaffleForm((s) => ({ ...s, totalTickets: v }))} keyboardType="numeric" />
               <TextInput style={styles.input} placeholder="Inicio (YYYY-MM-DD)" value={raffleForm.startDate} onChangeText={(v) => setRaffleForm((s) => ({ ...s, startDate: v }))} />
@@ -1261,7 +1297,7 @@ export default function AdminScreen({ api, user }) {
                 <ScrollView style={{ maxHeight: 400 }}>
                   {tickets.map(t => (
                     <View key={t.id} style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)' }}>
-                      <Text style={{ color: '#fff' }}>#{formatTicketNumber(t.number)}</Text>
+                      <Text style={{ color: '#fff' }}>#{formatTicketNumber(t.number, raffles.find(r => r.id === t.raffleId)?.digits)}</Text>
                       <Text style={{ color: '#cbd5e1' }}>{t.user?.email || 'Usuario'}</Text>
                       <Text style={{ color: t.status === 'approved' ? '#4ade80' : '#fbbf24' }}>{t.status}</Text>
                     </View>
@@ -1518,7 +1554,7 @@ export default function AdminScreen({ api, user }) {
                   <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#10b981' }}>
                     <Text style={{ color: '#10b981', fontWeight: 'bold', textAlign: 'center', fontSize: 18 }}>¡TICKET VENDIDO!</Text>
                     <Text style={{ color: '#fff', textAlign: 'center', marginTop: 8 }}>Comprador: {lotteryWinner.buyer?.firstName || lotteryWinner.user?.name}</Text>
-                    <Text style={{ color: '#fff', textAlign: 'center' }}>Ticket: #{formatTicketNumber(lotteryWinner.number)}</Text>
+                    <Text style={{ color: '#fff', textAlign: 'center' }}>Ticket: #{formatTicketNumber(lotteryWinner.number, raffles.find(r => r.id === lotteryCheck.raffleId)?.digits)}</Text>
                     <View style={{ marginTop: 12 }}>
                       <FilledButton title="Anunciar Ganador" onPress={announceWinner} icon={<Ionicons name="megaphone-outline" size={18} color="#fff" />} />
                     </View>
@@ -1606,7 +1642,7 @@ export default function AdminScreen({ api, user }) {
               
               <View style={{ backgroundColor: '#0f172a', paddingVertical: 20, paddingHorizontal: 40, borderRadius: 16, marginBottom: 24, borderWidth: 2, borderColor: '#fbbf24' }}>
                 <Text style={{ color: '#fff', fontSize: 56, fontWeight: '900', letterSpacing: 4 }}>
-                  {lotteryWinner ? formatTicketNumber(lotteryWinner.number) : '00000'}
+                  {lotteryWinner ? formatTicketNumber(lotteryWinner.number, raffles.find(r => r.id === lotteryCheck.raffleId)?.digits) : '00000'}
                 </Text>
               </View>
 

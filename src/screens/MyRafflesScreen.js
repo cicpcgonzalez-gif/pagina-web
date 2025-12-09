@@ -74,9 +74,9 @@ export default function MyRafflesScreen({ api, navigation }) {
                       <Text style={styles.muted}>Números</Text>
                       <Text style={{ color: '#e2e8f0', fontWeight: '800', fontSize: 16 }}>
                         {Array.isArray(item.numbers)
-                          ? item.numbers.map(formatTicketNumber).join(', ')
+                          ? item.numbers.map(n => formatTicketNumber(n, item.raffle?.digits)).join(', ')
                           : item.numbers
-                          ? formatTicketNumber(item.numbers)
+                          ? formatTicketNumber(item.numbers, item.raffle?.digits)
                           : '—'}
                       </Text>
                     </View>
