@@ -1,4 +1,4 @@
 export const ENV = {
-	apiUrl: 'https://backend-3i17.onrender.com',
+	apiUrl: 'https://backednnuevo.onrender.com',
 	timeout: 15000,
 };

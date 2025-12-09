@@ -11,10 +11,7 @@
     "preview": {
       "distribution": "internal",
       "android": {
-        "gradleCommand": ":app:assembleRelease"
-      },
-      "ios": {
-        "distribution": "internal"
+        "buildType": "apk"
       }
     },
     "production": {

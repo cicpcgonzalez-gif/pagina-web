@@ -1,5 +1,7 @@
 
-const API_BASE_URL = 'https://backend-3i17.onrender.com';
+// URL de producción en Render
+export const API_BASE_URL = 'https://backednnuevo.onrender.com';
+export const API_URL = API_BASE_URL;
 
 export default {
   API_BASE_URL,
