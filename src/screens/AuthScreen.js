@@ -152,29 +152,6 @@ export default function AuthScreen({ onAuth }) {
     setLoading(false);
   };
 
-  const handleRegister = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch(`${API_URL}/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          name: `${form.firstName} ${form.lastName}`.trim()
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'No se pudo registrar');
-      
-      Alert.alert('Registro exitoso', 'Revisa tu correo para el código de activación.');
-      setVerifyEmail(form.email);
-      setShowVerification(true);
-    } catch (err) {
-      setError(err.message);
-    }
-    setLoading(false);
-  };
 
   const handleVerify = async () => {
     if (!verifyEmail || !verifyCode) {
