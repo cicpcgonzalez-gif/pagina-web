@@ -38,7 +38,7 @@ const PulsingBadge = () => {
       position: 'absolute',
       top: 10,
       right: 10,
-      backgroundColor: '#ef4444',
+      backgroundColor: '#4ade80',
       paddingHorizontal: 10,
       paddingVertical: 4,
       borderRadius: 12,
@@ -52,7 +52,7 @@ const PulsingBadge = () => {
       shadowRadius: 3.84,
       elevation: 5
     }}>
-      <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold' }}>¡PARTICIPA Y GANA!</Text>
+      <Text style={{ color: '#000', fontSize: 10, fontWeight: 'bold' }}>¡PARTICIPA Y GANA!</Text>
     </Animated.View>
   );
 };
