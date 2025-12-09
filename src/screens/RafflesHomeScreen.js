@@ -161,6 +161,33 @@ export default function RafflesHomeScreen({ navigation, api, user }) {
                     elevation: 8,
                   }}
                 >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: 'rgba(30, 41, 59, 0.95)', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' }}>
+                    <TouchableOpacity 
+                      style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
+                      onPress={() => item.user && setViewProfileId(item.user.id)}
+                    >
+                      <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: palette.primary, alignItems: 'center', justifyContent: 'center', marginRight: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }}>
+                         {item.user?.avatar ? (
+                           <Image source={{ uri: item.user.avatar }} style={{ width: 36, height: 36, borderRadius: 18 }} />
+                         ) : (
+                           <Text style={{ color: '#000', fontWeight: 'bold', fontSize: 16 }}>{item.user?.name?.charAt(0).toUpperCase() || 'M'}</Text>
+                         )}
+                      </View>
+                      <View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15, marginRight: 4 }}>
+                            {item.user?.name || 'MegaRifas Oficial'}
+                          </Text>
+                          {item.user?.identityVerified && <Ionicons name="checkmark-circle" size={14} color="#3b82f6" />}
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Ionicons name="shield-checkmark" size={12} color="#fbbf24" style={{ marginRight: 4 }} />
+                          <Text style={{ color: '#94a3b8', fontSize: 11, fontWeight: '600' }}>ID: {item.user?.securityId || 'VERIFICADO'}</Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+
                   {item.style?.bannerImage ? (
                     <Image source={{ uri: item.style.bannerImage }} style={{ width: '100%', height: 180 }} resizeMode="cover" />
                   ) : (

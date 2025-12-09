@@ -42,12 +42,40 @@ export default function PublicProfileModal({ visible, onClose, userId, api }) {
                   </View>
                 )}
                 <Text style={[styles.title, { marginTop: 12 }]}>{profile.name}</Text>
-                {profile.verified && (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(16,185,129,0.1)', padding: 4, borderRadius: 4, marginTop: 4 }}>
-                    <Ionicons name="checkmark-circle" size={14} color="#10b981" />
-                    <Text style={{ color: '#10b981', fontSize: 12, fontWeight: 'bold' }}>Verificado</Text>
+                
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 8 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(251, 191, 36, 0.1)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(251, 191, 36, 0.3)' }}>
+                    <Ionicons name="shield-checkmark" size={14} color="#fbbf24" />
+                    <Text style={{ color: '#fbbf24', fontSize: 12, fontWeight: 'bold' }}>ID: {profile.securityId || 'N/A'}</Text>
                   </View>
-                )}
+                  
+                  {profile.identityVerified && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(59, 130, 246, 0.1)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.3)' }}>
+                      <Ionicons name="checkmark-circle" size={14} color="#3b82f6" />
+                      <Text style={{ color: '#3b82f6', fontSize: 12, fontWeight: 'bold' }}>Verificado</Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={{ flexDirection: 'row', justifyContent: 'space-around', width: '100%', marginTop: 24, marginBottom: 24 }}>
+                  <View style={{ alignItems: 'center' }}>
+                    <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold' }}>{profile.stats?.raffles || 0}</Text>
+                    <Text style={{ color: '#94a3b8', fontSize: 12 }}>Rifas</Text>
+                  </View>
+                  <View style={{ width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.1)' }} />
+                  <View style={{ alignItems: 'center' }}>
+                    <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold' }}>{profile.stats?.sales || 0}</Text>
+                    <Text style={{ color: '#94a3b8', fontSize: 12 }}>Ventas</Text>
+                  </View>
+                  <View style={{ width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.1)' }} />
+                  <View style={{ alignItems: 'center' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold' }}>{profile.reputationScore || 5.0}</Text>
+                      <Ionicons name="star" size={14} color="#fbbf24" style={{ marginLeft: 2 }} />
+                    </View>
+                    <Text style={{ color: '#94a3b8', fontSize: 12 }}>Reputación</Text>
+                  </View>
+                </View>
                 <Text style={styles.muted}>{profile.role === 'admin' || profile.role === 'superadmin' ? 'Administrador' : 'Usuario'}</Text>
               </View>
 

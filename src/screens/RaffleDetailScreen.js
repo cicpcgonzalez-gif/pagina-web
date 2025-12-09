@@ -170,13 +170,34 @@ export default function RaffleDetailScreen({ route, navigation, api }) {
         </Modal>
 
         <View style={styles.card}>
-          {current.organizerId ? (
-            <TouchableOpacity onPress={() => setViewProfileId(current.creatorId || current.organizerId)}>
-              <Text style={[styles.muted, { textDecorationLine: 'underline', color: palette.accent }]}>
-                Organizador: {current.organizerId}
-              </Text>
-            </TouchableOpacity>
-          ) : null}
+          <TouchableOpacity 
+            style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)' }}
+            onPress={() => current.user && setViewProfileId(current.user.id)}
+          >
+            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: palette.primary, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+               {current.user?.avatar ? (
+                 <Image source={{ uri: current.user.avatar }} style={{ width: 40, height: 40, borderRadius: 20 }} />
+               ) : (
+                 <Text style={{ color: '#000', fontWeight: 'bold', fontSize: 18 }}>{current.user?.name?.charAt(0).toUpperCase() || 'M'}</Text>
+               )}
+            </View>
+            <View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16, marginRight: 4 }}>
+                  {current.user?.name || 'MegaRifas Oficial'}
+                </Text>
+                {current.user?.identityVerified && <Ionicons name="checkmark-circle" size={14} color="#3b82f6" />}
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="shield-checkmark" size={12} color="#fbbf24" style={{ marginRight: 4 }} />
+                <Text style={{ color: '#94a3b8', fontSize: 12, fontWeight: '600' }}>ID: {current.user?.securityId || 'VERIFICADO'}</Text>
+              </View>
+            </View>
+            <View style={{ flex: 1, alignItems: 'flex-end' }}>
+               <Ionicons name="chevron-forward" size={20} color="#64748b" />
+            </View>
+          </TouchableOpacity>
+
           <Text style={styles.muted}>
             Precio VES {current.price} • Vendidos {stats.sold || 0} • Disponibles {stats.remaining ?? 0}
           </Text>
