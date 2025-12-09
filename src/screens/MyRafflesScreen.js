@@ -21,8 +21,17 @@ export default function MyRafflesScreen({ api, navigation }) {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { res, data } = await api('/me/raffles');
-    if (res.ok && Array.isArray(data)) setItems(data);
+    try {
+      const { res, data } = await api('/me/raffles');
+      if (res.ok && Array.isArray(data)) {
+        // Filtrar nulos/indefinidos para evitar crasheos en el render
+        setItems(data.filter(Boolean));
+      } else {
+        setItems([]);
+      }
+    } catch (err) {
+      setItems([]);
+    }
     setLoading(false);
   }, [api]);
 
@@ -50,16 +59,18 @@ export default function MyRafflesScreen({ api, navigation }) {
         ) : (
           <View>
             {items.length === 0 ? <Text style={styles.muted}>No tienes rifas compradas.</Text> : null}
-            {items.map((item) => {
-              const progress = item.raffle?.stats?.progress || 0;
+            {items.map((item, idx) => {
+              if (!item) return null;
+              const raffle = item.raffle || {};
+              const progress = raffle?.stats?.progress || 0;
               const isWinner = !!item.isWinner;
               const status = isWinner ? 'Ganador' : item.status || 'Activo';
               return (
-                <View key={item?.raffle?.id || item?.raffleId || String(Math.random())} style={[styles.card, styles.myRaffleCard]}>
+                <View key={raffle.id || item?.raffleId || `raffle-${idx}`} style={[styles.card, styles.myRaffleCard]}>
                   <View style={styles.rowBetween}>
                     <View style={{ flex: 1, paddingRight: 8 }}>
-                      <Text style={styles.itemTitle}>{item.raffle?.title || 'Rifa'}</Text>
-                      <Text style={styles.muted}>{item.raffle?.description}</Text>
+                      <Text style={styles.itemTitle}>{raffle.title || 'Rifa'}</Text>
+                      <Text style={styles.muted}>{raffle.description}</Text>
                     </View>
                     <View style={[styles.statusChip, isWinner ? styles.statusWinner : null]}>
                       <Ionicons name={isWinner ? 'trophy' : 'sparkles'} size={16} color={isWinner ? '#fbbf24' : palette.accent} />
@@ -74,9 +85,9 @@ export default function MyRafflesScreen({ api, navigation }) {
                       <Text style={styles.muted}>Números</Text>
                       <Text style={{ color: '#e2e8f0', fontWeight: '800', fontSize: 16 }}>
                         {Array.isArray(item.numbers)
-                          ? item.numbers.map(n => formatTicketNumber(n, item.raffle?.digits)).join(', ')
+                          ? item.numbers.map(n => formatTicketNumber(n, raffle?.digits)).join(', ')
                           : item.numbers
-                          ? formatTicketNumber(item.numbers, item.raffle?.digits)
+                          ? formatTicketNumber(item.numbers, raffle?.digits)
                           : '—'}
                       </Text>
                     </View>
@@ -84,8 +95,10 @@ export default function MyRafflesScreen({ api, navigation }) {
 
                   <View style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: 10, borderRadius: 8, marginVertical: 8 }}>
                     <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 4 }}>Detalles del Comprador:</Text>
-                    <Text style={{ color: '#e2e8f0', fontWeight: '600' }}>{user?.firstName} {user?.lastName}</Text>
-                    <Text style={{ color: '#cbd5e1', fontSize: 12 }}>{user?.phone}</Text>
+                    <Text style={{ color: '#e2e8f0', fontWeight: '600' }}>
+                      {item?.user?.firstName || item?.user?.name || 'Usuario'} {item?.user?.lastName || ''}
+                    </Text>
+                    <Text style={{ color: '#cbd5e1', fontSize: 12 }}>{item?.user?.phone || '—'}</Text>
                     {item.createdAt && (
                       <Text style={{ color: '#cbd5e1', fontSize: 12, marginTop: 4 }}>
                         Fecha: {new Date(item.createdAt).toLocaleDateString()} {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -106,7 +119,7 @@ export default function MyRafflesScreen({ api, navigation }) {
                   <ProgressBar progress={progress} color={isWinner ? '#fbbf24' : palette.accent} />
                   <View style={styles.rowBetween}>
                     <Text style={styles.muted}>Estado: {status}</Text>
-                    <TouchableOpacity onPress={() => navigation.navigate('RaffleDetail', { raffle: item.raffle })}>
+                    <TouchableOpacity onPress={() => raffle && navigation.navigate('RaffleDetail', { raffle })}>
                       <Text style={styles.link}>Ver rifa</Text>
                     </TouchableOpacity>
                   </View>
