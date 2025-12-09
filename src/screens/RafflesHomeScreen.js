@@ -21,6 +21,42 @@ import Announcements from '../components/Announcements';
 import PublicProfileModal from '../components/PublicProfileModal';
 import { FilledButton } from '../components/UI';
 
+const PulsingBadge = () => {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scale, { toValue: 1.1, duration: 800, useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 1, duration: 800, useNativeDriver: true })
+      ])
+    ).start();
+  }, []);
+
+  return (
+    <Animated.View style={{
+      position: 'absolute',
+      top: 10,
+      right: 10,
+      backgroundColor: '#ef4444',
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 12,
+      transform: [{ scale }],
+      zIndex: 10,
+      borderWidth: 1,
+      borderColor: '#fff',
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5
+    }}>
+      <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold' }}>¡PARTICIPA Y GANA!</Text>
+    </Animated.View>
+  );
+};
+
 export default function RafflesHomeScreen({ navigation, api, user }) {
   const [raffles, setRaffles] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -188,13 +224,16 @@ export default function RafflesHomeScreen({ navigation, api, user }) {
                     </TouchableOpacity>
                   </View>
 
-                  {item.style?.bannerImage ? (
-                    <Image source={{ uri: item.style.bannerImage }} style={{ width: '100%', height: 180 }} resizeMode="cover" />
-                  ) : (
-                    <View style={{ width: '100%', height: 150, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center' }}>
-                      <Ionicons name="image-outline" size={48} color="rgba(255,255,255,0.2)" />
-                    </View>
-                  )}
+                  <View>
+                    {item.style?.bannerImage ? (
+                      <Image source={{ uri: item.style.bannerImage }} style={{ width: '100%', height: 180 }} resizeMode="cover" />
+                    ) : (
+                      <View style={{ width: '100%', height: 150, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center' }}>
+                        <Ionicons name="image-outline" size={48} color="rgba(255,255,255,0.2)" />
+                      </View>
+                    )}
+                    <PulsingBadge />
+                  </View>
                   
                   <View style={{ padding: 16 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
