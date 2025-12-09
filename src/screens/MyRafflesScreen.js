@@ -18,6 +18,7 @@ import { formatTicketNumber } from '../utils';
 export default function MyRafflesScreen({ api, navigation }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -26,11 +27,14 @@ export default function MyRafflesScreen({ api, navigation }) {
       if (res.ok && Array.isArray(data)) {
         // Filtrar nulos/indefinidos para evitar crasheos en el render
         setItems(data.filter(Boolean));
+        setError('');
       } else {
         setItems([]);
+        setError(res?.status ? `Error ${res.status}` : 'No se pudo cargar');
       }
     } catch (err) {
       setItems([]);
+      setError('No se pudo cargar');
     }
     setLoading(false);
   }, [api]);
@@ -58,73 +62,78 @@ export default function MyRafflesScreen({ api, navigation }) {
           </View>
         ) : (
           <View>
-            {items.length === 0 ? <Text style={styles.muted}>No tienes rifas compradas.</Text> : null}
+            {error ? <Text style={styles.muted}>{error}</Text> : null}
+            {items.length === 0 && !error ? <Text style={styles.muted}>No tienes rifas compradas.</Text> : null}
             {items.map((item, idx) => {
-              if (!item) return null;
-              const raffle = item.raffle || {};
-              const progress = raffle?.stats?.progress || 0;
-              const isWinner = !!item.isWinner;
-              const status = isWinner ? 'Ganador' : item.status || 'Activo';
-              return (
-                <View key={raffle.id || item?.raffleId || `raffle-${idx}`} style={[styles.card, styles.myRaffleCard]}>
-                  <View style={styles.rowBetween}>
-                    <View style={{ flex: 1, paddingRight: 8 }}>
-                      <Text style={styles.itemTitle}>{raffle.title || 'Rifa'}</Text>
-                      <Text style={styles.muted}>{raffle.description}</Text>
+              try {
+                if (!item) return null;
+                const raffle = item.raffle || {};
+                const progress = raffle?.stats?.progress || 0;
+                const isWinner = !!item.isWinner;
+                const status = isWinner ? 'Ganador' : item.status || 'Activo';
+                return (
+                  <View key={raffle.id || item?.raffleId || `raffle-${idx}`} style={[styles.card, styles.myRaffleCard]}>
+                    <View style={styles.rowBetween}>
+                      <View style={{ flex: 1, paddingRight: 8 }}>
+                        <Text style={styles.itemTitle}>{raffle.title || 'Rifa'}</Text>
+                        <Text style={styles.muted}>{raffle.description}</Text>
+                      </View>
+                      <View style={[styles.statusChip, isWinner ? styles.statusWinner : null]}>
+                        <Ionicons name={isWinner ? 'trophy' : 'sparkles'} size={16} color={isWinner ? '#fbbf24' : palette.accent} />
+                        <Text style={styles.statusChipText}>{status}</Text>
+                      </View>
                     </View>
-                    <View style={[styles.statusChip, isWinner ? styles.statusWinner : null]}>
-                      <Ionicons name={isWinner ? 'trophy' : 'sparkles'} size={16} color={isWinner ? '#fbbf24' : palette.accent} />
-                      <Text style={styles.statusChipText}>{status}</Text>
+                    <View style={styles.ticketRow}>
+                      <View style={styles.ticketBadge}>
+                        <Ionicons name="ticket-outline" size={16} color="#f8fafc" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.muted}>Números</Text>
+                        <Text style={{ color: '#e2e8f0', fontWeight: '800', fontSize: 16 }}>
+                          {Array.isArray(item.numbers)
+                            ? item.numbers.map(n => formatTicketNumber(n, raffle?.digits)).join(', ')
+                            : item.numbers
+                            ? formatTicketNumber(item.numbers, raffle?.digits)
+                            : '—'}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                  <View style={styles.ticketRow}>
-                    <View style={styles.ticketBadge}>
-                      <Ionicons name="ticket-outline" size={16} color="#f8fafc" />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.muted}>Números</Text>
-                      <Text style={{ color: '#e2e8f0', fontWeight: '800', fontSize: 16 }}>
-                        {Array.isArray(item.numbers)
-                          ? item.numbers.map(n => formatTicketNumber(n, raffle?.digits)).join(', ')
-                          : item.numbers
-                          ? formatTicketNumber(item.numbers, raffle?.digits)
-                          : '—'}
+
+                    <View style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: 10, borderRadius: 8, marginVertical: 8 }}>
+                      <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 4 }}>Detalles del Comprador:</Text>
+                      <Text style={{ color: '#e2e8f0', fontWeight: '600' }}>
+                        {item?.user?.firstName || item?.user?.name || 'Usuario'} {item?.user?.lastName || ''}
                       </Text>
+                      <Text style={{ color: '#cbd5e1', fontSize: 12 }}>{item?.user?.phone || '—'}</Text>
+                      {item.createdAt && (
+                        <Text style={{ color: '#cbd5e1', fontSize: 12, marginTop: 4 }}>
+                          Fecha: {new Date(item.createdAt).toLocaleDateString()} {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </Text>
+                      )}
+                    </View>
+
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16, marginVertical: 8 }}>
+                      <View style={{ transform: [{ scale: 0.7 }] }}>
+                        <QRCodePlaceholder value={item.serialNumber || `TICKET-${item.id || '000'}`} />
+                      </View>
+                      <View>
+                        <Text style={{ color: '#94a3b8', fontSize: 10 }}>Serial Único</Text>
+                        <Text style={{ color: '#fff', fontFamily: 'monospace', fontSize: 12 }}>{item.serialNumber || 'PENDIENTE'}</Text>
+                      </View>
+                    </View>
+
+                    <ProgressBar progress={progress} color={isWinner ? '#fbbf24' : palette.accent} />
+                    <View style={styles.rowBetween}>
+                      <Text style={styles.muted}>Estado: {status}</Text>
+                      <TouchableOpacity onPress={() => raffle && navigation.navigate('RaffleDetail', { raffle })}>
+                        <Text style={styles.link}>Ver rifa</Text>
+                      </TouchableOpacity>
                     </View>
                   </View>
-
-                  <View style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: 10, borderRadius: 8, marginVertical: 8 }}>
-                    <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 4 }}>Detalles del Comprador:</Text>
-                    <Text style={{ color: '#e2e8f0', fontWeight: '600' }}>
-                      {item?.user?.firstName || item?.user?.name || 'Usuario'} {item?.user?.lastName || ''}
-                    </Text>
-                    <Text style={{ color: '#cbd5e1', fontSize: 12 }}>{item?.user?.phone || '—'}</Text>
-                    {item.createdAt && (
-                      <Text style={{ color: '#cbd5e1', fontSize: 12, marginTop: 4 }}>
-                        Fecha: {new Date(item.createdAt).toLocaleDateString()} {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </Text>
-                    )}
-                  </View>
-
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16, marginVertical: 8 }}>
-                    <View style={{ transform: [{ scale: 0.7 }] }}>
-                      <QRCodePlaceholder value={item.serialNumber || `TICKET-${item.id || '000'}`} />
-                    </View>
-                    <View>
-                      <Text style={{ color: '#94a3b8', fontSize: 10 }}>Serial Único</Text>
-                      <Text style={{ color: '#fff', fontFamily: 'monospace', fontSize: 12 }}>{item.serialNumber || 'PENDIENTE'}</Text>
-                    </View>
-                  </View>
-
-                  <ProgressBar progress={progress} color={isWinner ? '#fbbf24' : palette.accent} />
-                  <View style={styles.rowBetween}>
-                    <Text style={styles.muted}>Estado: {status}</Text>
-                    <TouchableOpacity onPress={() => raffle && navigation.navigate('RaffleDetail', { raffle })}>
-                      <Text style={styles.link}>Ver rifa</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              );
+                );
+              } catch (err) {
+                return null;
+              }
             })}
           </View>
         )}
