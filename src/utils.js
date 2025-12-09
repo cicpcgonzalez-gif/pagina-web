@@ -1,1 +1,1 @@
-export const formatTicketNumber = (value) => String(value ?? '').padStart(5, '0');
+export const formatTicketNumber = (value) => String(value ?? '').padStart(4, '0');

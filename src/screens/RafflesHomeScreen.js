@@ -136,7 +136,7 @@ export default function RafflesHomeScreen({ navigation, api, user }) {
                   <Image source={{ uri: w.photoUrl || 'https://via.placeholder.com/100' }} style={{ width: 60, height: 60, borderRadius: 30, marginBottom: 8 }} />
                   <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 12, textAlign: 'center' }} numberOfLines={1}>{w.winnerName}</Text>
                   <Text style={{ color: '#fbbf24', fontSize: 10, textAlign: 'center' }} numberOfLines={1}>{w.prize}</Text>
-                  <Text style={{ color: '#94a3b8', fontSize: 10, marginTop: 4 }}>Ticket #{String(w.ticketNumber).padStart(5, '0')}</Text>
+                  <Text style={{ color: '#94a3b8', fontSize: 10, marginTop: 4 }}>Ticket #{String(w.ticketNumber).padStart(4, '0')}</Text>
                 </View>
               ))}
             </ScrollView>

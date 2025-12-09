@@ -23,7 +23,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { palette } from '../theme';
 import { FilledButton, OutlineButton } from '../components/UI';
 
-const formatTicketNumber = (value) => String(value ?? '').padStart(5, '0');
+const formatTicketNumber = (value) => String(value ?? '').padStart(4, '0');
 
 const ProgressBar = ({ progress, color }) => (
   <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 3, marginVertical: 8, overflow: 'hidden' }}>

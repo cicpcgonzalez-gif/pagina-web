@@ -151,12 +151,6 @@ export default function AuthScreen({ onAuth }) {
     }
     setLoading(false);
   };
-      
-    } catch (err) {
-      setError(err.message);
-    }
-    setLoading(false);
-  };
 
   const handleRegister = async () => {
     setLoading(true);
