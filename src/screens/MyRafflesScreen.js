@@ -72,7 +72,7 @@ export default function MyRafflesScreen({ api, navigation }) {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.muted}>Números</Text>
-                      <Text style={{ color: '#e2e8f0', fontWeight: '800' }}>
+                      <Text style={{ color: '#e2e8f0', fontWeight: '800', fontSize: 16 }}>
                         {Array.isArray(item.numbers)
                           ? item.numbers.map(formatTicketNumber).join(', ')
                           : item.numbers
@@ -80,11 +80,29 @@ export default function MyRafflesScreen({ api, navigation }) {
                           : '—'}
                       </Text>
                     </View>
-                    <View style={styles.miniBadge}>
-                      <Text style={{ color: '#fbbf24', fontWeight: '800' }}>{Math.round(progress * 100)}%</Text>
+                  </View>
+
+                  <View style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: 10, borderRadius: 8, marginVertical: 8 }}>
+                    <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 4 }}>Detalles del Comprador:</Text>
+                    <Text style={{ color: '#e2e8f0', fontWeight: '600' }}>{user?.firstName} {user?.lastName}</Text>
+                    <Text style={{ color: '#cbd5e1', fontSize: 12 }}>{user?.phone}</Text>
+                    {item.createdAt && (
+                      <Text style={{ color: '#cbd5e1', fontSize: 12, marginTop: 4 }}>
+                        Fecha: {new Date(item.createdAt).toLocaleDateString()} {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </Text>
+                    )}
+                  </View>
+
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16, marginVertical: 8 }}>
+                    <View style={{ transform: [{ scale: 0.7 }] }}>
+                      <QRCodePlaceholder value={item.serialNumber || `TICKET-${item.id || '000'}`} />
+                    </View>
+                    <View>
+                      <Text style={{ color: '#94a3b8', fontSize: 10 }}>Serial Único</Text>
+                      <Text style={{ color: '#fff', fontFamily: 'monospace', fontSize: 12 }}>{item.serialNumber || 'PENDIENTE'}</Text>
                     </View>
                   </View>
-                  <QRCodePlaceholder value={item.serialNumber || `TICKET-${item.id || '000'}`} />
+
                   <ProgressBar progress={progress} color={isWinner ? '#fbbf24' : palette.accent} />
                   <View style={styles.rowBetween}>
                     <Text style={styles.muted}>Estado: {status}</Text>
