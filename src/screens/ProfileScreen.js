@@ -104,6 +104,7 @@ export default function ProfileScreen({ api, onUserUpdate, pushToken, setPushTok
           cedula: profile.cedula,
           dob: profile.dob,
           bio: profile.bio,
+          socials: profile.socials,
           avatar: profile.avatar
         })
       });
@@ -240,19 +241,40 @@ export default function ProfileScreen({ api, onUserUpdate, pushToken, setPushTok
                 value={profile.address || ''}
                 onChangeText={(v) => setProfile((p) => ({ ...p, address: v }))}
               />
-              <Text style={[styles.muted, { marginTop: 8 }]}>Redes Sociales (Opcional)</Text>
+              <Text style={[styles.muted, { marginTop: 8 }]}>Perfil Público (Opcional)</Text>
+              <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 8 }}>Esta información será visible para quienes vean tus rifas.</Text>
+              
               <TextInput
-                style={styles.input}
-                placeholder="Instagram (Usuario)"
-                value={profile.socials?.instagram || ''}
-                onChangeText={(v) => setProfile((p) => ({ ...p, socials: { ...p.socials, instagram: v } }))}
+                style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
+                placeholder="Biografía / Sobre mí..."
+                value={profile.bio || ''}
+                onChangeText={(v) => setProfile((p) => ({ ...p, bio: v }))}
+                multiline
+                numberOfLines={3}
               />
-              <TextInput
-                style={styles.input}
-                placeholder="Facebook (Enlace o Usuario)"
-                value={profile.socials?.facebook || ''}
-                onChangeText={(v) => setProfile((p) => ({ ...p, socials: { ...p.socials, facebook: v } }))}
-              />
+
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: '#cbd5e1', fontSize: 12, marginBottom: 4 }}>WhatsApp (Solo números)</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="58412..."
+                    value={profile.socials?.whatsapp || ''}
+                    onChangeText={(v) => setProfile((p) => ({ ...p, socials: { ...p.socials, whatsapp: v } }))}
+                    keyboardType="phone-pad"
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: '#cbd5e1', fontSize: 12, marginBottom: 4 }}>Instagram (Usuario)</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="@usuario"
+                    value={profile.socials?.instagram || ''}
+                    onChangeText={(v) => setProfile((p) => ({ ...p, socials: { ...p.socials, instagram: v } }))}
+                  />
+                </View>
+              </View>
+
               <FilledButton title={saving ? 'Guardando...' : 'Guardar cambios'} onPress={saveProfile} loading={saving} disabled={saving} icon={<Ionicons name="save-outline" size={18} color="#fff" />} />
             </View>
 
