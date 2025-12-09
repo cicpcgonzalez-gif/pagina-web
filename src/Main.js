@@ -204,7 +204,7 @@ function MainContent() {
                   />
                   {/* WhatsApp Floating Button */}
                   <TouchableOpacity
-                    onPress={() => Linking.openURL('https://wa.me/584121234567')} // Reemplazar con número real o dinámico
+                    onPress={() => Linking.openURL('https://wa.me/584227930168')}
                     style={{
                       position: 'absolute',
                       bottom: 80,
