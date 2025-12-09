@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { SafeAreaView, View, Text, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import * as Notifications from 'expo-notifications';
