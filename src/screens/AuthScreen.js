@@ -53,6 +53,7 @@ export default function AuthScreen({ onAuth }) {
     phone: ''
   });
   const [rememberMe, setRememberMe] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const handleChange = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -97,6 +98,46 @@ export default function AuthScreen({ onAuth }) {
       }; 
       
       await onAuth(token, token, user, rememberMe);
+      
+    } catch (err) {
+      setError(err.message);
+    }
+    setLoading(false);
+  };
+
+  const handleRegister = async () => {
+    if (!termsAccepted) {
+      Alert.alert('Atención', 'Debes aceptar que MegaRifas es solo una herramienta de gestión y no organiza sorteos.');
+      return;
+    }
+    if (!form.email || !form.password || !form.firstName || !form.lastName) {
+      Alert.alert('Faltan datos', 'Por favor completa todos los campos obligatorios.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_URL}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'No se pudo registrar');
+      }
+      
+      // Auto-login after register or show verification
+      Alert.alert('Registro Exitoso', 'Por favor verifica tu correo electrónico para activar tu cuenta.');
+      setMode('login');
+      setShowVerification(true);
+      setVerifyEmail(form.email);
+      
+    } catch (err) {
+      setError(err.message);
+    }
+    setLoading(false);
+  };
       
     } catch (err) {
       setError(err.message);
@@ -433,6 +474,17 @@ export default function AuthScreen({ onAuth }) {
                 <TextInput style={[styles.input, styles.inputSoft]} placeholder="Teléfono Móvil" value={form.phone} onChangeText={(v) => handleChange('phone', v)} keyboardType="phone-pad" placeholderTextColor="#cbd5e1" />
                 <TextInput style={[styles.input, styles.inputSoft]} placeholder="Dirección de Habitación" value={form.address} onChangeText={(v) => handleChange('address', v)} placeholderTextColor="#cbd5e1" />
                 
+                {/* Terms Checkbox */}
+                <TouchableOpacity 
+                  style={{ flexDirection: 'row', alignItems: 'flex-start', marginVertical: 12, padding: 8, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 8 }}
+                  onPress={() => setTermsAccepted(!termsAccepted)}
+                >
+                  <Ionicons name={termsAccepted ? 'checkbox' : 'square-outline'} size={24} color={termsAccepted ? palette.primary : '#cbd5e1'} style={{ marginTop: 2 }} />
+                  <Text style={{ color: '#cbd5e1', fontSize: 12, marginLeft: 10, flex: 1, lineHeight: 18 }}>
+                    Acepto que <Text style={{ fontWeight: 'bold', color: '#fff' }}>MegaRifas es una herramienta de gestión</Text>. Entiendo que la plataforma no organiza, avala ni es responsable de los sorteos realizados por terceros.
+                  </Text>
+                </TouchableOpacity>
+
                 {error ? <Text style={styles.errorText}>{error}</Text> : null}
                 <View style={{ marginTop: 12 }}>
                   <FilledButton

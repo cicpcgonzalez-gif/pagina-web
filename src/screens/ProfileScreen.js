@@ -136,6 +136,33 @@ export default function ProfileScreen({ api, onUserUpdate, pushToken, setPushTok
     setChangingPassword(false);
   };
 
+  const deleteAccount = () => {
+    Alert.alert(
+      'Eliminar cuenta',
+      '¿Estás seguro de que quieres eliminar tu cuenta? Esta acción es irreversible y perderás acceso a tus tickets y datos.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Eliminar', 
+          style: 'destructive', 
+          onPress: async () => {
+            try {
+              const { res, data } = await api('/me', { method: 'DELETE' });
+              if (res.ok) {
+                Alert.alert('Cuenta eliminada', 'Tu cuenta ha sido eliminada correctamente.');
+                onLogout();
+              } else {
+                Alert.alert('Error', data.error || 'No se pudo eliminar la cuenta.');
+              }
+            } catch (e) {
+              Alert.alert('Error', 'Error de conexión al eliminar la cuenta.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const showReceipt = (item) => {
     Alert.alert(
       'Recibo',
@@ -282,13 +309,22 @@ export default function ProfileScreen({ api, onUserUpdate, pushToken, setPushTok
               })}
             </View>
 
-            <View style={{ marginTop: 20 }}>
+            <View style={{ marginTop: 20, gap: 12, marginBottom: 40 }}>
               <FilledButton 
                 title="Cerrar sesión" 
                 onPress={onLogout} 
                 style={{ backgroundColor: '#ef4444' }} 
                 icon={<Ionicons name="log-out-outline" size={18} color="#fff" />} 
               />
+              
+              <TouchableOpacity 
+                onPress={deleteAccount}
+                style={{ padding: 12, alignItems: 'center' }}
+              >
+                <Text style={{ color: '#94a3b8', fontSize: 14, textDecorationLine: 'underline' }}>
+                  Eliminar mi cuenta
+                </Text>
+              </TouchableOpacity>
             </View>
           </>
         ) : (
