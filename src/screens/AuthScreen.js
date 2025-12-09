@@ -28,6 +28,7 @@ export default function AuthScreen({ onAuth }) {
   const [twofaUserId, setTwofaUserId] = useState(null);
   const [twofaCode, setTwofaCode] = useState('');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [showVerification, setShowVerification] = useState(false);
   const [verifyEmail, setVerifyEmail] = useState('');
   const [verifyCode, setVerifyCode] = useState('');
@@ -66,6 +67,12 @@ export default function AuthScreen({ onAuth }) {
   }, [heroAnim]);
 
   const handleLogin = async () => {
+    const errors = {};
+    if (!form.email) errors.email = true;
+    if (!form.password) errors.password = true;
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
     setLoading(true);
     setError('');
     try {
@@ -106,14 +113,20 @@ export default function AuthScreen({ onAuth }) {
   };
 
   const handleRegister = async () => {
+    const errors = {};
+    if (!form.email) errors.email = true;
+    if (!form.password) errors.password = true;
+    if (!form.firstName) errors.firstName = true;
+    if (!form.lastName) errors.lastName = true;
+    setFieldErrors(errors);
+
+    if (Object.keys(errors).length > 0) return;
+
     if (!termsAccepted) {
       Alert.alert('Atención', 'Debes aceptar que MegaRifas es solo una herramienta de gestión y no organiza sorteos.');
       return;
     }
-    if (!form.email || !form.password || !form.firstName || !form.lastName) {
-      Alert.alert('Faltan datos', 'Por favor completa todos los campos obligatorios.');
-      return;
-    }
+
     setLoading(true);
     setError('');
     try {
@@ -357,19 +370,22 @@ export default function AuthScreen({ onAuth }) {
 
             {mode === 'login' ? (
               <View style={[styles.card, { backgroundColor: 'rgba(30, 41, 59, 0.7)', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1 }]}>
-                <TextInput
-                  style={[styles.input, { backgroundColor: palette.inputBg, borderColor: 'transparent' }]}
-                  placeholder="Correo electrónico"
-                  autoCapitalize="none"
-                  autoComplete="off"
-                  textContentType="emailAddress"
-                  value={form.email}
-                  onChangeText={(v) => handleChange('email', v)}
-                  placeholderTextColor={palette.muted}
-                />
-                <View style={{ position: 'relative' }}>
+                <View style={{ marginBottom: 10 }}>
                   <TextInput
-                    style={[styles.input, { backgroundColor: palette.inputBg, borderColor: 'transparent', paddingRight: 50 }]}
+                    style={[styles.input, { backgroundColor: palette.inputBg, borderColor: fieldErrors.email ? '#ef4444' : 'transparent', borderWidth: fieldErrors.email ? 1 : 0 }]}
+                    placeholder="Correo electrónico"
+                    autoCapitalize="none"
+                    autoComplete="off"
+                    textContentType="emailAddress"
+                    value={form.email}
+                    onChangeText={(v) => handleChange('email', v)}
+                    placeholderTextColor={palette.muted}
+                  />
+                  {fieldErrors.email && <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>* Requerido</Text>}
+                </View>
+                <View style={{ position: 'relative', marginBottom: 10 }}>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: palette.inputBg, borderColor: fieldErrors.password ? '#ef4444' : 'transparent', borderWidth: fieldErrors.password ? 1 : 0, paddingRight: 50 }]}
                     placeholder="Contraseña"
                     secureTextEntry={!showPassword}
                     autoComplete="off"
@@ -384,6 +400,7 @@ export default function AuthScreen({ onAuth }) {
                   >
                     <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={24} color="#cbd5e1" />
                   </TouchableOpacity>
+                  {fieldErrors.password && <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>* Requerido</Text>}
                 </View>
 
                 {twofaNeeded ? (
@@ -463,9 +480,27 @@ export default function AuthScreen({ onAuth }) {
                 </View>
 
                 <Text style={{ color: '#e2e8f0', fontSize: 14, fontWeight: '700', marginBottom: 10, marginTop: 10 }}>Información Personal</Text>
-                <View style={{ flexDirection: 'row', gap: 10 }}>
-                  <TextInput style={[styles.input, styles.inputSoft, { flex: 1 }]} placeholder="Nombre" value={form.firstName} onChangeText={(v) => handleChange('firstName', v)} placeholderTextColor="#cbd5e1" />
-                  <TextInput style={[styles.input, styles.inputSoft, { flex: 1 }]} placeholder="Apellido" value={form.lastName} onChangeText={(v) => handleChange('lastName', v)} placeholderTextColor="#cbd5e1" />
+                <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
+                  <View style={{ flex: 1 }}>
+                    <TextInput 
+                      style={[styles.input, styles.inputSoft, fieldErrors.firstName && { borderColor: '#ef4444', borderWidth: 1 }]} 
+                      placeholder="Nombre" 
+                      value={form.firstName} 
+                      onChangeText={(v) => handleChange('firstName', v)} 
+                      placeholderTextColor="#cbd5e1" 
+                    />
+                    {fieldErrors.firstName && <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>* Requerido</Text>}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <TextInput 
+                      style={[styles.input, styles.inputSoft, fieldErrors.lastName && { borderColor: '#ef4444', borderWidth: 1 }]} 
+                      placeholder="Apellido" 
+                      value={form.lastName} 
+                      onChangeText={(v) => handleChange('lastName', v)} 
+                      placeholderTextColor="#cbd5e1" 
+                    />
+                    {fieldErrors.lastName && <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>* Requerido</Text>}
+                  </View>
                 </View>
                 <TextInput style={[styles.input, styles.inputSoft]} placeholder="Cédula de Identidad" value={form.cedula} onChangeText={(v) => handleChange('cedula', v)} keyboardType="numeric" placeholderTextColor="#cbd5e1" />
                 <TextInput style={[styles.input, styles.inputSoft]} placeholder="Fecha de nacimiento (YYYY-MM-DD)" value={form.dob} onChangeText={(v) => handleChange('dob', v)} placeholderTextColor="#cbd5e1" />

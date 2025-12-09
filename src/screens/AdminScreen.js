@@ -47,6 +47,7 @@ export default function AdminScreen({ api, user }) {
   const [smtpForm, setSmtpForm] = useState({ host: '', port: '587', user: '', pass: '', secure: false, fromName: '', fromEmail: '' });
   const [savingSmtp, setSavingSmtp] = useState(false);
   const [techSupportForm, setTechSupportForm] = useState({ phone: '', email: '' });
+  const [techSupportErrors, setTechSupportErrors] = useState({});
   const [savingTechSupport, setSavingTechSupport] = useState(false);
 
   // New Sections State
@@ -102,6 +103,7 @@ export default function AdminScreen({ api, user }) {
   const [ticketsLoading, setTicketsLoading] = useState(false);
   const [ticketFilters, setTicketFilters] = useState({ raffleId: '', status: '', from: '', to: '' });
   const [raffleForm, setRaffleForm] = useState({ id: null, title: '', price: '', description: '', totalTickets: '', startDate: '', endDate: '', securityCode: '', lottery: '', instantWins: '', terms: '' });
+  const [raffleErrors, setRaffleErrors] = useState({});
   const [savingRaffle, setSavingRaffle] = useState(false);
   const [showLotteryModal, setShowLotteryModal] = useState(false);
 
@@ -397,6 +399,12 @@ export default function AdminScreen({ api, user }) {
   };
 
   const saveTechSupport = async () => {
+    const errors = {};
+    if (!techSupportForm.phone) errors.phone = true;
+    if (!techSupportForm.email) errors.email = true;
+    setTechSupportErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
     setSavingTechSupport(true);
     const { res, data } = await api('/superadmin/settings/tech-support', { method: 'PATCH', body: JSON.stringify(techSupportForm) });
     if (res.ok) Alert.alert('Listo', 'Soporte técnico actualizado.');
@@ -597,10 +605,17 @@ export default function AdminScreen({ api, user }) {
 
   const resetRaffleForm = () => {
     setRaffleForm({ id: null, title: '', price: '', description: '', totalTickets: '', startDate: '', endDate: '', securityCode: '', lottery: '', instantWins: '', terms: '' });
+    setRaffleErrors({});
   };
 
   const submitRaffle = async () => {
-    if (!raffleForm.title || !raffleForm.price || !raffleForm.lottery) return Alert.alert('Faltan datos', 'Ingresa titulo, precio y selecciona una lotería.');
+    const errors = {};
+    if (!raffleForm.title) errors.title = true;
+    if (!raffleForm.price) errors.price = true;
+    if (!raffleForm.lottery) errors.lottery = true;
+    
+    setRaffleErrors(errors);
+    if (Object.keys(errors).length > 0) return;
     
     const instantWinsArray = raffleForm.instantWins 
       ? raffleForm.instantWins.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n))
@@ -623,10 +638,14 @@ export default function AdminScreen({ api, user }) {
     const method = raffleForm.id ? 'PATCH' : 'POST';
     const { res, data } = await api(endpoint, { method, body: JSON.stringify(payload) });
     if (res.ok) {
-      Alert.alert('Listo', raffleForm.id ? 'Rifa actualizada.' : 'Rifa creada.');
-      resetRaffleForm();
-      loadRaffles();
-      loadTickets();
+      Alert.alert('Listo', raffleForm.id ? 'Rifa actualizada.' : 'Rifa creada.', [
+        { text: 'OK', onPress: () => {
+            resetRaffleForm();
+            loadRaffles();
+            loadTickets();
+            setActiveSection(null);
+        }}
+      ]);
     } else {
       Alert.alert('Ups', data.error || 'No se pudo guardar.');
     }
@@ -735,14 +754,39 @@ export default function AdminScreen({ api, user }) {
                   <Text style={[styles.title, { marginBottom: 0, marginLeft: 12, fontSize: 20 }]}>Gestionar Rifas</Text>
               </View>
               <Text style={styles.section}>Gestionar rifas</Text>
-              <TextInput style={styles.input} placeholder="Titulo" value={raffleForm.title} onChangeText={(v) => setRaffleForm((s) => ({ ...s, title: v }))} />
-              <TextInput style={styles.input} placeholder="Precio" value={raffleForm.price} onChangeText={(v) => setRaffleForm((s) => ({ ...s, price: v }))} keyboardType="numeric" />
+              <View style={{ marginBottom: 10 }}>
+                <TextInput 
+                  style={[styles.input, raffleErrors.title && { borderColor: '#ef4444', borderWidth: 1 }]} 
+                  placeholder="Titulo" 
+                  value={raffleForm.title} 
+                  onChangeText={(v) => setRaffleForm((s) => ({ ...s, title: v }))} 
+                />
+                {raffleErrors.title && <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>* Requerido</Text>}
+              </View>
+
+              <View style={{ marginBottom: 10 }}>
+                <TextInput 
+                  style={[styles.input, raffleErrors.price && { borderColor: '#ef4444', borderWidth: 1 }]} 
+                  placeholder="Precio" 
+                  value={raffleForm.price} 
+                  onChangeText={(v) => setRaffleForm((s) => ({ ...s, price: v }))} 
+                  keyboardType="numeric" 
+                />
+                {raffleErrors.price && <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>* Requerido</Text>}
+              </View>
+
               <TextInput style={styles.input} placeholder="Descripcion" value={raffleForm.description} onChangeText={(v) => setRaffleForm((s) => ({ ...s, description: v }))} />
               
-              <TouchableOpacity onPress={() => setShowLotteryModal(true)} style={[styles.input, { justifyContent: 'center' }]}>
-                  <Text style={{ color: raffleForm.lottery ? '#fff' : '#94a3b8' }}>{raffleForm.lottery || 'Seleccionar Lotería'}</Text>
-                  <Ionicons name="chevron-down-outline" size={20} color="#94a3b8" style={{ position: 'absolute', right: 12 }} />
-              </TouchableOpacity>
+              <View style={{ marginBottom: 10 }}>
+                <TouchableOpacity 
+                  onPress={() => setShowLotteryModal(true)} 
+                  style={[styles.input, { justifyContent: 'center' }, raffleErrors.lottery && { borderColor: '#ef4444', borderWidth: 1 }]}
+                >
+                    <Text style={{ color: raffleForm.lottery ? '#fff' : '#94a3b8' }}>{raffleForm.lottery || 'Seleccionar Lotería'}</Text>
+                    <Ionicons name="chevron-down-outline" size={20} color="#94a3b8" style={{ position: 'absolute', right: 12 }} />
+                </TouchableOpacity>
+                {raffleErrors.lottery && <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>* Requerido</Text>}
+              </View>
 
               <Modal visible={showLotteryModal} transparent animationType="fade">
                 <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', padding: 20 }}>
@@ -829,23 +873,29 @@ export default function AdminScreen({ api, user }) {
               <Text style={{ color: palette.muted, fontSize: 12, marginBottom: 12 }}>Visible solo para usuarios cuando esté configurado.</Text>
               
               <Text style={styles.section}>WhatsApp Soporte</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="+58 412 1234567"
-                value={techSupportForm.phone}
-                onChangeText={(v) => setTechSupportForm(s => ({ ...s, phone: v }))}
-                keyboardType="phone-pad"
-              />
+              <View style={{ marginBottom: 10 }}>
+                <TextInput
+                  style={[styles.input, techSupportErrors.phone && { borderColor: '#ef4444', borderWidth: 1 }]}
+                  placeholder="+58 412 1234567"
+                  value={techSupportForm.phone}
+                  onChangeText={(v) => setTechSupportForm(s => ({ ...s, phone: v }))}
+                  keyboardType="phone-pad"
+                />
+                {techSupportErrors.phone && <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>* Requerido</Text>}
+              </View>
               
               <Text style={styles.section}>Email Soporte</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="soporte@app.com"
-                value={techSupportForm.email}
-                onChangeText={(v) => setTechSupportForm(s => ({ ...s, email: v }))}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+              <View style={{ marginBottom: 10 }}>
+                <TextInput
+                  style={[styles.input, techSupportErrors.email && { borderColor: '#ef4444', borderWidth: 1 }]}
+                  placeholder="soporte@app.com"
+                  value={techSupportForm.email}
+                  onChangeText={(v) => setTechSupportForm(s => ({ ...s, email: v }))}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+                {techSupportErrors.email && <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>* Requerido</Text>}
+              </View>
 
               <FilledButton 
                 title={savingTechSupport ? 'Guardando...' : 'Guardar Configuración'} 
