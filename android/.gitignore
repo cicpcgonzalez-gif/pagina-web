@@ -13,3 +13,6 @@ local.properties
 
 # Bundle artifacts
 *.jsbundle
+
+jdk17.zip
+jdk17/

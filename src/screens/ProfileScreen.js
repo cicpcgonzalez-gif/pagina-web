@@ -20,13 +20,13 @@ import { styles } from '../styles';
 import { FilledButton } from '../components/UI';
 import { formatTicketNumber } from '../utils';
 
-export default function ProfileScreen({ api, onUserUpdate, pushToken, setPushToken, onLogout }) {
+export default function ProfileScreen({ navigation, api, onUserUpdate, pushToken, setPushToken, onLogout }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [tickets, setTickets] = useState([]);
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [myRaffles, setMyRaffles] = useState([]);
+  // const [myRaffles, setMyRaffles] = useState([]); // Removed as we use a separate screen now
   const [passwordForm, setPasswordForm] = useState({ current: '', new: '' });
   const [changingPassword, setChangingPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -60,11 +60,7 @@ export default function ProfileScreen({ api, onUserUpdate, pushToken, setPushTok
         }
         setProfile(user);
         
-        // If admin/organizer, load their raffles
-        if (user.role === 'admin' || user.role === 'superadmin') {
-           const { res: rRaf, data: dRaf } = await api('/admin/raffles');
-           if (rRaf.ok) setMyRaffles(dRaf);
-        }
+        // Removed inline raffle fetching
       } else {
         setErrorMsg(d1?.error || `Error ${r1.status}: No se pudo cargar el perfil`);
       }
@@ -219,8 +215,17 @@ export default function ProfileScreen({ api, onUserUpdate, pushToken, setPushTok
               </View>
               
               <Text style={[styles.itemTitle, { fontSize: 24, marginTop: 12 }]}>{profile.name || 'Usuario'}</Text>
+              
+              {/* STARS RATING */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, backgroundColor: 'rgba(251, 191, 36, 0.1)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 12 }}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Ionicons key={star} name="star" size={14} color="#fbbf24" />
+                ))}
+                <Text style={{ color: '#fbbf24', marginLeft: 6, fontWeight: 'bold', fontSize: 12 }}>5.0 (Excelencia)</Text>
+              </View>
+
               {profile.verified && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}>
                   <Ionicons name="checkmark-circle" size={16} color="#3b82f6" />
                   <Text style={{ color: '#3b82f6', fontWeight: 'bold' }}>Verificado</Text>
                 </View>
@@ -243,8 +248,19 @@ export default function ProfileScreen({ api, onUserUpdate, pushToken, setPushTok
                 ) : null}
               </View>
 
+              {/* MY PUBLICATIONS BUTTON */}
+              {(profile.role === 'admin' || profile.role === 'superadmin') && (
+                <TouchableOpacity 
+                  style={[styles.button, { marginTop: 20, backgroundColor: 'rgba(59, 130, 246, 0.15)', width: 'auto', paddingHorizontal: 24 }]} 
+                  onPress={() => navigation.navigate('Rifas', { screen: 'MyPublications' })}
+                >
+                  <Ionicons name="list-outline" size={20} color="#3b82f6" />
+                  <Text style={{ color: '#3b82f6', fontWeight: 'bold', marginLeft: 8 }}>Mis Publicaciones</Text>
+                </TouchableOpacity>
+              )}
+
               <TouchableOpacity 
-                style={[styles.button, styles.secondaryButton, { marginTop: 20, width: 'auto', paddingHorizontal: 24 }]} 
+                style={[styles.button, styles.secondaryButton, { marginTop: 12, width: 'auto', paddingHorizontal: 24 }]} 
                 onPress={() => setIsEditing(!isEditing)}
               >
                 <Ionicons name={isEditing ? "close-outline" : "create-outline"} size={18} color={palette.primary} />
@@ -279,19 +295,7 @@ export default function ProfileScreen({ api, onUserUpdate, pushToken, setPushTok
               </View>
             )}
 
-            {/* ADMIN RAFFLES */}
-            {(profile.role === 'admin' || profile.role === 'superadmin') && (
-              <View style={[styles.card, styles.glassCard]}>
-                <Text style={styles.section}>Mis Publicaciones</Text>
-                {myRaffles.length === 0 ? <Text style={styles.muted}>No has publicado rifas.</Text> : null}
-                {myRaffles.map(r => (
-                  <View key={r.id} style={{ marginBottom: 12, padding: 12, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 8 }}>
-                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>{r.title}</Text>
-                    <Text style={{ color: palette.muted, fontSize: 12 }}>{r.status === 'closed' ? 'CERRADA' : 'ACTIVA'} • Tickets: {r.soldTickets || 0}/{r.totalTickets || 0}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
+            {/* REMOVED INLINE ADMIN RAFFLES */}
 
             <View style={[styles.card, styles.glassCard]}>
               <TouchableOpacity style={styles.rowBetween} onPress={() => setShowPassword(!showPassword)}>

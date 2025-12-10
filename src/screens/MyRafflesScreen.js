@@ -136,7 +136,7 @@ export default function MyRafflesScreen({ api, navigation }) {
                         <View style={{ marginBottom: 8 }}>
                           <Text style={{ color: '#64748b', fontSize: 9, textTransform: 'uppercase', fontWeight: 'bold' }}>Serial Único</Text>
                           <Text style={{ color: '#cbd5e1', fontFamily: 'monospace', fontSize: 11, letterSpacing: 0.5 }}>
-                            {item.serialNumber || 'PENDIENTE'}
+                            {item.serialNumber ? item.serialNumber.slice(-8).toUpperCase() : 'PENDIENTE'}
                           </Text>
                         </View>
                         <View>

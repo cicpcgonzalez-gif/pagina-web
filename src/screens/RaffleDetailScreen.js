@@ -41,12 +41,12 @@ export default function RaffleDetailScreen({ route, navigation, api }) {
   const [bankDetails, setBankDetails] = useState(null);
   const stats = current?.stats || {};
   const style = current?.style || {};
-  const themeColor = style.themeColor || palette.primary;
+  const themeColor = style?.themeColor || palette.primary;
   const [viewProfileId, setViewProfileId] = useState(null);
   const [termsVisible, setTermsVisible] = useState(false);
-  const totalTickets = current?.totalTickets || stats.total || 0;
-  const sold = stats.sold || 0;
-  const remaining = stats.remaining ?? (totalTickets ? Math.max(totalTickets - sold, 0) : 0);
+  const totalTickets = current?.totalTickets || stats?.total || 0;
+  const sold = stats?.sold || 0;
+  const remaining = stats?.remaining ?? (totalTickets ? Math.max(totalTickets - sold, 0) : 0);
   const percentLeft = totalTickets ? Math.max(0, Math.min(100, (remaining / totalTickets) * 100)) : 0;
 
   // Fetch full raffle details if missing critical data
@@ -216,7 +216,7 @@ export default function RaffleDetailScreen({ route, navigation, api }) {
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Ionicons name="shield-checkmark" size={12} color="#fbbf24" style={{ marginRight: 4 }} />
-                <Text style={{ color: '#94a3b8', fontSize: 12, fontWeight: '600' }}>ID: {current.user?.securityId || 'VERIFICADO'}</Text>
+                <Text style={{ color: '#94a3b8', fontSize: 12, fontWeight: '600' }}>ID: {current.user?.securityId ? current.user.securityId.slice(-8).toUpperCase() : 'VERIFICADO'}</Text>
               </View>
             </View>
             <View style={{ flex: 1, alignItems: 'flex-end' }}>

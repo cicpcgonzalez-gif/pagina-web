@@ -70,7 +70,7 @@ export default function TabsNavigator({ api, user, onUserUpdate, modulesConfig, 
       </Tabs.Screen>
       {cfg?.user?.profile !== false && (
         <Tabs.Screen name="Perfil">
-          {() => <ProfileScreen api={api} user={user} onUserUpdate={onUserUpdate} pushToken={pushToken} setPushToken={setPushToken} onLogout={onLogout} />}
+          {(props) => <ProfileScreen {...props} api={api} user={user} onUserUpdate={onUserUpdate} pushToken={pushToken} setPushToken={setPushToken} onLogout={onLogout} />}
         </Tabs.Screen>
       )}
       {(user?.role === 'admin' || user?.role === 'organizer' || user?.role === 'superadmin') && cfg?.admin?.raffles !== false && (

@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { palette } from '../theme';
 import RafflesHomeScreen from '../screens/RafflesHomeScreen';
 import RaffleDetailScreen from '../screens/RaffleDetailScreen';
+import MyPublicationsScreen from '../screens/MyPublicationsScreen';
 
 const InnerStack = createNativeStackNavigator();
 
@@ -20,6 +21,9 @@ export default function RafflesStack({ api, user }) {
       </InnerStack.Screen>
       <InnerStack.Screen name="RaffleDetail" options={{ title: 'Detalle' }}>
         {(props) => <RaffleDetailScreen {...props} api={api} />}
+      </InnerStack.Screen>
+      <InnerStack.Screen name="MyPublications" options={{ title: 'Mis Publicaciones', headerShown: false }}>
+        {(props) => <MyPublicationsScreen {...props} api={api} />}
       </InnerStack.Screen>
     </InnerStack.Navigator>
   );
