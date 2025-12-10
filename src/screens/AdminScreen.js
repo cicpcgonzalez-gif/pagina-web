@@ -1189,7 +1189,7 @@ export default function AdminScreen({ api, user }) {
                       <Text style={{ color: palette.muted, fontSize: 12 }}>{u.email}</Text>
                       <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
                         <View style={{ backgroundColor: u.role === 'superadmin' ? '#c084fc' : u.role === 'admin' ? '#60a5fa' : '#94a3b8', paddingHorizontal: 6, borderRadius: 4 }}>
-                          <Text style={{ color: '#000', fontSize: 10, fontWeight: 'bold' }}>{u.role.toUpperCase()}</Text>
+                          <Text style={{ color: '#000', fontSize: 10, fontWeight: 'bold' }}>{(u.role || 'user').toUpperCase()}</Text>
                         </View>
                         <View style={{ backgroundColor: u.active ? '#4ade80' : '#f87171', paddingHorizontal: 6, borderRadius: 4 }}>
                           <Text style={{ color: '#000', fontSize: 10, fontWeight: 'bold' }}>{u.active ? 'ACTIVO' : 'INACTIVO'}</Text>
@@ -2022,7 +2022,7 @@ export default function AdminScreen({ api, user }) {
               </View>
               <Text style={styles.muted}>Código único para validar sorteos.</Text>
               <View style={{ padding: 20, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 12, alignItems: 'center', marginVertical: 16 }}>
-                <Text style={{ color: '#fbbf24', fontSize: 24, fontWeight: '900', letterSpacing: 4 }}>{securityStatus.code || '••••••'}</Text>
+                <Text style={{ color: '#fbbf24', fontSize: 24, fontWeight: '900', letterSpacing: 4 }}>{securityStatus?.code || '••••••'}</Text>
               </View>
               <FilledButton title={regenerating ? 'Generando...' : 'Regenerar Código'} onPress={regenerateSecurityCode} loading={regenerating} disabled={regenerating} icon={<Ionicons name="refresh-outline" size={18} color="#fff" />} />
             </View>
