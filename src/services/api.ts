@@ -75,13 +75,35 @@ export async function createRaffle(raffle: { title: string; description: string 
 export async function login(credentials: { email: string; password: string }) {
   try {
     console.log(ENV.apiUrl);
-    const res = await api.post('/login', credentials);
-    token = res.data.token;
-    await SecureStore.setItemAsync('jwt_token', token ?? '');
-    return token;
+    const res = await api.post('/auth/login', credentials);
+    // El backend devuelve { accessToken, refreshToken, user, ... }
+    token = res.data.accessToken; 
+    if (token) {
+      await SecureStore.setItemAsync('jwt_token', token);
+    }
+    return res.data;
   } catch (err: any) {
     console.log('login error:', err.message, err);
-    throw new Error(err.message || 'No se pudo iniciar sesión');
+    // Propagar el error exacto del backend para detectar si es "no verificado"
+    throw err; 
+  }
+}
+
+export async function verifyAccount(email: string, code: string) {
+  try {
+    const res = await api.get('/auth/verify', { params: { email, code } });
+    return res.data;
+  } catch (err: any) {
+    throw new Error(err.response?.data?.error || 'Error al verificar cuenta');
+  }
+}
+
+export async function resendVerificationCode(email: string) {
+  try {
+    const res = await api.post('/auth/verify/resend', { email });
+    return res.data;
+  } catch (err: any) {
+    throw new Error(err.response?.data?.error || 'Error al reenviar código');
   }
 }
 
