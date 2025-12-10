@@ -1181,8 +1181,8 @@ export default function AdminScreen({ api, user }) {
                 onChangeText={filterUsers} 
               />
 
-              {filteredUsers.map(u => (
-                <View key={u.id} style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 12, marginBottom: 8 }}>
+              {filteredUsers.filter(u => u).map(u => (
+                <View key={u.id || Math.random()} style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 12, marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <View>
                       <Text style={{ color: '#fff', fontWeight: 'bold' }}>{u.name || 'Sin nombre'}</Text>
@@ -1869,8 +1869,8 @@ export default function AdminScreen({ api, user }) {
                   <TouchableOpacity onPress={() => setActiveSection(null)}><Ionicons name="arrow-back" size={24} color="#fff" /></TouchableOpacity>
                   <Text style={[styles.title, { marginBottom: 0, marginLeft: 12, fontSize: 20 }]}>Auditoría</Text>
               </View>
-              {auditLogs.map(log => (
-                <View key={log.id} style={{ marginBottom: 8, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)', paddingBottom: 8 }}>
+              {auditLogs.filter(l => l).map(log => (
+                <View key={log.id || Math.random()} style={{ marginBottom: 8, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)', paddingBottom: 8 }}>
                   <Text style={{ color: '#fbbf24', fontWeight: 'bold' }}>{log.action}</Text>
                   <Text style={{ color: '#cbd5e1' }}>{log.detail}</Text>
                   <Text style={{ color: palette.muted, fontSize: 10 }}>{new Date(log.timestamp).toLocaleString()}</Text>
@@ -1885,8 +1885,8 @@ export default function AdminScreen({ api, user }) {
                   <TouchableOpacity onPress={() => setActiveSection(null)}><Ionicons name="arrow-back" size={24} color="#fff" /></TouchableOpacity>
                   <Text style={[styles.title, { marginBottom: 0, marginLeft: 12, fontSize: 20 }]}>Log de Correos</Text>
               </View>
-              {mailLogs.map(log => (
-                <View key={log.id} style={{ marginBottom: 8, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)', paddingBottom: 8 }}>
+              {mailLogs.filter(l => l).map(log => (
+                <View key={log.id || Math.random()} style={{ marginBottom: 8, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)', paddingBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <Text style={{ color: '#fff', fontWeight: 'bold', flex: 1 }}>{log.to}</Text>
                     <Text style={{ color: log.status === 'SENT' ? '#4ade80' : '#f87171', fontSize: 10, fontWeight: 'bold' }}>{log.status}</Text>
@@ -1906,8 +1906,8 @@ export default function AdminScreen({ api, user }) {
               </View>
               <Text style={styles.muted}>Registro de actividad administrativa.</Text>
               {/* Reusing audit logs for now as they are similar in this context */}
-              {auditLogs.map(log => (
-                <View key={log.id} style={{ marginBottom: 8, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)', paddingBottom: 8 }}>
+              {auditLogs.filter(l => l).map(log => (
+                <View key={log.id || Math.random()} style={{ marginBottom: 8, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)', paddingBottom: 8 }}>
                   <Text style={{ color: '#22d3ee', fontWeight: 'bold' }}>{log.entity} - {log.action}</Text>
                   <Text style={{ color: '#cbd5e1' }}>{log.detail}</Text>
                   <Text style={{ color: palette.muted, fontSize: 10 }}>{new Date(log.timestamp).toLocaleString()}</Text>
