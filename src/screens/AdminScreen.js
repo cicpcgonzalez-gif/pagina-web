@@ -1044,7 +1044,7 @@ export default function AdminScreen({ api, user }) {
               </View>
 
               <Text style={[styles.section, { marginTop: 24 }]}>Rifas Existentes</Text>
-              {raffles.map(r => (
+              {raffles.filter(r => r).map(r => (
                 <View key={r.id} style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 12, marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <View style={{ flex: 1 }}>
@@ -1399,7 +1399,7 @@ export default function AdminScreen({ api, user }) {
                       <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 8 }}>
                         {(() => {
                           const max = Math.max(1, ...metricsHourly.map((x) => x.count || 0));
-                          return metricsHourly.map((h) => {
+                          return metricsHourly.filter(h => h).map((h) => {
                             const height = Math.max(4, ((h.count || 0) / max) * 80);
                             return (
                               <View key={`h-${h.hour}`} style={{ flex: 1, alignItems: 'center', marginHorizontal: 1 }}>
@@ -1422,7 +1422,7 @@ export default function AdminScreen({ api, user }) {
                       <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 8 }}>
                         {(() => {
                           const max = Math.max(1, ...metricsDaily.map((d) => d.count || 0));
-                          return metricsDaily.map((d) => {
+                          return metricsDaily.filter(d => d).map((d) => {
                             const h = Math.max(4, ((d.count || 0) / max) * 80);
                             return (
                               <View key={d.date} style={{ flex: 1, alignItems: 'center', marginHorizontal: 2 }}>
@@ -1439,7 +1439,7 @@ export default function AdminScreen({ api, user }) {
                   {/* Ventas por estado */}
                   <View style={{ marginTop: 16 }}>
                     <Text style={styles.section}>Ventas por estado</Text>
-                    {metricsByState.length === 0 ? <Text style={{ color: palette.muted }}>Sin datos.</Text> : metricsByState.slice(0, 8).map((s) => {
+                    {metricsByState.length === 0 ? <Text style={{ color: palette.muted }}>Sin datos.</Text> : metricsByState.filter(s => s).slice(0, 8).map((s) => {
                       const max = Math.max(1, metricsByState[0]?.count || 1);
                       const width = Math.max(6, (s.count / max) * 100);
                       return (
@@ -1459,8 +1459,8 @@ export default function AdminScreen({ api, user }) {
                   {/* Top compradores */}
                   <View style={{ marginTop: 16 }}>
                     <Text style={styles.section}>Top de compra</Text>
-                    {metricsTop.length === 0 ? <Text style={{ color: palette.muted }}>Sin datos.</Text> : metricsTop.map((u, idx) => (
-                      <View key={u.userId} style={{ paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)', flexDirection: 'row', justifyContent: 'space-between' }}>
+                    {metricsTop.length === 0 ? <Text style={{ color: palette.muted }}>Sin datos.</Text> : metricsTop.filter(u => u).map((u, idx) => (
+                      <View key={u.userId || idx} style={{ paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)', flexDirection: 'row', justifyContent: 'space-between' }}>
                         <View>
                           <Text style={{ color: '#fff', fontWeight: '700' }}>{idx + 1}. {u.name}</Text>
                           <Text style={{ color: '#94a3b8', fontSize: 12 }}>{u.email || '—'} • {u.state}</Text>
@@ -1480,7 +1480,7 @@ export default function AdminScreen({ api, user }) {
                   <TouchableOpacity onPress={() => setActiveSection(null)}><Ionicons name="arrow-back" size={24} color="#fff" /></TouchableOpacity>
                   <Text style={[styles.title, { marginBottom: 0, marginLeft: 12, fontSize: 20 }]}>Progreso de Rifas</Text>
               </View>
-              {raffles.map(r => {
+              {raffles.filter(r => r).map(r => {
                 // Mock calculation if backend doesn't send sold count yet
                 const sold = r.soldTickets || 0; 
                 const total = r.totalTickets || 100;
@@ -1564,7 +1564,7 @@ export default function AdminScreen({ api, user }) {
               
               {loadingPayments ? <ActivityIndicator color={palette.primary} /> : (
                 payments.length === 0 ? <Text style={{ color: '#94a3b8', textAlign: 'center', marginVertical: 20 }}>No hay pagos pendientes.</Text> :
-                payments.map(p => {
+                payments.filter(p => p).map(p => {
                   const buyer = p.user || {};
                   const statusColor = p.status === 'approved' ? '#4ade80' : p.status === 'rejected' ? '#f87171' : '#fbbf24';
                   return (
@@ -1621,7 +1621,7 @@ export default function AdminScreen({ api, user }) {
               
               <Text style={styles.section}>Seleccionar Rifa</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-                {raffles.map(r => (
+                {raffles.filter(r => r).map(r => (
                   <TouchableOpacity 
                     key={r.id} 
                     onPress={() => {
@@ -1749,7 +1749,7 @@ export default function AdminScreen({ api, user }) {
 
               {ticketsLoading ? <ActivityIndicator color={palette.primary} /> : (
                 <ScrollView style={{ maxHeight: 420 }}>
-                  {tickets.map(t => {
+                  {tickets.filter(t => t).map(t => {
                     const buyer = t.buyer || {};
                     const raffleDigits = raffles.find(r => r.id === t.raffleId)?.digits;
                     const statusColor = t.status === 'approved' || t.status === 'aprobado' ? '#4ade80' : t.status === 'ganador' ? '#fbbf24' : t.status === 'rejected' ? '#f87171' : '#fbbf24';
@@ -2095,7 +2095,7 @@ export default function AdminScreen({ api, user }) {
                 </TouchableOpacity>
               </View>
               <ScrollView>
-                {raffles.map((r) => (
+                {raffles.filter(r => r).map((r) => (
                   <TouchableOpacity
                     key={r.id}
                     onPress={() => { setSelectedRaffle(r); setRafflePickerVisible(false); }}
