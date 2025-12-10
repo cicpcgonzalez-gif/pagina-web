@@ -372,25 +372,30 @@ export default function AdminScreen({ api, user }) {
 
     if (user?.role !== 'superadmin') return;
     setLoadingSuper(true);
-    const [s1, s2, s3, s4] = await Promise.all([
-      api('/superadmin/settings'),
-      api('/superadmin/audit/users'),
-      api('/superadmin/mail/logs'),
-      api('/superadmin/audit/actions')
-    ]);
-    if (s1.res.ok) {
-      setBranding((b) => ({ ...b, ...(s1.data.branding || {}) }));
-      setModules(s1.data.modules || {});
-      if (s1.data.smtp) setSmtpForm(s => ({ ...s, ...s1.data.smtp }));
-      if (s1.data.techSupport) setTechSupportForm(s => ({ ...s, ...s1.data.techSupport }));
-      if (s1.data.company) setCompanyForm(s => ({ ...s, ...s1.data.company }));
+    try {
+      const [s1, s2, s3, s4] = await Promise.all([
+        api('/superadmin/settings'),
+        api('/superadmin/audit/users'),
+        api('/superadmin/mail/logs'),
+        api('/superadmin/audit/actions')
+      ]);
+      if (s1.res.ok && s1.data) {
+        setBranding((b) => ({ ...b, ...(s1.data.branding || {}) }));
+        setModules(s1.data.modules || {});
+        if (s1.data.smtp) setSmtpForm(s => ({ ...s, ...s1.data.smtp }));
+        if (s1.data.techSupport) setTechSupportForm(s => ({ ...s, ...s1.data.techSupport }));
+        if (s1.data.company) setCompanyForm(s => ({ ...s, ...s1.data.company }));
+      }
+      if (s2.res.ok && Array.isArray(s2.data)) {
+        setUsers(s2.data);
+        setFilteredUsers(s2.data);
+      }
+      if (s3.res.ok && Array.isArray(s3.data)) setMailLogs(s3.data);
+      if (s4.res.ok && Array.isArray(s4.data)) setAuditLogs(s4.data);
+    } catch (e) {
+      console.error('Error loading superadmin data:', e);
+      Alert.alert('Error', 'No se pudo cargar la información de superadmin.');
     }
-    if (s2.res.ok && Array.isArray(s2.data)) {
-      setUsers(s2.data);
-      setFilteredUsers(s2.data);
-    }
-    if (s3.res.ok && Array.isArray(s3.data)) setMailLogs(s3.data);
-    if (s4.res.ok && Array.isArray(s4.data)) setAuditLogs(s4.data);
     setLoadingSuper(false);
   }, [api, user?.role]);
 
@@ -504,13 +509,14 @@ export default function AdminScreen({ api, user }) {
 
   useFocusEffect(
     useCallback(() => {
-      loadProfile();
-      loadSecurityStatus();
-      loadManualPayments();
-      loadRaffles();
-      loadTickets();
-      // Always load super admin data function (it now handles tech support for everyone)
-      loadSuperAdminData();
+      const safeLoad = async (fn) => { try { await fn(); } catch (e) { console.log('Load error:', e); } };
+      
+      safeLoad(loadProfile);
+      safeLoad(loadSecurityStatus);
+      safeLoad(loadManualPayments);
+      safeLoad(loadRaffles);
+      safeLoad(loadTickets);
+      safeLoad(loadSuperAdminData);
     }, [loadProfile, loadSecurityStatus, loadManualPayments, loadRaffles, loadTickets, loadSuperAdminData])
   );
 

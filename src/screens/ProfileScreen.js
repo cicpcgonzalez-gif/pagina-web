@@ -24,8 +24,9 @@ export default function ProfileScreen({ api, onUserUpdate, pushToken, setPushTok
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [tickets, setTickets] = useState([]);
-  const [payments, setPayments] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [myRaffles, setMyRaffles] = useState([]);
   const [passwordForm, setPasswordForm] = useState({ current: '', new: '' });
   const [changingPassword, setChangingPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -36,9 +37,8 @@ export default function ProfileScreen({ api, onUserUpdate, pushToken, setPushTok
     if (tickets.length > 0) list.push({ id: 'ach1', label: 'Explorador', icon: 'planet' });
     if (tickets.length >= 5) list.push({ id: 'ach2', label: 'Jugador fiel', icon: 'sparkles' });
     if (profile.referrals?.length >= 5) list.push({ id: 'ach3', label: 'Influencer', icon: 'people' });
-    if (payments.reduce((acc, p) => acc + (p.amount || 0), 0) > 100) list.push({ id: 'ach4', label: 'Magnate', icon: 'diamond' });
     return list;
-  }, [profile, tickets, payments]);
+  }, [profile, tickets]);
 
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -46,28 +46,29 @@ export default function ProfileScreen({ api, onUserUpdate, pushToken, setPushTok
     setLoading(true);
     setErrorMsg('');
     try {
-      const [{ res: r1, data: d1 }, { res: r2, data: d2 }, { res: r3, data: d3 }, { res: r4, data: d4 }] = await Promise.all([
+      const [{ res: r1, data: d1 }, { res: r2, data: d2 }, { res: r4, data: d4 }] = await Promise.all([
         api('/me'),
         api('/me/tickets'),
-        api('/me/payments'),
         api('/me/referrals')
       ]);
       
-      console.log('Profile Load Status:', r1.status, d1);
-
       if (r1.ok) {
-        // Merge referral data if available
         const user = d1;
         if (r4.ok) {
           user.referrals = d4.referrals;
           user.referralCode = d4.code;
         }
         setProfile(user);
+        
+        // If admin/organizer, load their raffles
+        if (user.role === 'admin' || user.role === 'superadmin') {
+           const { res: rRaf, data: dRaf } = await api('/admin/raffles');
+           if (rRaf.ok) setMyRaffles(dRaf);
+        }
       } else {
         setErrorMsg(d1?.error || `Error ${r1.status}: No se pudo cargar el perfil`);
       }
       if (r2.ok && Array.isArray(d2)) setTickets(d2);
-      if (r3.ok && Array.isArray(d3)) setPayments(d3);
     } catch (e) {
       console.error('Profile Load Error:', e);
       setErrorMsg(e.message || 'Error de conexión');
@@ -100,27 +101,36 @@ export default function ProfileScreen({ api, onUserUpdate, pushToken, setPushTok
     if (!profile) return;
     setSaving(true);
     try {
-      const { res, data } = await api(`/users/${profile.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ 
-          name: profile.name,
-          email: profile.email,
-          phone: profile.phone, 
-          address: profile.address, 
-          cedula: profile.cedula,
-          dob: profile.dob,
-          bio: profile.bio,
-          socials: profile.socials,
-          avatar: profile.avatar
-        })
+      // Ensure socials is an object or string as expected. 
+      // Assuming backend handles JSON body correctly.
+      const payload = { 
+        name: profile.name,
+        email: profile.email,
+        phone: profile.phone, 
+        address: profile.address, 
+        cedula: profile.cedula,
+        dob: profile.dob,
+        bio: profile.bio,
+        socials: profile.socials || {},
+        avatar: profile.avatar
+      };
+
+      const { res, data } = await api('/me', {
+        method: 'PATCH',
+        body: JSON.stringify(payload)
       });
+      
       if (res.ok) {
         Alert.alert('Guardado', 'Perfil actualizado correctamente.');
+        setIsEditing(false);
         if (onUserUpdate) onUserUpdate(data.user);
       } else {
+        // Log error for debugging
+        console.log('Save Profile Error:', data);
         Alert.alert('Error', data.error || 'No se pudo actualizar el perfil.');
       }
     } catch (e) {
+      console.error('Save Profile Exception:', e);
       Alert.alert('Error', e.message || 'Error de conexión al guardar.');
     }
     setSaving(false);
@@ -194,7 +204,8 @@ export default function ProfileScreen({ api, onUserUpdate, pushToken, setPushTok
           </View>
         ) : profile ? (
           <>
-            <View style={[styles.card, styles.profileHeader]}> 
+            {/* MURAL VIEW */}
+            <View style={[styles.card, styles.profileHeader, { alignItems: 'center', paddingVertical: 30 }]}> 
               <View style={styles.avatarGlow}>
                 <View style={styles.avatarRing}>
                   {profile.avatar ? (
@@ -206,83 +217,81 @@ export default function ProfileScreen({ api, onUserUpdate, pushToken, setPushTok
                   )}
                 </View>
               </View>
-              <View style={{ alignItems: 'center', gap: 4 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={styles.itemTitle}>{profile.name || 'Usuario'}</Text>
-                  {profile.verified && <Ionicons name="checkmark-circle" size={18} color="#3b82f6" />}
-                </View>
-                <Text style={styles.muted}>{profile.email ? profile.email.replace(/(.{2})(.*)(@.*)/, "$1***$3") : 'Sin correo'}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginVertical: 4 }}>
-                  <Ionicons name="id-card-outline" size={14} color="#fbbf24" />
-                  <Text style={{ color: '#fbbf24', fontWeight: '700', fontSize: 12 }}>ID: {profile.publicId || '—'}</Text>
-                </View>
-                <View style={styles.pillRow}>
-                  <Text style={styles.ghostPill}>Nivel seguro</Text>
-                  {tickets.length > 0 && <Text style={[styles.ghostPill, { backgroundColor: 'rgba(34,211,238,0.15)' }]}>+ Tickets</Text>}
-                </View>
-              </View>
-              <TouchableOpacity style={styles.editButton} onPress={() => Alert.alert('Editar perfil', 'Actualiza tus datos en la sección de contacto')} activeOpacity={0.9}>
-                <Ionicons name="create-outline" size={16} color="#0b1224" />
-                <Text style={styles.editButtonText}>Editar perfil</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.button, styles.secondaryButton, { marginTop: 8 }]} onPress={pickAvatar} activeOpacity={0.85}>
-                <Ionicons name="image-outline" size={18} color={palette.primary} />
-                <Text style={[styles.secondaryText, { marginLeft: 8 }]}>Cambiar foto</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={[styles.card, styles.glassCard]}>
-              <Text style={styles.section}>Datos de contacto</Text>
-              <Text style={styles.muted}>Información privada para notificarte sobre premios y compras.</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Teléfono"
-                value={profile.phone || ''}
-                onChangeText={(v) => setProfile((p) => ({ ...p, phone: v }))}
-                keyboardType="phone-pad"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Dirección"
-                value={profile.address || ''}
-                onChangeText={(v) => setProfile((p) => ({ ...p, address: v }))}
-              />
-              <Text style={[styles.muted, { marginTop: 8 }]}>Perfil Público (Opcional)</Text>
-              <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 8 }}>Esta información será visible para quienes vean tus rifas.</Text>
               
-              <TextInput
-                style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
-                placeholder="Biografía / Sobre mí..."
-                value={profile.bio || ''}
-                onChangeText={(v) => setProfile((p) => ({ ...p, bio: v }))}
-                multiline
-                numberOfLines={3}
-              />
+              <Text style={[styles.itemTitle, { fontSize: 24, marginTop: 12 }]}>{profile.name || 'Usuario'}</Text>
+              {profile.verified && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                  <Ionicons name="checkmark-circle" size={16} color="#3b82f6" />
+                  <Text style={{ color: '#3b82f6', fontWeight: 'bold' }}>Verificado</Text>
+                </View>
+              )}
+              
+              <Text style={[styles.muted, { textAlign: 'center', marginTop: 8, paddingHorizontal: 20 }]}>
+                {profile.bio || 'Sin biografía.'}
+              </Text>
 
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#cbd5e1', fontSize: 12, marginBottom: 4 }}>WhatsApp (Solo números)</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="58412..."
-                    value={profile.socials?.whatsapp || ''}
-                    onChangeText={(v) => setProfile((p) => ({ ...p, socials: { ...p.socials, whatsapp: v } }))}
-                    keyboardType="phone-pad"
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#cbd5e1', fontSize: 12, marginBottom: 4 }}>Instagram (Usuario)</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="@usuario"
-                    value={profile.socials?.instagram || ''}
-                    onChangeText={(v) => setProfile((p) => ({ ...p, socials: { ...p.socials, instagram: v } }))}
-                  />
-                </View>
+              <View style={{ flexDirection: 'row', gap: 16, marginTop: 16 }}>
+                {profile.socials?.whatsapp ? (
+                  <TouchableOpacity onPress={() => Linking.openURL(`https://wa.me/${profile.socials.whatsapp}`)}>
+                    <Ionicons name="logo-whatsapp" size={24} color="#25D366" />
+                  </TouchableOpacity>
+                ) : null}
+                {profile.socials?.instagram ? (
+                  <TouchableOpacity onPress={() => Linking.openURL(`https://instagram.com/${profile.socials.instagram.replace('@','')}`)}>
+                    <Ionicons name="logo-instagram" size={24} color="#E1306C" />
+                  </TouchableOpacity>
+                ) : null}
               </View>
 
-              <FilledButton title={saving ? 'Guardando...' : 'Guardar cambios'} onPress={saveProfile} loading={saving} disabled={saving} icon={<Ionicons name="save-outline" size={18} color="#fff" />} />
+              <TouchableOpacity 
+                style={[styles.button, styles.secondaryButton, { marginTop: 20, width: 'auto', paddingHorizontal: 24 }]} 
+                onPress={() => setIsEditing(!isEditing)}
+              >
+                <Ionicons name={isEditing ? "close-outline" : "create-outline"} size={18} color={palette.primary} />
+                <Text style={[styles.secondaryText, { marginLeft: 8 }]}>{isEditing ? 'Cancelar Edición' : 'Editar Perfil'}</Text>
+              </TouchableOpacity>
             </View>
+
+            {/* EDIT FORM */}
+            {isEditing && (
+              <View style={[styles.card, styles.glassCard]}>
+                <Text style={styles.section}>Editar Información</Text>
+                <TouchableOpacity style={{ alignItems: 'center', marginBottom: 16 }} onPress={pickAvatar}>
+                  <Text style={{ color: palette.primary }}>Cambiar Foto de Perfil</Text>
+                </TouchableOpacity>
+
+                <Text style={styles.muted}>Nombre</Text>
+                <TextInput style={styles.input} value={profile.name} onChangeText={(v) => setProfile(p => ({...p, name: v}))} />
+
+                <Text style={styles.muted}>Biografía</Text>
+                <TextInput style={[styles.input, { height: 80 }]} multiline value={profile.bio} onChangeText={(v) => setProfile(p => ({...p, bio: v}))} />
+
+                <Text style={styles.muted}>Teléfono</Text>
+                <TextInput style={styles.input} value={profile.phone} onChangeText={(v) => setProfile(p => ({...p, phone: v}))} keyboardType="phone-pad" />
+
+                <Text style={styles.muted}>WhatsApp (Solo números)</Text>
+                <TextInput style={styles.input} value={profile.socials?.whatsapp} onChangeText={(v) => setProfile(p => ({...p, socials: {...p.socials, whatsapp: v}}))} keyboardType="phone-pad" />
+
+                <Text style={styles.muted}>Instagram (@usuario)</Text>
+                <TextInput style={styles.input} value={profile.socials?.instagram} onChangeText={(v) => setProfile(p => ({...p, socials: {...p.socials, instagram: v}}))} />
+
+                <FilledButton title={saving ? 'Guardando...' : 'Guardar Cambios'} onPress={saveProfile} loading={saving} disabled={saving} />
+              </View>
+            )}
+
+            {/* ADMIN RAFFLES */}
+            {(profile.role === 'admin' || profile.role === 'superadmin') && (
+              <View style={[styles.card, styles.glassCard]}>
+                <Text style={styles.section}>Mis Publicaciones</Text>
+                {myRaffles.length === 0 ? <Text style={styles.muted}>No has publicado rifas.</Text> : null}
+                {myRaffles.map(r => (
+                  <View key={r.id} style={{ marginBottom: 12, padding: 12, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 8 }}>
+                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>{r.title}</Text>
+                    <Text style={{ color: palette.muted, fontSize: 12 }}>{r.status === 'closed' ? 'CERRADA' : 'ACTIVA'} • Tickets: {r.soldTickets || 0}/{r.totalTickets || 0}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
 
             <View style={[styles.card, styles.glassCard]}>
               <TouchableOpacity style={styles.rowBetween} onPress={() => setShowPassword(!showPassword)}>
@@ -316,25 +325,6 @@ export default function ProfileScreen({ api, onUserUpdate, pushToken, setPushTok
                   />
                 </View>
               )}
-            </View>
-
-            <View style={[styles.card, styles.glassCard]}>
-              <Text style={styles.section}>Historial de pagos</Text>
-              {payments.length === 0 ? <Text style={styles.muted}>No tienes pagos registrados.</Text> : null}
-              {payments.map((p) => {
-                const amount = p.amount ?? p.total ?? (p.price && p.quantity ? Number(p.price) * Number(p.quantity) : null);
-                return (
-                  <View key={p.id || p.reference} style={styles.receiptCard}>
-                    <View style={styles.rowBetween}>
-                      <Text style={styles.itemTitle}>{p.raffleTitle || p.raffleId || 'Pago'}</Text>
-                      <Text style={styles.ghostPill}>{p.status || 'pendiente'}</Text>
-                    </View>
-                    <Text style={styles.muted}>Ref: {p.reference || '—'}</Text>
-                    <Text style={{ color: '#fbbf24', fontWeight: 'bold' }}>VES {amount || '0.00'}</Text>
-                    <Text style={styles.muted}>{new Date(p.createdAt).toLocaleDateString()}</Text>
-                  </View>
-                );
-              })}
             </View>
 
             <View style={{ marginTop: 20, gap: 12, marginBottom: 40 }}>

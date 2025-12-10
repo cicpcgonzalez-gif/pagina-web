@@ -19,6 +19,7 @@ export default function WalletScreen({ api }) {
   const [refreshing, setRefreshing] = useState(false);
   const [balance, setBalance] = useState(0);
   const [movements, setMovements] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [topupAmount, setTopupAmount] = useState('');
   const [showTopup, setShowTopup] = useState(false);
   
@@ -30,12 +31,22 @@ export default function WalletScreen({ api }) {
 
   const loadWallet = useCallback(async () => {
     setRefreshing(true);
-    const { res, data } = await api('/wallet');
-    if (res.ok) {
-      setBalance(data.balance || 0);
-      setMovements(data.transactions || []);
+    try {
+      const { res, data } = await api('/wallet');
+      if (res.ok && data) {
+        setBalance(data.balance || 0);
+        setMovements(data.transactions || []);
+      }
+      
+      const { res: pRes, data: pData } = await api('/payments/my');
+      if (pRes.ok) {
+        setPayments(pData || []);
+      }
+    } catch (e) {
+      console.log('Error loading wallet:', e);
+    } finally {
+      setRefreshing(false);
     }
-    setRefreshing(false);
   }, [api]);
 
   const handleTopup = async () => {
@@ -157,6 +168,25 @@ export default function WalletScreen({ api }) {
               ))
             )}
           </View>
+        </View>
+
+        <View style={[styles.card, styles.glassCard]}>
+          <Text style={styles.section}>Historial de Pagos</Text>
+          {payments.length === 0 ? <Text style={styles.muted}>No tienes pagos registrados.</Text> : null}
+          {payments.map((p) => {
+            const amount = p.amount ?? p.total ?? (p.price && p.quantity ? Number(p.price) * Number(p.quantity) : null);
+            return (
+              <View key={p.id || p.reference} style={styles.receiptCard}>
+                <View style={styles.rowBetween}>
+                  <Text style={styles.itemTitle}>{p.raffleTitle || p.raffleId || 'Pago'}</Text>
+                  <Text style={styles.ghostPill}>{p.status || 'pendiente'}</Text>
+                </View>
+                <Text style={styles.muted}>Ref: {p.reference || '—'}</Text>
+                <Text style={{ color: '#fbbf24', fontWeight: 'bold' }}>VES {amount || '0.00'}</Text>
+                <Text style={styles.muted}>{new Date(p.createdAt).toLocaleDateString()}</Text>
+              </View>
+            );
+          })}
         </View>
       </ScrollView>
       </LinearGradient>

@@ -135,7 +135,7 @@ export default function MyRafflesScreen({ api, navigation }) {
                       <View style={{ flex: 1 }}>
                         <View style={{ marginBottom: 8 }}>
                           <Text style={{ color: '#64748b', fontSize: 9, textTransform: 'uppercase', fontWeight: 'bold' }}>Serial Único</Text>
-                          <Text style={{ color: '#cbd5e1', fontFamily: 'monospace', fontSize: 13, letterSpacing: 0.5 }}>
+                          <Text style={{ color: '#cbd5e1', fontFamily: 'monospace', fontSize: 11, letterSpacing: 0.5 }}>
                             {item.serialNumber || 'PENDIENTE'}
                           </Text>
                         </View>
@@ -150,11 +150,16 @@ export default function MyRafflesScreen({ api, navigation }) {
                       {/* QR (DERECHA) - Más pequeño y limpio */}
                       <View style={{ 
                         backgroundColor: '#fff', 
-                        padding: 4, 
-                        borderRadius: 6,
-                        marginLeft: 12
+                        padding: 2, 
+                        borderRadius: 4,
+                        marginLeft: 12,
+                        width: 45,
+                        height: 45,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        overflow: 'hidden'
                       }}>
-                        <View style={{ transform: [{ scale: 0.6 }] }}>
+                        <View style={{ transform: [{ scale: 0.35 }] }}>
                           <QRCodePlaceholder value={item.serialNumber || `TICKET-${item.id}`} />
                         </View>
                       </View>

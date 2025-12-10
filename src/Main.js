@@ -13,7 +13,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { palette } from './theme';
 import { styles } from './styles';
 import AuthScreen from './screens/AuthScreen';
+import RafflesStack from './navigation/RafflesStack';
 import TabsNavigator from './navigation/TabsNavigator';
+import RaffleDetailScreen from './screens/RaffleDetailScreen';
 import { useApi } from './hooks/useApi';
 import { ToastProvider } from './components/UI';
 
@@ -184,6 +186,7 @@ function MainContent() {
         }}
       >
         {accessToken ? (
+          <>
           <Stack.Screen
             name="Main"
             options={{
@@ -229,6 +232,10 @@ function MainContent() {
               </SafeAreaView>
             )}
           </Stack.Screen>
+          <Stack.Screen name="RaffleDetail" options={{ title: 'Detalle de Rifa' }}>
+            {(props) => <RaffleDetailScreen {...props} api={api} />}
+          </Stack.Screen>
+        </>
         ) : (
           <Stack.Screen name="Auth" options={{ headerShown: false }}>
             {() => <AuthScreen onAuth={handleAuth} />}

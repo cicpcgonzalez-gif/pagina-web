@@ -26,8 +26,9 @@ const { width } = Dimensions.get('window');
 
 export default function RaffleDetailScreen({ route, navigation, api }) {
   const { raffle } = route.params || {};
+  // Local state to hold the raffle data, initialized with param but updatable
+  const [current, setCurrent] = useState(raffle || {});
   const [quantity, setQuantity] = useState('1');
-  const [current] = useState(raffle);
   const [buying, setBuying] = useState(false);
   const [manualRef, setManualRef] = useState('');
   const [manualNote, setManualNote] = useState('');
@@ -47,6 +48,19 @@ export default function RaffleDetailScreen({ route, navigation, api }) {
   const sold = stats.sold || 0;
   const remaining = stats.remaining ?? (totalTickets ? Math.max(totalTickets - sold, 0) : 0);
   const percentLeft = totalTickets ? Math.max(0, Math.min(100, (remaining / totalTickets) * 100)) : 0;
+
+  // Fetch full raffle details if missing critical data
+  useEffect(() => {
+    if (!current || !current.id) return;
+    // If stats or style are missing, fetch fresh data
+    if (!current.stats || !current.style) {
+      api(`/raffles/${current.id}`).then(({ res, data }) => {
+        if (res.ok && data) {
+          setCurrent(prev => ({ ...prev, ...data }));
+        }
+      });
+    }
+  }, [current?.id, api]);
 
   useEffect(() => {
     if (api) {
