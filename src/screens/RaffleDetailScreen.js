@@ -56,7 +56,7 @@ export default function RaffleDetailScreen({ route, navigation, api }) {
     }
   }, [api]);
 
-  if (!current) {
+  if (!current || !current.id) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>

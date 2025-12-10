@@ -735,6 +735,30 @@ export default function AdminScreen({ api, user }) {
     setRegenerating(false);
   };
 
+  useEffect(() => {
+    if (activeSection === 'news') loadAnnouncements();
+  }, [activeSection]);
+
+  const loadAnnouncements = async () => {
+    const { res, data } = await api('/announcements');
+    if (res.ok) setAnnouncements(data);
+  };
+
+  const deleteAnnouncement = async (id) => {
+    if (user?.role !== 'superadmin') return Alert.alert('Acceso denegado', 'Solo el superadmin puede eliminar anuncios.');
+    Alert.alert('Eliminar', '¿Eliminar este anuncio?', [
+      { text: 'Cancelar' },
+      { text: 'Eliminar', onPress: async () => {
+        const { res, data } = await api(`/admin/announcements/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          loadAnnouncements();
+        } else {
+          Alert.alert('Error', data.error || 'No se pudo eliminar.');
+        }
+      }}
+    ]);
+  };
+
   const createAnnouncement = async () => {
     if (!announcementForm.title || !announcementForm.content) return Alert.alert('Faltan datos', 'Título y contenido requeridos.');
     setSavingAnnouncement(true);
@@ -745,6 +769,7 @@ export default function AdminScreen({ api, user }) {
     if (res.ok) {
       Alert.alert('Listo', 'Anuncio publicado.');
       setAnnouncementForm({ title: '', content: '', imageUrl: '' });
+      loadAnnouncements();
     } else {
       Alert.alert('Error', data.error || 'No se pudo publicar.');
     }
@@ -772,6 +797,34 @@ export default function AdminScreen({ api, user }) {
       Alert.alert('Ups', data.error || 'No se pudo cerrar la rifa.');
     }
     setClosingId(null);
+  };
+
+  const deleteRaffle = async (raffleId) => {
+    if (user?.role !== 'superadmin') return Alert.alert('Acceso denegado', 'Solo el superadmin puede eliminar rifas.');
+    
+    Alert.alert(
+      'Eliminar Rifa',
+      '¿Estás seguro? Esta acción eliminará la rifa y todos sus tickets asociados. No se puede deshacer.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Eliminar', 
+          style: 'destructive',
+          onPress: async () => {
+            setSavingRaffle(true);
+            const { res, data } = await api(`/raffles/${raffleId}`, { method: 'DELETE' });
+            if (res.ok) {
+              Alert.alert('Eliminada', 'La rifa ha sido eliminada.');
+              loadRaffles();
+              if (raffleForm.id === raffleId) resetRaffleForm();
+            } else {
+              Alert.alert('Error', data.error || 'No se pudo eliminar.');
+            }
+            setSavingRaffle(false);
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -950,6 +1003,50 @@ export default function AdminScreen({ api, user }) {
                   <OutlineButton title="Nueva" onPress={resetRaffleForm} icon={<Ionicons name="refresh-outline" size={18} color={palette.primary} />} />
                 ) : null}
               </View>
+
+              <Text style={[styles.section, { marginTop: 24 }]}>Rifas Existentes</Text>
+              {raffles.map(r => (
+                <View key={r.id} style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 12, marginBottom: 8 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: '#fff', fontWeight: 'bold' }}>{r.title}</Text>
+                      <Text style={{ color: palette.muted, fontSize: 12 }}>ID: {r.id} • {r.status === 'closed' ? 'CERRADA' : 'ABIERTA'}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <TouchableOpacity onPress={() => {
+                        setRaffleForm({
+                          id: r.id,
+                          title: r.title,
+                          price: String(r.price),
+                          description: r.description || '',
+                          totalTickets: String(r.totalTickets),
+                          startDate: r.startDate ? r.startDate.split('T')[0] : '',
+                          endDate: r.endDate ? r.endDate.split('T')[0] : '',
+                          securityCode: r.securityCode || '',
+                          lottery: r.lottery || '',
+                          instantWins: r.instantWins ? r.instantWins.join(', ') : '',
+                          terms: r.terms || '',
+                          digits: r.digits || 4
+                        });
+                      }} style={{ padding: 8, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 8 }}>
+                        <Ionicons name="create-outline" size={20} color="#fff" />
+                      </TouchableOpacity>
+                      
+                      {r.status !== 'closed' && (
+                        <TouchableOpacity onPress={() => Alert.alert('Cerrar Rifa', '¿Cerrar esta rifa y seleccionar ganador?', [{ text: 'Cancelar' }, { text: 'Cerrar', onPress: () => closeRaffle(r.id) }])} style={{ padding: 8, backgroundColor: 'rgba(251, 191, 36, 0.2)', borderRadius: 8 }}>
+                          <Ionicons name="lock-closed-outline" size={20} color="#fbbf24" />
+                        </TouchableOpacity>
+                      )}
+
+                      {user?.role === 'superadmin' && (
+                        <TouchableOpacity onPress={() => deleteRaffle(r.id)} style={{ padding: 8, backgroundColor: 'rgba(248, 113, 113, 0.2)', borderRadius: 8 }}>
+                          <Ionicons name="trash-outline" size={20} color="#f87171" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+                </View>
+              ))}
             </View>
           )}
 
@@ -1178,6 +1275,23 @@ export default function AdminScreen({ api, user }) {
               {announcementForm.imageUrl && <Image source={{ uri: announcementForm.imageUrl }} style={{ width: '100%', height: 150, borderRadius: 8, marginBottom: 12 }} />}
 
               <FilledButton title={savingAnnouncement ? 'Publicando...' : 'Publicar Noticia'} onPress={createAnnouncement} loading={savingAnnouncement} disabled={savingAnnouncement} icon={<Ionicons name="newspaper-outline" size={18} color="#fff" />} />
+              
+              <Text style={[styles.section, { marginTop: 24 }]}>Noticias Publicadas</Text>
+              {announcements.map(a => (
+                <View key={a.id} style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 12, marginBottom: 8 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: '#fff', fontWeight: 'bold' }}>{a.title}</Text>
+                      <Text style={{ color: palette.muted, fontSize: 12 }}>{new Date(a.createdAt).toLocaleDateString()}</Text>
+                    </View>
+                    {user?.role === 'superadmin' && (
+                      <TouchableOpacity onPress={() => deleteAnnouncement(a.id)} style={{ padding: 8, backgroundColor: 'rgba(248, 113, 113, 0.2)', borderRadius: 8 }}>
+                        <Ionicons name="trash-outline" size={20} color="#f87171" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              ))}
             </View>
           )}
 
