@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, Alert, FlatList, TextInput } from 'react-native';
+import { View, Text, Button, Alert, FlatList, TextInput, StyleSheet } from 'react-native';
 import { listRaffles, createRaffle } from '../services/api';
 
 export default function RafflesScreen() {
@@ -19,7 +19,7 @@ export default function RafflesScreen() {
   const handleCreate = async () => {
     try {
       await createRaffle({ title: newRaffleName, description: newRaffleDescription });
-      setNewName('');
+      setNewRaffleName('');
       fetchRaffles();
     } catch (error: any) {
       Alert.alert('Error', error.message);
@@ -35,13 +35,14 @@ export default function RafflesScreen() {
       <Text>Rifas</Text>
       <FlatList
         data={raffles}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => <Text>{item.name}</Text>}
+        keyExtractor={item => String(item.id)}
+        renderItem={({ item }) => <Text>{item.name || item.title}</Text>}
       />
       <TextInput
         placeholder="Nombre de la rifa"
         value={newRaffleName}
         onChangeText={setNewRaffleName}
+        style={styles.input}
       />
       <TextInput
         style={styles.input}
@@ -53,3 +54,13 @@ export default function RafflesScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 6
+  }
+});

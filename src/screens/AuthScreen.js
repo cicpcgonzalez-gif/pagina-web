@@ -11,13 +11,21 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Animated
+  Animated,
+  Modal
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { ENV } from '../config/env';
 import { palette } from '../theme';
 import { HeroBanner, FilledButton, OutlineButton } from '../components/UI';
+
+const VENEZUELA_STATES = [
+  'Amazonas', 'Anzoategui', 'Apure', 'Aragua', 'Barinas', 'Bolivar', 'Carabobo', 'Cojedes',
+  'Delta Amacuro', 'Distrito Capital', 'Falcon', 'Guarico', 'Lara', 'Merida', 'Miranda',
+  'Monagas', 'Nueva Esparta', 'Portuguesa', 'Sucre', 'Tachira', 'Trujillo', 'Vargas',
+  'Yaracuy', 'Zulia'
+];
 
 const API_URL = ENV.apiUrl;
 
@@ -48,6 +56,7 @@ export default function AuthScreen({ onAuth }) {
     password: '',
     firstName: '',
     lastName: '',
+    state: '',
     address: '',
     dob: '',
     cedula: '',
@@ -55,6 +64,7 @@ export default function AuthScreen({ onAuth }) {
   });
   const [rememberMe, setRememberMe] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [statePickerVisible, setStatePickerVisible] = useState(false);
 
   const handleChange = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -118,6 +128,7 @@ export default function AuthScreen({ onAuth }) {
     if (!form.password) errors.password = true;
     if (!form.firstName) errors.firstName = true;
     if (!form.lastName) errors.lastName = true;
+    if (!form.state) errors.state = true;
     setFieldErrors(errors);
 
     if (Object.keys(errors).length > 0) return;
@@ -318,6 +329,30 @@ export default function AuthScreen({ onAuth }) {
               </TouchableOpacity>
             </View>
           </ScrollView>
+
+          <Modal visible={statePickerVisible} transparent animationType="fade" onRequestClose={() => setStatePickerVisible(false)}>
+            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
+              <View style={{ backgroundColor: '#0f172a', borderRadius: 12, padding: 16, maxHeight: '80%' }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>Selecciona tu estado</Text>
+                  <TouchableOpacity onPress={() => setStatePickerVisible(false)}>
+                    <Ionicons name="close" size={22} color="#cbd5e1" />
+                  </TouchableOpacity>
+                </View>
+                <ScrollView>
+                  {VENEZUELA_STATES.map((st) => (
+                    <TouchableOpacity
+                      key={st}
+                      onPress={() => { handleChange('state', st); setStatePickerVisible(false); setFieldErrors((e) => ({ ...e, state: false })); }}
+                      style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)' }}
+                    >
+                      <Text style={{ color: '#e2e8f0', fontSize: 14 }}>{st}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </View>
+          </Modal>
         </KeyboardAvoidingView>
       </LinearGradient>
     </SafeAreaView>
@@ -473,6 +508,17 @@ export default function AuthScreen({ onAuth }) {
                     {fieldErrors.lastName && <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>* Requerido</Text>}
                   </View>
                 </View>
+
+                <TouchableOpacity
+                  style={[styles.input, styles.inputSoft, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, fieldErrors.state && { borderColor: '#ef4444', borderWidth: 1 }]}
+                  onPress={() => setStatePickerVisible(true)}
+                >
+                  <Text style={{ color: form.state ? '#fff' : '#cbd5e1' }}>
+                    {form.state || 'Selecciona tu estado (Venezuela)'}
+                  </Text>
+                  <Ionicons name="chevron-down-outline" size={18} color="#cbd5e1" />
+                </TouchableOpacity>
+                {fieldErrors.state && <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>* Requerido</Text>}
                 <TextInput style={[styles.input, styles.inputSoft]} placeholder="Cédula de Identidad" value={form.cedula} onChangeText={(v) => handleChange('cedula', v)} keyboardType="numeric" placeholderTextColor="#cbd5e1" />
                 <TextInput style={[styles.input, styles.inputSoft]} placeholder="Fecha de nacimiento (YYYY-MM-DD)" value={form.dob} onChangeText={(v) => handleChange('dob', v)} placeholderTextColor="#cbd5e1" />
                 

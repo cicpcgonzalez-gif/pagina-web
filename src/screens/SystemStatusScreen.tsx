@@ -23,7 +23,6 @@ export default function SystemStatusScreen() {
       <Text>Estado del sistema</Text>
       <Button title="Actualizar" onPress={fetchStatus} />
       <Text>Health: {status?.health ? JSON.stringify(status.health) : '...'}</Text>
-      <Text>Status: {status?.status ? JSON.stringify(status.status) : '...'}</Text>
     </View>
   );
 }

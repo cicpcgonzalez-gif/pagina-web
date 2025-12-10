@@ -40,15 +40,11 @@ api.interceptors.response.use(
   }
 );
 
-// Verifica el estado del backend
+// Verifica el estado del backend (solo health; el backend no expone /status)
 export async function checkApi() {
   try {
-    console.log(ENV.apiUrl);
-    const [health, status] = await Promise.all([
-      api.get('/health'),
-      api.get('/status'),
-    ]);
-    return { health: health.data, status: status.data };
+    const health = await api.get('/health');
+    return { health: health.data };
   } catch (err: any) {
     console.log('checkApi error:', err.message, err);
     throw new Error(err.message || 'No se pudo conectar con el backend');
@@ -99,7 +95,7 @@ export async function login(credentials: { email: string; password: string }) {
 
 export async function verifyAccount(email: string, code: string) {
   try {
-    const res = await api.get('/auth/verify', { params: { email, code } });
+    const res = await api.post('/verify-email', { email, code });
     return res.data;
   } catch (err: any) {
     throw new Error(err.response?.data?.error || 'Error al verificar cuenta');
@@ -108,7 +104,7 @@ export async function verifyAccount(email: string, code: string) {
 
 export async function resendVerificationCode(email: string) {
   try {
-    const res = await api.post('/auth/verify/resend', { email });
+    const res = await api.post('/resend-code', { email });
     return res.data;
   } catch (err: any) {
     // El interceptor ya procesó el error, así que solo lo relanzamos

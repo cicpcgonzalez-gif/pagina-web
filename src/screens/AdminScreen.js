@@ -73,6 +73,15 @@ export default function AdminScreen({ api, user }) {
   const [announcements, setAnnouncements] = useState([]);
   const [loadingNews, setLoadingNews] = useState(false);
 
+  // Dashboard Metrics
+  const [metricsSummary, setMetricsSummary] = useState(null);
+  const [metricsHourly, setMetricsHourly] = useState([]);
+  const [metricsDaily, setMetricsDaily] = useState([]);
+  const [metricsByState, setMetricsByState] = useState([]);
+  const [metricsTop, setMetricsTop] = useState([]);
+  const [metricsLoading, setMetricsLoading] = useState(false);
+  const [rafflePickerVisible, setRafflePickerVisible] = useState(false);
+
   const [userSearch, setUserSearch] = useState('');
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [editingUser, setEditingUser] = useState(null); // For modal actions
@@ -87,6 +96,7 @@ export default function AdminScreen({ api, user }) {
       { id: 'security', title: 'Cód. Seguridad', icon: 'shield-checkmark-outline', color: '#34d399' },
       { id: 'lottery', title: 'Sorteo en Vivo', icon: 'dice-outline', color: '#f87171' },
       { id: 'raffles', title: 'Crear/Editar', icon: 'create-outline', color: '#a78bfa' },
+      { id: 'dashboard', title: 'Dashboard', icon: 'speedometer-outline', color: '#22c55e' },
       { id: 'news', title: 'Novedades', icon: 'newspaper-outline', color: '#60a5fa' },
       { id: 'winner', title: 'Publicar Ganador', icon: 'trophy-outline', color: '#fbbf24' },
       { id: 'progress', title: 'Progreso Rifas', icon: 'bar-chart-outline', color: '#c084fc' },
@@ -106,7 +116,7 @@ export default function AdminScreen({ api, user }) {
   const [payments, setPayments] = useState([]);
   const [loadingPayments, setLoadingPayments] = useState(false);
   const [actingId, setActingId] = useState(null);
-  const [paymentFilters, setPaymentFilters] = useState({ raffleId: '', status: 'pending', reference: '', phone: '', cedula: '', email: '' });
+  const [paymentFilters, setPaymentFilters] = useState({ raffleId: '', status: 'pending', reference: '' });
   const [proofViewer, setProofViewer] = useState({ visible: false, uri: '' });
   const [styleForm, setStyleForm] = useState({ raffleId: null, bannerImage: '', gallery: [], themeColor: '#2563eb', terms: '', whatsapp: '', instagram: '' });
   const [savingStyle, setSavingStyle] = useState(false);
@@ -155,6 +165,10 @@ export default function AdminScreen({ api, user }) {
   const [techSupport, setTechSupport] = useState(null);
   const [supportVisible, setSupportVisible] = useState(false);
   const [supportMessage, setSupportMessage] = useState('');
+
+  useEffect(() => {
+    if (activeSection === 'dashboard') loadMetrics();
+  }, [activeSection]);
 
   // Lottery Control State
   const [lotteryCheck, setLotteryCheck] = useState({ raffleId: '', number: '' });
@@ -326,9 +340,6 @@ export default function AdminScreen({ api, user }) {
     if (paymentFilters.raffleId) params.append('raffleId', paymentFilters.raffleId.trim());
     if (paymentFilters.status) params.append('status', paymentFilters.status.trim());
     if (paymentFilters.reference) params.append('reference', paymentFilters.reference.trim());
-    if (paymentFilters.phone) params.append('phone', paymentFilters.phone.trim());
-    if (paymentFilters.cedula) params.append('cedula', paymentFilters.cedula.trim());
-    if (paymentFilters.email) params.append('email', paymentFilters.email.trim());
     const query = params.toString() ? `?${params.toString()}` : '';
     const { res, data } = await api(`/admin/manual-payments${query}`);
     if (res.ok) setPayments(Array.isArray(data) ? data : []);
@@ -784,6 +795,28 @@ export default function AdminScreen({ api, user }) {
       const asset = result.assets[0];
       setAnnouncementForm((s) => ({ ...s, imageUrl: `data:image/jpeg;base64,${asset.base64}` }));
     }
+  };
+
+  const loadMetrics = async () => {
+    setMetricsLoading(true);
+    try {
+      const [summary, hourly, daily, byState, top] = await Promise.all([
+        api('/admin/metrics/summary'),
+        api('/admin/metrics/hourly'),
+        api('/admin/metrics/daily?days=7'),
+        api('/admin/metrics/by-state'),
+        api('/admin/metrics/top-buyers')
+      ]);
+
+      if (summary.res.ok) setMetricsSummary(summary.data); else setMetricsSummary(null);
+      if (hourly.res.ok) setMetricsHourly(hourly.data || []); else setMetricsHourly([]);
+      if (daily.res.ok) setMetricsDaily(daily.data || []); else setMetricsDaily([]);
+      if (byState.res.ok) setMetricsByState(byState.data || []); else setMetricsByState([]);
+      if (top.res.ok) setMetricsTop(top.data || []); else setMetricsTop([]);
+    } catch (err) {
+      console.log('metrics error', err);
+    }
+    setMetricsLoading(false);
   };
 
   const closeRaffle = async (raffleId) => {
@@ -1295,6 +1328,146 @@ export default function AdminScreen({ api, user }) {
             </View>
           )}
 
+          {activeSection === 'dashboard' && (
+            <View style={styles.card}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                  <TouchableOpacity onPress={() => setActiveSection(null)}><Ionicons name="arrow-back" size={24} color="#fff" /></TouchableOpacity>
+                  <Text style={[styles.title, { marginBottom: 0, marginLeft: 12, fontSize: 20 }]}>Dashboard</Text>
+              </View>
+
+              <Text style={styles.section}>Rifa</Text>
+                <TouchableOpacity onPress={() => setRafflePickerVisible(true)} style={[styles.input, { justifyContent: 'center' }]}>
+                  <Text style={{ color: selectedRaffle ? '#fff' : '#94a3b8' }}>{selectedRaffle?.title || 'Seleccionar Rifa'}</Text>
+                  <Ionicons name="chevron-down-outline" size={20} color="#94a3b8" style={{ position: 'absolute', right: 12 }} />
+              </TouchableOpacity>
+
+              {metricsLoading ? (
+                <ActivityIndicator color={palette.primary} style={{ marginVertical: 20 }} />
+              ) : (
+                <>
+                  {metricsSummary ? (
+                    <View style={{ flexWrap: 'wrap', flexDirection: 'row', gap: 10, marginTop: 10 }}>
+                      {[{ label: 'Participantes', value: metricsSummary.participants },
+                        { label: 'Tickets vendidos', value: metricsSummary.ticketsSold },
+                        { label: 'Pendientes', value: metricsSummary.pendingPayments },
+                        { label: 'Recaudado', value: `$${(metricsSummary.totalRevenue || 0).toFixed(2)}` },
+                        { label: 'Ventas hoy', value: metricsSummary.todaySales },
+                        { label: 'Recaudado hoy', value: `$${(metricsSummary.todayRevenue || 0).toFixed(2)}` }].map(card => (
+                          <View key={card.label} style={{ flexBasis: '48%', backgroundColor: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' }}>
+                            <Text style={{ color: '#94a3b8', fontSize: 12 }}>{card.label}</Text>
+                            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 18, marginTop: 4 }}>{card.value}</Text>
+                          </View>
+                        ))}
+                    </View>
+                  ) : (
+                    <Text style={{ color: palette.muted, marginTop: 10 }}>Sin datos de métricas.</Text>
+                  )}
+
+                  {(() => {
+                    const r = selectedRaffle || raffles[0];
+                    const sold = r?.soldTickets || 0;
+                    const total = r?.totalTickets || 100;
+                    const percent = total > 0 ? (sold / total) * 100 : 0;
+                    return (
+                      <View style={{ marginTop: 16, backgroundColor: 'rgba(255,255,255,0.04)', padding: 12, borderRadius: 12 }}>
+                        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>{r?.title || 'Sin rifa seleccionada'}</Text>
+                        <Text style={{ color: palette.muted, fontSize: 12 }}>Ticket: ${r?.price || r?.ticketPrice || 0} • Cierre: {r?.endDate ? r.endDate.split('T')[0] : '—'}</Text>
+                        {r?.style?.bannerImage ? (
+                          <Image source={{ uri: r.style.bannerImage }} style={{ width: '100%', height: 140, borderRadius: 10, marginTop: 10 }} resizeMode="cover" />
+                        ) : null}
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>
+                          <Text style={{ color: '#cbd5e1' }}>Vendidos: {sold}/{total}</Text>
+                          <Text style={{ color: '#fbbf24', fontWeight: 'bold' }}>{percent.toFixed(1)}%</Text>
+                        </View>
+                        <ProgressBar progress={percent} color={percent > 75 ? '#4ade80' : percent > 40 ? '#fbbf24' : '#f87171'} />
+                      </View>
+                    );
+                  })()}
+
+                  {/* Ventas por hora */}
+                  <View style={{ marginTop: 16 }}>
+                    <Text style={styles.section}>Ventas por hora (hoy)</Text>
+                    {metricsHourly.length === 0 ? (
+                      <Text style={{ color: palette.muted }}>Sin ventas registradas hoy.</Text>
+                    ) : (
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 8 }}>
+                        {(() => {
+                          const max = Math.max(1, ...metricsHourly.map((x) => x.count || 0));
+                          return metricsHourly.map((h) => {
+                            const height = Math.max(4, ((h.count || 0) / max) * 80);
+                            return (
+                              <View key={`h-${h.hour}`} style={{ flex: 1, alignItems: 'center', marginHorizontal: 1 }}>
+                                <View style={{ width: '70%', height, backgroundColor: '#22c55e', borderRadius: 6 }} />
+                                <Text style={{ color: '#94a3b8', fontSize: 8, marginTop: 4 }}>{h.hour}</Text>
+                              </View>
+                            );
+                          });
+                        })()}
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Ventas por día */}
+                  <View style={{ marginTop: 16 }}>
+                    <Text style={styles.section}>Ventas últimos 7 días</Text>
+                    {metricsDaily.length === 0 ? (
+                      <Text style={{ color: palette.muted }}>Sin datos.</Text>
+                    ) : (
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 8 }}>
+                        {(() => {
+                          const max = Math.max(1, ...metricsDaily.map((d) => d.count || 0));
+                          return metricsDaily.map((d) => {
+                            const h = Math.max(4, ((d.count || 0) / max) * 80);
+                            return (
+                              <View key={d.date} style={{ flex: 1, alignItems: 'center', marginHorizontal: 2 }}>
+                                <View style={{ width: '70%', height: h, backgroundColor: '#60a5fa', borderRadius: 6 }} />
+                                <Text style={{ color: '#94a3b8', fontSize: 8, marginTop: 4 }}>{d.date.slice(5)}</Text>
+                              </View>
+                            );
+                          });
+                        })()}
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Ventas por estado */}
+                  <View style={{ marginTop: 16 }}>
+                    <Text style={styles.section}>Ventas por estado</Text>
+                    {metricsByState.length === 0 ? <Text style={{ color: palette.muted }}>Sin datos.</Text> : metricsByState.slice(0, 8).map((s) => {
+                      const max = Math.max(1, metricsByState[0]?.count || 1);
+                      const width = Math.max(6, (s.count / max) * 100);
+                      return (
+                        <View key={s.state} style={{ marginBottom: 8 }}>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                            <Text style={{ color: '#e2e8f0' }}>{s.state}</Text>
+                            <Text style={{ color: '#94a3b8' }}>{s.count}</Text>
+                          </View>
+                          <View style={{ height: 8, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 4, overflow: 'hidden', marginTop: 4 }}>
+                            <View style={{ width: `${width}%`, height: '100%', backgroundColor: '#a78bfa' }} />
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+
+                  {/* Top compradores */}
+                  <View style={{ marginTop: 16 }}>
+                    <Text style={styles.section}>Top de compra</Text>
+                    {metricsTop.length === 0 ? <Text style={{ color: palette.muted }}>Sin datos.</Text> : metricsTop.map((u, idx) => (
+                      <View key={u.userId} style={{ paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)', flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <View>
+                          <Text style={{ color: '#fff', fontWeight: '700' }}>{idx + 1}. {u.name}</Text>
+                          <Text style={{ color: '#94a3b8', fontSize: 12 }}>{u.email || '—'} • {u.state}</Text>
+                        </View>
+                        <Text style={{ color: '#fbbf24', fontWeight: '800' }}>{u.tickets}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              )}
+            </View>
+          )}
+
           {activeSection === 'progress' && (
             <View style={styles.card}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
@@ -1352,9 +1525,6 @@ export default function AdminScreen({ api, user }) {
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 12 }}>
                 <TextInput style={[styles.input, { flexGrow: 1, flexBasis: '45%', marginBottom: 0 }]} placeholder="ID Rifa" value={paymentFilters.raffleId} onChangeText={(v) => setPaymentFilters(s => ({ ...s, raffleId: v }))} />
                 <TextInput style={[styles.input, { flexGrow: 1, flexBasis: '45%', marginBottom: 0 }]} placeholder="Referencia" value={paymentFilters.reference} onChangeText={(v) => setPaymentFilters(s => ({ ...s, reference: v }))} />
-                <TextInput style={[styles.input, { flexGrow: 1, flexBasis: '45%', marginBottom: 0 }]} placeholder="Teléfono" value={paymentFilters.phone} onChangeText={(v) => setPaymentFilters(s => ({ ...s, phone: v }))} keyboardType="phone-pad" />
-                <TextInput style={[styles.input, { flexGrow: 1, flexBasis: '45%', marginBottom: 0 }]} placeholder="Cédula" value={paymentFilters.cedula} onChangeText={(v) => setPaymentFilters(s => ({ ...s, cedula: v }))} keyboardType="numeric" />
-                <TextInput style={[styles.input, { flexGrow: 1, flexBasis: '45%', marginBottom: 0 }]} placeholder="Email" value={paymentFilters.email} onChangeText={(v) => setPaymentFilters(s => ({ ...s, email: v }))} autoCapitalize="none" />
               </View>
 
               <View style={{ flexDirection: 'row', marginBottom: 12, gap: 8 }}>
@@ -1379,7 +1549,7 @@ export default function AdminScreen({ api, user }) {
                   <Text style={{ color: '#fff', fontWeight: '700' }}>Filtrar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => { setPaymentFilters({ raffleId: '', status: 'pending', reference: '', phone: '', cedula: '', email: '' }); setTimeout(loadManualPayments, 10); }}
+                  onPress={() => { setPaymentFilters({ raffleId: '', status: 'pending', reference: '' }); setTimeout(loadManualPayments, 10); }}
                   style={{ flex: 1, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', padding: 12, borderRadius: 12, alignItems: 'center' }}
                 >
                   <Text style={{ color: '#e2e8f0', fontWeight: '700' }}>Limpiar</Text>
@@ -1389,7 +1559,7 @@ export default function AdminScreen({ api, user }) {
               {loadingPayments ? <ActivityIndicator color={palette.primary} /> : (
                 payments.length === 0 ? <Text style={{ color: '#94a3b8', textAlign: 'center', marginVertical: 20 }}>No hay pagos pendientes.</Text> :
                 payments.map(p => {
-                  const buyer = p.buyer || {};
+                  const buyer = p.user || {};
                   const statusColor = p.status === 'approved' ? '#4ade80' : p.status === 'rejected' ? '#f87171' : '#fbbf24';
                   return (
                     <View key={p.id} style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 12, marginBottom: 10 }}>
@@ -1400,13 +1570,13 @@ export default function AdminScreen({ api, user }) {
                           <Text style={{ color: statusColor, marginLeft: 6, fontWeight: '700' }}>{p.status}</Text>
                         </View>
                       </View>
-                      <Text style={{ color: '#94a3b8', fontSize: 12 }}>Rifa ID: {p.raffleId} • Cantidad: {p.quantity}</Text>
+                      <Text style={{ color: '#94a3b8', fontSize: 12 }}>Rifa ID: {p.raffleId} • Monto: ${Number(p.amount || 0).toFixed(2)}</Text>
                       <Text style={{ color: '#94a3b8', fontSize: 12, marginTop: 2 }}>Creado: {p.createdAt ? new Date(p.createdAt).toLocaleString() : '—'}</Text>
                       <View style={{ marginTop: 8 }}>
                         <Text style={{ color: '#cbd5e1', fontSize: 12 }}>Comprador</Text>
                         <Text style={{ color: '#fff', fontWeight: '700' }}>{buyer.firstName || buyer.name || 'Usuario'} {buyer.lastName || ''}</Text>
                         <Text style={{ color: '#cbd5e1', fontSize: 12 }}>{buyer.email || '—'}</Text>
-                        <Text style={{ color: '#cbd5e1', fontSize: 12 }}>{buyer.phone || buyer.cedula || '—'}</Text>
+                        <Text style={{ color: '#cbd5e1', fontSize: 12 }}>{buyer.state || '—'}</Text>
                       </View>
                       {p.proof ? (
                         <TouchableOpacity onPress={() => setProofViewer({ visible: true, uri: p.proof })}>
@@ -1909,6 +2079,34 @@ export default function AdminScreen({ api, user }) {
         </ScrollView>
         
         {/* Modals */}
+        <Modal visible={rafflePickerVisible} transparent animationType="fade" onRequestClose={() => setRafflePickerVisible(false)}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
+            <View style={{ backgroundColor: '#0f172a', borderRadius: 12, padding: 16, maxHeight: '70%' }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>Selecciona Rifa</Text>
+                <TouchableOpacity onPress={() => setRafflePickerVisible(false)}>
+                  <Ionicons name="close" size={22} color="#cbd5e1" />
+                </TouchableOpacity>
+              </View>
+              <ScrollView>
+                {raffles.map((r) => (
+                  <TouchableOpacity
+                    key={r.id}
+                    onPress={() => { setSelectedRaffle(r); setRafflePickerVisible(false); }}
+                    style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+                  >
+                    <View>
+                      <Text style={{ color: '#fff', fontWeight: '700' }}>{r.title}</Text>
+                      <Text style={{ color: '#94a3b8', fontSize: 12 }}>ID: {r.id}</Text>
+                    </View>
+                    {selectedRaffle?.id === r.id && <Ionicons name="checkmark-circle" size={20} color={palette.primary} />}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+
         <Modal visible={supportVisible} transparent animationType="slide" onRequestClose={() => setSupportVisible(false)}>
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
             <View style={[styles.card, { borderTopLeftRadius: 16, borderTopRightRadius: 16, marginBottom: 0 }]}> 
