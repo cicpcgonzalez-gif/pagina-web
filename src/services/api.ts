@@ -23,7 +23,15 @@ api.interceptors.response.use(
   response => response,
   error => {
     if (error.response) {
-      throw new Error(error.response.data?.message || 'Error en la API');
+      // Intenta extraer el mensaje de error del backend
+      const backendError = error.response.data?.error || error.response.data?.message;
+      // Si el backend devuelve HTML (común en 404/500 de Render), data será string
+      if (typeof error.response.data === 'string') {
+         // Si es HTML, probablemente sea un error de servidor o URL incorrecta
+         console.log('HTML Response:', error.response.data);
+         throw new Error(`Error del servidor (${error.response.status})`);
+      }
+      throw new Error(backendError || 'Error en la API');
     } else if (error.request) {
       throw new Error('No se pudo conectar con el servidor');
     } else {
@@ -103,7 +111,8 @@ export async function resendVerificationCode(email: string) {
     const res = await api.post('/auth/verify/resend', { email });
     return res.data;
   } catch (err: any) {
-    throw new Error(err.response?.data?.error || 'Error al reenviar código');
+    // El interceptor ya procesó el error, así que solo lo relanzamos
+    throw err;
   }
 }
 
