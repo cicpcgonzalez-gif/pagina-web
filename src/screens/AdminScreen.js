@@ -184,10 +184,10 @@ export default function AdminScreen({ api, user }) {
       body: JSON.stringify(pushForm)
     });
     if (res.ok) {
-      Alert.alert('Enviado', data.message || 'Notificación enviada.');
+      Alert.alert('Enviado', data?.message || 'Notificación enviada.');
       setPushForm({ title: '', body: '' });
     } else {
-      Alert.alert('Error', data.error || 'No se pudo enviar.');
+      Alert.alert('Error', data?.error || 'No se pudo enviar.');
     }
     setSendingPush(false);
   };
@@ -205,7 +205,7 @@ export default function AdminScreen({ api, user }) {
       } else {
         const { res, data } = await api(`/admin/tickets?raffleId=${lotteryCheck.raffleId}`);
         if (res.ok && Array.isArray(data)) {
-           foundTicket = data.find(t => String(t.number) === String(lotteryCheck.number));
+           foundTicket = data?.find(t => String(t.number) === String(lotteryCheck.number));
         }
       }
 
@@ -259,7 +259,7 @@ export default function AdminScreen({ api, user }) {
       setPasswordForm({ current: '', new: '' });
       setShowPassword(false);
     } else {
-      Alert.alert('Error', data.error || 'No se pudo cambiar la contraseña.');
+      Alert.alert('Error', data?.error || 'No se pudo cambiar la contraseña.');
     }
     setChangingPassword(false);
   };
@@ -285,7 +285,7 @@ export default function AdminScreen({ api, user }) {
       Alert.alert('Listo', 'Ganador publicado en el Muro de la Fama.');
       setWinnerForm({ raffleId: '', ticketNumber: '', winnerName: '', prize: '', testimonial: '', photoUrl: '' });
     } else {
-      Alert.alert('Error', data.error || 'No se pudo publicar.');
+      Alert.alert('Error', data?.error || 'No se pudo publicar.');
     }
     setSavingWinner(false);
   };
@@ -295,14 +295,14 @@ export default function AdminScreen({ api, user }) {
     const { res, data } = await api('/me');
     if (res.ok) {
       setProfile(data);
-      const sup = data.support || {};
+      const sup = data?.support || {};
       setSupportForm({
         whatsapp: sup.whatsapp || '',
         instagram: sup.instagram || '',
         facebook: sup.facebook || '',
         tiktok: sup.tiktok || '',
         website: sup.website || '',
-        email: sup.email || data.email || ''
+        email: sup.email || data?.email || ''
       });
     }
     setProfileLoading(false);
@@ -312,7 +312,7 @@ export default function AdminScreen({ api, user }) {
     const { res, data } = await api('/admin/raffles');
     if (res.ok && Array.isArray(data)) {
       setRaffles(data);
-      if (!selectedRaffle && data.length) {
+      if (!selectedRaffle && data?.length) {
         const first = data[0];
         setSelectedRaffle(first);
         setStyleForm({
@@ -380,11 +380,11 @@ export default function AdminScreen({ api, user }) {
         api('/superadmin/audit/actions')
       ]);
       if (s1.res.ok && s1.data) {
-        setBranding((b) => ({ ...b, ...(s1.data.branding || {}) }));
-        setModules(s1.data.modules || {});
-        if (s1.data.smtp) setSmtpForm(s => ({ ...s, ...s1.data.smtp }));
-        if (s1.data.techSupport) setTechSupportForm(s => ({ ...s, ...s1.data.techSupport }));
-        if (s1.data.company) setCompanyForm(s => ({ ...s, ...s1.data.company }));
+        setBranding((b) => ({ ...b, ...(s1.data?.branding || {}) }));
+        setModules(s1.data?.modules || {});
+        if (s1.data?.smtp) setSmtpForm(s => ({ ...s, ...s1.data?.smtp }));
+        if (s1.data?.techSupport) setTechSupportForm(s => ({ ...s, ...s1.data?.techSupport }));
+        if (s1.data?.company) setCompanyForm(s => ({ ...s, ...s1.data?.company }));
       }
       if (s2.res.ok && Array.isArray(s2.data)) {
         setUsers(s2.data);
@@ -403,7 +403,7 @@ export default function AdminScreen({ api, user }) {
     setSavingCompany(true);
     const { res, data } = await api('/superadmin/settings/company', { method: 'PATCH', body: JSON.stringify(companyForm) });
     if (res.ok) Alert.alert('Listo', 'Datos de empresa actualizados.');
-    else Alert.alert('Error', data.error || 'No se pudo guardar.');
+    else Alert.alert('Error', data?.error || 'No se pudo guardar.');
     setSavingCompany(false);
   };
 
@@ -416,7 +416,7 @@ export default function AdminScreen({ api, user }) {
       Alert.alert('Éxito', `Usuario ${!currentStatus ? 'verificado' : 'desverificado'}.`);
       loadSuperAdminData();
     } else {
-      Alert.alert('Error', data.error || 'No se pudo cambiar el estado.');
+      Alert.alert('Error', data?.error || 'No se pudo cambiar el estado.');
     }
   };
 
@@ -437,7 +437,7 @@ export default function AdminScreen({ api, user }) {
     setSavingSmtp(true);
     const { res, data } = await api('/superadmin/settings/smtp', { method: 'PATCH', body: JSON.stringify(smtpForm) });
     if (res.ok) Alert.alert('Listo', 'Configuración SMTP guardada.');
-    else Alert.alert('Error', data.error || 'No se pudo guardar SMTP.');
+    else Alert.alert('Error', data?.error || 'No se pudo guardar SMTP.');
     setSavingSmtp(false);
   };
 
@@ -451,7 +451,7 @@ export default function AdminScreen({ api, user }) {
     setSavingTechSupport(true);
     const { res, data } = await api('/superadmin/settings/tech-support', { method: 'PATCH', body: JSON.stringify(techSupportForm) });
     if (res.ok) Alert.alert('Listo', 'Soporte técnico actualizado.');
-    else Alert.alert('Error', data.error || 'No se pudo guardar.');
+    else Alert.alert('Error', data?.error || 'No se pudo guardar.');
     setSavingTechSupport(false);
   };
 
@@ -477,10 +477,10 @@ export default function AdminScreen({ api, user }) {
     setSavingBranding(true);
     const { res, data } = await api('/superadmin/settings/branding', { method: 'PATCH', body: JSON.stringify(branding) });
     if (res.ok) {
-      setBranding(data.branding || branding);
+      setBranding(data?.branding || branding);
       Alert.alert('Listo', 'Branding actualizado');
     } else {
-      Alert.alert('Ups', data.error || 'No se pudo guardar');
+      Alert.alert('Ups', data?.error || 'No se pudo guardar');
     }
     setSavingBranding(false);
   };
@@ -530,7 +530,7 @@ export default function AdminScreen({ api, user }) {
       setProfile(data);
       Alert.alert('Listo', 'Datos de soporte guardados.');
     } else {
-      Alert.alert('Ups', data.error || 'No se pudo guardar.');
+      Alert.alert('Ups', data?.error || 'No se pudo guardar.');
     }
     setSavingSupport(false);
   };
@@ -544,7 +544,7 @@ export default function AdminScreen({ api, user }) {
       loadManualPayments();
       loadTickets();
     } else {
-      Alert.alert('Error', data.error || 'No se pudo procesar.');
+      Alert.alert('Error', data?.error || 'No se pudo procesar.');
     }
     setActingId(null);
   };
@@ -559,7 +559,7 @@ export default function AdminScreen({ api, user }) {
     if (res.ok) {
       Alert.alert('Estilo actualizado');
     } else {
-      Alert.alert('Ups', data.error || 'No se pudo actualizar el estilo.');
+      Alert.alert('Ups', data?.error || 'No se pudo actualizar el estilo.');
     }
     setStyleLoading(false);
   };
@@ -582,7 +582,7 @@ export default function AdminScreen({ api, user }) {
       Alert.alert('Exportado', 'CSV generado. Revisa la consola para copiarlo.');
       console.log('CSV tickets:\n', data);
     } else {
-      Alert.alert('Ups', data.error || 'No se pudo exportar.');
+      Alert.alert('Ups', data?.error || 'No se pudo exportar.');
     }
     setTicketsLoading(false);
   };
@@ -685,7 +685,7 @@ export default function AdminScreen({ api, user }) {
       Alert.alert('Listo', 'Estilo actualizado.');
       loadRaffles();
     } else {
-      Alert.alert('Error', data.error || 'No se pudo guardar estilo.');
+      Alert.alert('Error', data?.error || 'No se pudo guardar estilo.');
     }
     setSavingStyle(false);
   };
@@ -735,7 +735,7 @@ export default function AdminScreen({ api, user }) {
         }}
       ]);
     } else {
-      Alert.alert('Ups', data.error || 'No se pudo guardar.');
+      Alert.alert('Ups', data?.error || 'No se pudo guardar.');
     }
     setSavingRaffle(false);
   };
@@ -744,10 +744,10 @@ export default function AdminScreen({ api, user }) {
     setRegenerating(true);
     const { res, data } = await api('/admin/security-code/regenerate', { method: 'POST' });
     if (res.ok) {
-      Alert.alert('Nuevo código', `Código: ${data.code}\nGuárdalo y no lo compartas.`);
+      Alert.alert('Nuevo código', `Código: ${data?.code}\nGuárdalo y no lo compartas.`);
       setSecurityStatus({ active: true, updatedAt: Date.now() });
     } else {
-      Alert.alert('Ups', data.error || 'No se pudo regenerar.');
+      Alert.alert('Ups', data?.error || 'No se pudo regenerar.');
     }
     setRegenerating(false);
   };
@@ -770,7 +770,7 @@ export default function AdminScreen({ api, user }) {
         if (res.ok) {
           loadAnnouncements();
         } else {
-          Alert.alert('Error', data.error || 'No se pudo eliminar.');
+          Alert.alert('Error', data?.error || 'No se pudo eliminar.');
         }
       }}
     ]);
@@ -788,7 +788,7 @@ export default function AdminScreen({ api, user }) {
       setAnnouncementForm({ title: '', content: '', imageUrl: '' });
       loadAnnouncements();
     } else {
-      Alert.alert('Error', data.error || 'No se pudo publicar.');
+      Alert.alert('Error', data?.error || 'No se pudo publicar.');
     }
     setSavingAnnouncement(false);
   };
@@ -829,11 +829,11 @@ export default function AdminScreen({ api, user }) {
     setClosingId(raffleId);
     const { res, data } = await api(`/raffles/${raffleId}/close`, { method: 'POST' });
     if (res.ok) {
-      Alert.alert('Rifa cerrada', `Ticket ganador: ${data.winner?.number ? formatTicketNumber(data.winner.number, raffles.find(r => r.id === raffleId)?.digits) : '—'}`);
+      Alert.alert('Rifa cerrada', `Ticket ganador: ${data?.winner?.number ? formatTicketNumber(data?.winner.number, raffles.find(r => r.id === raffleId)?.digits) : '—'}`);
       loadRaffles();
       loadTickets();
     } else {
-      Alert.alert('Ups', data.error || 'No se pudo cerrar la rifa.');
+      Alert.alert('Ups', data?.error || 'No se pudo cerrar la rifa.');
     }
     setClosingId(null);
   };
@@ -857,7 +857,7 @@ export default function AdminScreen({ api, user }) {
               loadRaffles();
               if (raffleForm.id === raffleId) resetRaffleForm();
             } else {
-              Alert.alert('Error', data.error || 'No se pudo eliminar.');
+              Alert.alert('Error', data?.error || 'No se pudo eliminar.');
             }
             setSavingRaffle(false);
           }
@@ -1286,7 +1286,7 @@ export default function AdminScreen({ api, user }) {
                   // Save to user profile or system settings depending on architecture. Using /me for now as per user profile logic.
                   const { res, data } = await api('/me', { method: 'PATCH', body: JSON.stringify({ bankDetails: bankSettings }) });
                   if (res.ok) Alert.alert('Listo', 'Datos bancarios actualizados.');
-                  else Alert.alert('Error', data.error || 'No se pudo guardar.');
+                  else Alert.alert('Error', data?.error || 'No se pudo guardar.');
                   setSavingBank(false);
                 }} 
                 loading={savingBank} 

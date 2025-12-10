@@ -34,8 +34,8 @@ export default function WalletScreen({ api }) {
     try {
       const { res, data } = await api('/wallet');
       if (res.ok && data) {
-        setBalance(data.balance || 0);
-        setMovements(data.transactions || []);
+        setBalance(data?.balance || 0);
+        setMovements(data?.transactions || []);
       }
       
       const { res: pRes, data: pData } = await api('/payments/my');
@@ -63,7 +63,7 @@ export default function WalletScreen({ api }) {
       setShowTopup(false);
       loadWallet();
     } else {
-      showToast(data.error || 'Error al recargar', 'error');
+      showToast(data?.error || 'Error al recargar', 'error');
     }
   };
 
