@@ -5,6 +5,7 @@ import {
   Text,
   ScrollView,
   Image,
+  ImageBackground,
   TouchableOpacity,
   TextInput,
   Alert,
@@ -42,6 +43,10 @@ export default function RaffleDetailScreen({ route, navigation, api }) {
   const themeColor = style.themeColor || palette.primary;
   const [viewProfileId, setViewProfileId] = useState(null);
   const [termsVisible, setTermsVisible] = useState(false);
+  const totalTickets = current?.totalTickets || stats.total || 0;
+  const sold = stats.sold || 0;
+  const remaining = stats.remaining ?? (totalTickets ? Math.max(totalTickets - sold, 0) : 0);
+  const percentLeft = totalTickets ? Math.max(0, Math.min(100, (remaining / totalTickets) * 100)) : 0;
 
   useEffect(() => {
     if (api) {
@@ -126,15 +131,16 @@ export default function RaffleDetailScreen({ route, navigation, api }) {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
         {style.gallery && style.gallery.length > 0 ? (
-          <View style={{ height: 250, marginBottom: 16 }}>
+          <View style={{ height: 260, marginBottom: 16 }}>
             <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
               {style.gallery.map((img, index) => (
-                <Image 
-                  key={index} 
-                  source={{ uri: img }} 
-                  style={{ width: width - 32, height: 250, borderRadius: 12, marginRight: 0 }} 
-                  resizeMode="cover" 
-                />
+                <View key={index} style={{ width: width - 32, height: 260, borderRadius: 12, overflow: 'hidden', marginRight: 0, backgroundColor: 'rgba(255,255,255,0.04)' }}>
+                  <ImageBackground source={{ uri: img }} style={{ flex: 1 }} blurRadius={12}>
+                    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 8 }}>
+                      <Image source={{ uri: img }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                    </View>
+                  </ImageBackground>
+                </View>
               ))}
             </ScrollView>
             <View style={{ position: 'absolute', bottom: 10, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
@@ -144,7 +150,13 @@ export default function RaffleDetailScreen({ route, navigation, api }) {
             </View>
           </View>
         ) : style.bannerImage ? (
-          <Image source={{ uri: style.bannerImage }} style={{ width: '100%', height: 200, borderRadius: 12, marginBottom: 16 }} resizeMode="cover" />
+          <View style={{ height: 220, marginBottom: 16, borderRadius: 12, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.05)' }}>
+            <ImageBackground source={{ uri: style.bannerImage }} style={{ flex: 1 }} blurRadius={12}>
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 8 }}>
+                <Image source={{ uri: style.bannerImage }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+              </View>
+            </ImageBackground>
+          </View>
         ) : null}
         
         <Text style={[styles.title, { color: themeColor }]}>{current.title}</Text>
@@ -198,9 +210,14 @@ export default function RaffleDetailScreen({ route, navigation, api }) {
             </View>
           </TouchableOpacity>
 
-          <Text style={styles.muted}>
-            Precio VES {current.price} • Vendidos {stats.sold || 0} • Disponibles {stats.remaining ?? 0}
-          </Text>
+          <View style={{ marginBottom: 8 }}>
+            <Text style={styles.muted}>
+              Precio VES {current.price} • Disponibles {remaining} / {totalTickets || '∞'} ({percentLeft.toFixed(0)}%)
+            </Text>
+            <View style={{ height: 10, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 5, overflow: 'hidden', marginTop: 6 }}>
+              <View style={{ width: `${percentLeft}%`, height: '100%', backgroundColor: themeColor }} />
+            </View>
+          </View>
           
           {(style.whatsapp || style.instagram || current.support) && (
             <View style={{ marginTop: 8, flexDirection: 'row', gap: 10 }}>

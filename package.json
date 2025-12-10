@@ -18,6 +18,7 @@
     "@types/react": "~18.2.45",
     "axios": "^1.13.2",
     "expo": "~50.0.14",
+    "expo-image-manipulator": "~14.11.1",
     "expo-clipboard": "~5.0.1",
     "expo-dev-client": "~3.3.12",
     "expo-haptics": "~12.8.1",

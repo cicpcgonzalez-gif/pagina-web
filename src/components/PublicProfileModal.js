@@ -7,16 +7,29 @@ import { styles } from '../styles';
 export default function PublicProfileModal({ visible, onClose, userId, api }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [raffles, setRaffles] = useState({ active: [], closed: [] });
 
   useEffect(() => {
     if (visible && userId) {
       setLoading(true);
-      api(`/users/public/${userId}`).then(({ res, data }) => {
-        if (res.ok) setProfile(data);
+      Promise.all([
+        api(`/users/public/${userId}`),
+        api(`/users/public/${userId}/raffles`).catch(() => ({ res: {}, data: null }))
+      ]).then(([profileRes, rafflesRes]) => {
+        if (profileRes.res?.ok) setProfile(profileRes.data);
+        if (rafflesRes?.res?.ok && rafflesRes.data) {
+          setRaffles({
+            active: rafflesRes.data.active || rafflesRes.data.raffles || [],
+            closed: rafflesRes.data.closed || rafflesRes.data.history || []
+          });
+        } else {
+          setRaffles({ active: [], closed: [] });
+        }
         setLoading(false);
       });
     } else {
       setProfile(null);
+      setRaffles({ active: [], closed: [] });
     }
   }, [visible, userId]);
 
@@ -118,6 +131,50 @@ export default function PublicProfileModal({ visible, onClose, userId, api }) {
                     <TouchableOpacity onPress={() => Linking.openURL(`https://instagram.com/${profile.socials.instagram}`)}>
                       <Ionicons name="logo-instagram" size={24} color="#E1306C" />
                     </TouchableOpacity>
+                  )}
+                  {profile.socials.email && (
+                    <TouchableOpacity onPress={() => Linking.openURL(`mailto:${profile.socials.email}`)}>
+                      <Ionicons name="mail-outline" size={24} color={palette.primary} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+
+              {(raffles.active.length > 0 || raffles.closed.length > 0) && (
+                <View style={{ marginTop: 20 }}>
+                  <Text style={[styles.section, { textAlign: 'center' }]}>Rifas de este rifero</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 12, gap: 10 }}>
+                    {raffles.active.map((r) => (
+                      <View key={`act-${r.id}`} style={{ width: 180, backgroundColor: 'rgba(255,255,255,0.05)', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }}>
+                        <Text style={{ color: '#fff', fontWeight: '800' }} numberOfLines={1}>{r.title}</Text>
+                        <Text style={{ color: '#94a3b8', fontSize: 12 }} numberOfLines={2}>{r.description}</Text>
+                        <View style={{ marginTop: 8 }}>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                            <Text style={{ color: '#cbd5e1', fontSize: 11 }}>Disp.</Text>
+                            <Text style={{ color: '#cbd5e1', fontSize: 11 }}>
+                              {(r.stats?.remaining ?? r.remaining ?? 0)} / {(r.totalTickets || r.stats?.total || '∞')}
+                            </Text>
+                          </View>
+                          <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' }}>
+                            <View style={{ width: `${Math.max(0, Math.min(100, ((r.stats?.remaining ?? r.remaining ?? 0) / (r.totalTickets || r.stats?.total || 1)) * 100))}%`, height: '100%', backgroundColor: palette.primary }} />
+                          </View>
+                        </View>
+                      </View>
+                    ))}
+                    {raffles.active.length === 0 && <Text style={styles.muted}>Sin rifas activas.</Text>}
+                  </ScrollView>
+
+                  {raffles.closed.length > 0 && (
+                    <View style={{ marginTop: 8 }}>
+                      <Text style={[styles.muted, { marginBottom: 6 }]}>Historial reciente</Text>
+                      {raffles.closed.slice(0, 3).map((r) => (
+                        <View key={`cls-${r.id}`} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' }}>
+                          <Ionicons name="checkmark-circle" size={14} color="#22c55e" style={{ marginRight: 6 }} />
+                          <Text style={{ color: '#e2e8f0', flex: 1 }} numberOfLines={1}>{r.title}</Text>
+                          {r.winner && <Text style={{ color: '#fbbf24', fontSize: 12 }}>Ganador: {r.winner}</Text>}
+                        </View>
+                      ))}
+                    </View>
                   )}
                 </View>
               )}

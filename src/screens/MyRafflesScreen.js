@@ -71,6 +71,7 @@ export default function MyRafflesScreen({ api, navigation }) {
                 const progress = raffle?.stats?.progress || 0;
                 const isWinner = !!item.isWinner;
                 const status = isWinner ? 'Ganador' : item.status || 'Activo';
+                const statusColor = isWinner ? '#fbbf24' : status === 'approved' ? '#4ade80' : status === 'pending' ? '#fbbf24' : '#94a3b8';
                 return (
                   <View key={raffle.id || item?.raffleId || `raffle-${idx}`} style={[styles.card, styles.myRaffleCard]}>
                     <View style={styles.rowBetween}>
@@ -78,9 +79,9 @@ export default function MyRafflesScreen({ api, navigation }) {
                         <Text style={styles.itemTitle}>{raffle.title || 'Rifa'}</Text>
                         <Text style={styles.muted}>{raffle.description}</Text>
                       </View>
-                      <View style={[styles.statusChip, isWinner ? styles.statusWinner : null]}>
-                        <Ionicons name={isWinner ? 'trophy' : 'sparkles'} size={16} color={isWinner ? '#fbbf24' : palette.accent} />
-                        <Text style={styles.statusChipText}>{status}</Text>
+                      <View style={[styles.statusChip, { backgroundColor: 'rgba(255,255,255,0.06)', borderColor: statusColor }]}>
+                        <Ionicons name={isWinner ? 'trophy' : status === 'approved' ? 'checkmark-circle' : status === 'pending' ? 'time' : 'sparkles'} size={16} color={statusColor} />
+                        <Text style={[styles.statusChipText, { color: statusColor }]}>{status}</Text>
                       </View>
                     </View>
                     <View style={styles.ticketRow}>
@@ -124,7 +125,7 @@ export default function MyRafflesScreen({ api, navigation }) {
 
                     <ProgressBar progress={progress} color={isWinner ? '#fbbf24' : palette.accent} />
                     <View style={styles.rowBetween}>
-                      <Text style={styles.muted}>Estado: {status}</Text>
+                      <Text style={styles.muted}>Estado: {status === 'pending' ? 'Pago pendiente de aprobación' : status}</Text>
                       <TouchableOpacity onPress={() => raffle && navigation.navigate('RaffleDetail', { raffle })}>
                         <Text style={styles.link}>Ver rifa</Text>
                       </TouchableOpacity>

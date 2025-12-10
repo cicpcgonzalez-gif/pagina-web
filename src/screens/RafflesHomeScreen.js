@@ -6,11 +6,13 @@ import {
   ScrollView,
   ActivityIndicator,
   Image,
+  ImageBackground,
   TouchableOpacity,
   Animated,
   Modal,
   TextInput,
-  Alert
+  Alert,
+  Dimensions
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -66,6 +68,10 @@ export default function RafflesHomeScreen({ navigation, api, user }) {
   const [viewProfileId, setViewProfileId] = useState(null);
   const [winners, setWinners] = useState([]);
   const heroAnim = useRef(new Animated.Value(0)).current;
+  const [carouselIndex, setCarouselIndex] = useState({});
+  const cardImageWidth = Dimensions.get('window').width - 32;
+  const [helpVisible, setHelpVisible] = useState(false);
+  const [filter, setFilter] = useState('all');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -165,8 +171,31 @@ export default function RafflesHomeScreen({ navigation, api, user }) {
             </View>
             <Text style={styles.heroHeading}>Tu oportunidad de ganar hoy.</Text>
             <Text style={styles.heroSub}>Participa en los sorteos más exclusivos con total seguridad.</Text>
+            <TouchableOpacity onPress={() => setHelpVisible(true)} style={{ marginTop: 8, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="information-circle-outline" size={18} color={palette.primary} />
+              <Text style={{ color: palette.primary, fontWeight: '700' }}>Cómo participar</Text>
+            </TouchableOpacity>
           </View>
         </Animated.View>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 8, gap: 8 }}>
+          {[{ id: 'all', label: 'Todas' }, { id: 'closing', label: 'Próximas a cerrar' }, { id: 'cheap', label: 'Menor precio' }].map(opt => (
+            <TouchableOpacity
+              key={opt.id}
+              onPress={() => setFilter(opt.id)}
+              style={{
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: filter === opt.id ? palette.primary : 'rgba(255,255,255,0.15)',
+                backgroundColor: filter === opt.id ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.05)'
+              }}
+            >
+              <Text style={{ color: '#e2e8f0', fontWeight: '700' }}>{opt.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
         <Announcements api={api} onShowProfile={setViewProfileId} />
 
@@ -177,9 +206,21 @@ export default function RafflesHomeScreen({ navigation, api, user }) {
           </View>
         ) : (
           <View style={{ gap: 16 }}>
-            {raffles.map((item, index) => {
+            {raffles
+              .slice()
+              .sort((a, b) => {
+                if (filter === 'cheap') return Number(a.price || 0) - Number(b.price || 0);
+                if (filter === 'closing') return new Date(a.endDate || 0) - new Date(b.endDate || 0);
+                return 0;
+              })
+              .map((item, index) => {
               const stats = item.stats || {};
-              return (
+              const total = item.totalTickets || stats.total || 0;
+              const sold = stats.sold || 0;
+              const remaining = stats.remaining ?? (total ? Math.max(total - sold, 0) : 0);
+              const percentLeft = total ? Math.max(0, Math.min(100, (remaining / total) * 100)) : 0;
+              const lowStock = total && percentLeft <= 10;
+                return (
                 <TouchableOpacity
                   key={item.id}
                   activeOpacity={0.95}
@@ -224,14 +265,69 @@ export default function RafflesHomeScreen({ navigation, api, user }) {
                     </TouchableOpacity>
                   </View>
 
-                  <View>
-                    {item.style?.bannerImage ? (
-                      <Image source={{ uri: item.style.bannerImage }} style={{ width: '100%', height: 180 }} resizeMode="cover" />
-                    ) : (
-                      <View style={{ width: '100%', height: 150, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center' }}>
-                        <Ionicons name="image-outline" size={48} color="rgba(255,255,255,0.2)" />
-                      </View>
-                    )}
+                  <View style={{ position: 'relative' }}>
+                    {(() => {
+                      const gallery = Array.isArray(item.style?.gallery) && item.style.gallery.length
+                        ? item.style.gallery
+                        : item.style?.bannerImage
+                        ? [item.style.bannerImage]
+                        : [];
+
+                      if (!gallery.length) {
+                        return (
+                          <View style={{ width: '100%', height: 200, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center' }}>
+                            <Ionicons name="image-outline" size={48} color="rgba(255,255,255,0.2)" />
+                          </View>
+                        );
+                      }
+
+                      return (
+                        <View style={{ height: 220 }}>
+                          <ScrollView
+                            horizontal
+                            pagingEnabled
+                            showsHorizontalScrollIndicator={false}
+                            snapToInterval={cardImageWidth}
+                            decelerationRate="fast"
+                            onScroll={(evt) => {
+                              const nextIndex = Math.round((evt.nativeEvent.contentOffset.x || 0) / cardImageWidth);
+                              setCarouselIndex((prev) => (prev[item.id] === nextIndex ? prev : { ...prev, [item.id]: nextIndex }));
+                            }}
+                            scrollEventThrottle={16}
+                            contentContainerStyle={{ alignItems: 'center' }}
+                          >
+                            {gallery.map((img, idx) => (
+                              <View key={`${item.id}-img-${idx}`} style={{ width: cardImageWidth, height: 220, marginRight: 12, borderRadius: 12, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.04)' }}>
+                                <ImageBackground source={{ uri: img }} style={{ flex: 1 }} blurRadius={12}>
+                                  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 8 }}>
+                                    <Image
+                                      source={{ uri: img }}
+                                      style={{ width: '100%', height: '100%' }}
+                                      resizeMode="contain"
+                                    />
+                                  </View>
+                                </ImageBackground>
+                              </View>
+                            ))}
+                          </ScrollView>
+                          {gallery.length > 1 && (
+                            <View style={{ position: 'absolute', bottom: 12, right: 16, flexDirection: 'row', gap: 6 }}>
+                              {gallery.map((_, i) => (
+                                <View
+                                  key={`${item.id}-dot-${i}`}
+                                  style={{
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: 4,
+                                    backgroundColor: (carouselIndex[item.id] || 0) === i ? '#fbbf24' : 'rgba(255,255,255,0.4)'
+                                  }}
+                                />
+                              ))}
+                            </View>
+                          )}
+                        </View>
+                      );
+                    })()}
                     <PulsingBadge />
                   </View>
                   
@@ -242,16 +338,24 @@ export default function RafflesHomeScreen({ navigation, api, user }) {
                         <Text style={{ color: '#fbbf24', fontWeight: '800' }}>VES {item.price}</Text>
                       </View>
                     </View>
+                    {lowStock && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6, gap: 6 }}>
+                        <Ionicons name="alert-circle" size={14} color="#f97316" />
+                        <Text style={{ color: '#fbbf24', fontWeight: '700', fontSize: 12 }}>Quedan pocos tickets</Text>
+                      </View>
+                    )}
                     
                     <Text style={{ color: '#94a3b8', fontSize: 14, marginBottom: 16 }} numberOfLines={2}>{item.description}</Text>
                     
                     <View style={{ marginBottom: 12 }}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <Text style={{ color: '#cbd5e1', fontSize: 12, fontWeight: '600' }}>Progreso</Text>
-                        <Text style={{ color: '#cbd5e1', fontSize: 12 }}>{stats.sold || 0} / {item.totalTickets || '∞'}</Text>
+                        <Text style={{ color: '#cbd5e1', fontSize: 12, fontWeight: '600' }}>Disponibles</Text>
+                        <Text style={{ color: '#cbd5e1', fontSize: 12 }}>
+                          {remaining} / {total || '∞'} ({percentLeft.toFixed(0)}%)
+                        </Text>
                       </View>
-                      <View style={{ height: 8, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 4, overflow: 'hidden' }}>
-                        <View style={{ width: `${(stats.progress || 0) * 100}%`, height: '100%', backgroundColor: item.style?.accentColor || palette.primary }} />
+                      <View style={{ height: 10, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 5, overflow: 'hidden' }}>
+                        <View style={{ width: `${percentLeft}%`, height: '100%', backgroundColor: item.style?.accentColor || palette.primary }} />
                       </View>
                     </View>
 
@@ -267,8 +371,8 @@ export default function RafflesHomeScreen({ navigation, api, user }) {
                     </View>
                   </View>
                 </TouchableOpacity>
-              );
-            })}
+                );
+              })}
             {raffles.length === 0 && <Text style={styles.muted}>No hay rifas activas por el momento.</Text>}
           </View>
         )}
@@ -324,6 +428,30 @@ export default function RafflesHomeScreen({ navigation, api, user }) {
               }}
               icon={<Ionicons name="chatbubble-ellipses-outline" size={18} color="#fff" />}
             />
+          </View>
+        </View>
+      </Modal>
+      <Modal visible={helpVisible} transparent animationType="fade" onRequestClose={() => setHelpVisible(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', padding: 20 }}>
+          <View style={[styles.card, { padding: 20, borderRadius: 16 }]}> 
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={[styles.title, { marginBottom: 0 }]}>Cómo usar MegaRifas</Text>
+              <TouchableOpacity onPress={() => setHelpVisible(false)}>
+                <Ionicons name="close" size={22} color={palette.text} />
+              </TouchableOpacity>
+            </View>
+            {[
+              '1) Explora rifas y revisa la barra de disponibilidad.',
+              '2) Compra: elige cantidad, paga y sube tu comprobante.',
+              '3) Aprobación: el admin valida y recibes tus números.',
+              '4) Resultado: revisa el muro de ganadores cuando cierre.'
+            ].map((step) => (
+              <Text key={step} style={{ color: palette.text, marginTop: 8 }}>{step}</Text>
+            ))}
+            <View style={{ marginTop: 16, backgroundColor: 'rgba(59,130,246,0.12)', padding: 12, borderRadius: 10 }}>
+              <Text style={{ color: '#60a5fa', fontWeight: '700' }}>¿Dudas?</Text>
+              <Text style={styles.muted}>Usa el botón de ayuda o el soporte del rifero en la ficha.</Text>
+            </View>
           </View>
         </View>
       </Modal>

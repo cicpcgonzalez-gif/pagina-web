@@ -13,6 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useFocusEffect } from '@react-navigation/native';
 import { palette } from '../theme';
 import { styles } from '../styles';
@@ -83,10 +84,15 @@ export default function ProfileScreen({ api, onUserUpdate, pushToken, setPushTok
   const pickAvatar = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) return Alert.alert('Permiso requerido', 'Autoriza el acceso a la galería.');
-    const result = await ImagePicker.launchImageLibraryAsync({ base64: true, quality: 0.6 });
+    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.9, base64: false, allowsEditing: false });
     if (!result.canceled && result.assets?.length) {
       const asset = result.assets[0];
-      setProfile((p) => ({ ...p, avatar: `data:image/jpeg;base64,${asset.base64}` }));
+      const normalized = await ImageManipulator.manipulateAsync(
+        asset.uri,
+        [{ resize: { width: Math.min(800, asset.width || 800) } }],
+        { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+      );
+      setProfile((p) => ({ ...p, avatar: `data:image/jpeg;base64,${normalized.base64}` }));
     }
   };
 
