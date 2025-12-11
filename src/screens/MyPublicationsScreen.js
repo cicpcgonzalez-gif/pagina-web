@@ -14,7 +14,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { palette } from '../theme';
 import { styles } from '../styles';
 
-export default function MyPublicationsScreen({ api, navigation }) {
+export default function MyPublicationsScreen({ api, navigation, user }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -63,12 +63,15 @@ export default function MyPublicationsScreen({ api, navigation }) {
   };
 
   const handleEdit = (raffle) => {
-    // Navigate to AdminScreen or a specific Edit screen.
-    // Since we don't have a dedicated Edit screen yet, we might need to pass it to AdminScreen if it supports editing,
-    // or just show an alert for now if not implemented.
-    // Assuming AdminScreen handles creation, maybe we can pass params to pre-fill.
-    // For now, let's just show the details or a placeholder.
-    Alert.alert('Editar', 'Funcionalidad de edición en construcción.');
+    const targetTab = user?.role === 'superadmin' ? 'Superadmin' : 'Admin';
+    // Navegar al tab de Admin y pasar los parámetros para editar
+    navigation.navigate(targetTab, { 
+      screen: targetTab, // Esto asegura que si hay un stack anidado (que no lo hay en tabs directo, pero por si acaso) se maneje
+      params: { 
+        action: 'editRaffle', 
+        raffleData: raffle 
+      } 
+    });
   };
 
   return (

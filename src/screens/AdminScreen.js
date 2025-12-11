@@ -20,7 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { palette } from '../theme';
 import { FilledButton, OutlineButton } from '../components/UI';
 
@@ -45,7 +45,35 @@ const normalizeImage = async (asset, { maxWidth = 1280, compress = 0.82 } = {}) 
 };
 
 export default function AdminScreen({ api, user, modulesConfig }) {
+  const route = useRoute();
   const [activeSection, setActiveSection] = useState(null);
+
+  // Handle navigation params for editing
+  useFocusEffect(
+    useCallback(() => {
+      if (route.params?.action === 'editRaffle' && route.params?.raffleData) {
+        const r = route.params.raffleData;
+        setActiveSection('raffles');
+        setRaffleForm({
+          id: r.id,
+          title: r.title || '',
+          price: String(r.price || ''),
+          description: r.description || '',
+          totalTickets: r.totalTickets ? String(r.totalTickets) : '',
+          digits: r.digits || 4,
+          startDate: r.startDate ? r.startDate.slice(0, 10) : '',
+          endDate: r.endDate ? r.endDate.slice(0, 10) : '',
+          lottery: r.lottery || '',
+          instantWins: r.instantWins ? r.instantWins.join(', ') : '',
+          terms: r.terms || '',
+          securityCode: r.securityCode || ''
+        });
+        // Clear params to avoid re-triggering
+        route.params.action = null;
+        route.params.raffleData = null;
+      }
+    }, [route.params])
+  );
 
   // Superadmin State
   const [branding, setBranding] = useState({ title: '', tagline: '', primaryColor: '', secondaryColor: '', logoUrl: '', bannerUrl: '', policies: '' });

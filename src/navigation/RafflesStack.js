@@ -23,7 +23,7 @@ export default function RafflesStack({ api, user }) {
         {(props) => <RaffleDetailScreen {...props} api={api} />}
       </InnerStack.Screen>
       <InnerStack.Screen name="MyPublications" options={{ title: 'Mis Publicaciones', headerShown: false }}>
-        {(props) => <MyPublicationsScreen {...props} api={api} />}
+        {(props) => <MyPublicationsScreen {...props} api={api} user={user} />}
       </InnerStack.Screen>
     </InnerStack.Navigator>
   );
