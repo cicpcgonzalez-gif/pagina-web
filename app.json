@@ -23,19 +23,36 @@
     "android": {
       "package": "com.megarifas.app",
       "versionCode": 2,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#ffffff",
+        "resizeMode": "contain"
+      },
       "permissions": [
         "INTERNET",
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
+        "VIBRATE",
+        "INTERNET",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
         "VIBRATE"
-      ]
+      ],
+      "runtimeVersion": "1.0.0"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.megarifas.app",
-      "buildNumber": "1.0.1"
+      "buildNumber": "1.0.1",
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
-    "owner": "megarifasapps-organization"
+    "owner": "megarifasapps-organization",
+    "updates": {
+      "url": "https://u.expo.dev/d217637f-70ce-446b-8763-76a51b14b0a7"
+    }
   }
 }

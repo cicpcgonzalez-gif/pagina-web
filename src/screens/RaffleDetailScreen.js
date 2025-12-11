@@ -25,7 +25,7 @@ import PublicProfileModal from '../components/PublicProfileModal';
 const { width } = Dimensions.get('window');
 
 export default function RaffleDetailScreen({ route, navigation, api }) {
-  const { raffle } = route.params || {};
+  const { raffle, ticket } = route.params || {};
   // Local state to hold the raffle data, initialized with param but updatable
   const [current, setCurrent] = useState(raffle || {});
   const [quantity, setQuantity] = useState('1');
@@ -331,6 +331,18 @@ export default function RaffleDetailScreen({ route, navigation, api }) {
             </>
           )}
         </View>
+
+        {ticket && (
+          <View style={[styles.card, styles.glassCard, { borderColor: palette.primary, borderWidth: 1 }]}>
+            <Text style={styles.section}>Tu Ticket</Text>
+            <View style={{ alignItems: 'center', marginVertical: 10 }}>
+              <Text style={{ color: palette.primary, fontSize: 32, fontWeight: 'bold' }}>
+                #{formatTicketNumber(ticket.number, current.digits)}
+              </Text>
+              <Text style={{ color: palette.muted, fontSize: 12 }}>Serial: {ticket.serialNumber}</Text>
+            </View>
+          </View>
+        )}
 
         {assignedNumbers.length ? (
           <Animated.View

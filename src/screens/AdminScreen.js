@@ -44,7 +44,7 @@ const normalizeImage = async (asset, { maxWidth = 1280, compress = 0.82 } = {}) 
   return `data:image/jpeg;base64,${manipResult.base64}`;
 };
 
-export default function AdminScreen({ api, user }) {
+export default function AdminScreen({ api, user, modulesConfig }) {
   const [activeSection, setActiveSection] = useState(null);
 
   // Superadmin State
@@ -87,7 +87,7 @@ export default function AdminScreen({ api, user }) {
   const [editingUser, setEditingUser] = useState(null); // For modal actions
 
   const MENU_ITEMS = useMemo(() => {
-    return [
+    const items = [
       { id: 'account', title: 'Mi Cuenta', icon: 'person-circle-outline', color: palette.primary },
       { id: 'support', title: 'Mi Soporte', icon: 'headset-outline', color: '#f87171' },
       { id: 'push', title: 'Notificaciones', icon: 'notifications-outline', color: '#f472b6' },
@@ -98,6 +98,22 @@ export default function AdminScreen({ api, user }) {
       { id: 'raffles', title: 'Crear/Editar', icon: 'create-outline', color: '#a78bfa' },
       { id: 'dashboard', title: 'Dashboard', icon: 'speedometer-outline', color: '#22c55e' },
       { id: 'news', title: 'Novedades', icon: 'newspaper-outline', color: '#60a5fa' },
+    ];
+    
+    if (user?.role === 'superadmin' && modulesConfig?.superadmin) {
+      if (modulesConfig.superadmin.audit) {
+        items.push({ id: 'audit', title: 'Auditoría', icon: 'receipt-outline', color: '#facc15' });
+      }
+      if (modulesConfig.superadmin.branding) {
+        items.push({ id: 'branding', title: 'Branding', icon: 'color-palette-outline', color: '#c084fc' });
+      }
+      if (modulesConfig.superadmin.modules) {
+        items.push({ id: 'modules', title: 'Módulos', icon: 'layers-outline', color: '#4ade80' });
+      }
+    }
+    
+    return items;
+  }, [user, modulesConfig]);
       { id: 'winner', title: 'Publicar Ganador', icon: 'trophy-outline', color: '#fbbf24' },
       { id: 'progress', title: 'Progreso Rifas', icon: 'bar-chart-outline', color: '#c084fc' },
       { id: 'payments', title: 'Pagos Manuales', icon: 'cash-outline', color: '#4ade80' },
@@ -1181,15 +1197,41 @@ export default function AdminScreen({ api, user }) {
                 onChangeText={filterUsers} 
               />
 
-              {filteredUsers.filter(u => u).map(u => (
+              <Text style={[styles.section, { marginTop: 16, color: '#60a5fa' }]}>Administradores y Staff</Text>
+              {filteredUsers.filter(u => u && (u.role === 'admin' || u.role === 'superadmin')).map(u => (
+                <View key={u.id || Math.random()} style={{ backgroundColor: 'rgba(96, 165, 250, 0.1)', padding: 12, borderRadius: 12, marginBottom: 8, borderWidth: 1, borderColor: 'rgba(96, 165, 250, 0.3)' }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <View>
+                      <Text style={{ color: '#fff', fontWeight: 'bold' }}>{u.name || 'Sin nombre'}</Text>
+                      <Text style={{ color: palette.muted, fontSize: 12 }}>{u.email}</Text>
+                      <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
+                        <View style={{ backgroundColor: u.role === 'superadmin' ? '#c084fc' : '#60a5fa', paddingHorizontal: 6, borderRadius: 4 }}>
+                          <Text style={{ color: '#000', fontSize: 10, fontWeight: 'bold' }}>{(u.role || 'user').toUpperCase()}</Text>
+                        </View>
+                        <View style={{ backgroundColor: u.active ? '#4ade80' : '#f87171', paddingHorizontal: 6, borderRadius: 4 }}>
+                          <Text style={{ color: '#000', fontSize: 10, fontWeight: 'bold' }}>{u.active ? 'ACTIVO' : 'INACTIVO'}</Text>
+                        </View>
+                      </View>
+                    </View>
+                    <View style={{ alignItems: 'flex-end', gap: 8 }}>
+                      <TouchableOpacity onPress={() => updateUserStatus(u.id, { active: !u.active })} style={{ padding: 6, backgroundColor: u.active ? 'rgba(248, 113, 113, 0.2)' : 'rgba(74, 222, 128, 0.2)', borderRadius: 8 }}>
+                        <Ionicons name={u.active ? "ban-outline" : "checkmark-circle-outline"} size={20} color={u.active ? "#f87171" : "#4ade80"} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              ))}
+
+              <Text style={[styles.section, { marginTop: 16, color: '#4ade80' }]}>Usuarios Registrados</Text>
+              {filteredUsers.filter(u => u && u.role !== 'admin' && u.role !== 'superadmin').map(u => (
                 <View key={u.id || Math.random()} style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 12, marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <View>
                       <Text style={{ color: '#fff', fontWeight: 'bold' }}>{u.name || 'Sin nombre'}</Text>
                       <Text style={{ color: palette.muted, fontSize: 12 }}>{u.email}</Text>
                       <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
-                        <View style={{ backgroundColor: u.role === 'superadmin' ? '#c084fc' : u.role === 'admin' ? '#60a5fa' : '#94a3b8', paddingHorizontal: 6, borderRadius: 4 }}>
-                          <Text style={{ color: '#000', fontSize: 10, fontWeight: 'bold' }}>{(u.role || 'user').toUpperCase()}</Text>
+                        <View style={{ backgroundColor: '#94a3b8', paddingHorizontal: 6, borderRadius: 4 }}>
+                          <Text style={{ color: '#000', fontSize: 10, fontWeight: 'bold' }}>USER</Text>
                         </View>
                         <View style={{ backgroundColor: u.active ? '#4ade80' : '#f87171', paddingHorizontal: 6, borderRadius: 4 }}>
                           <Text style={{ color: '#000', fontSize: 10, fontWeight: 'bold' }}>{u.active ? 'ACTIVO' : 'INACTIVO'}</Text>

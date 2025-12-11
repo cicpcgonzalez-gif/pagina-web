@@ -171,7 +171,7 @@ export default function MyRafflesScreen({ api, navigation }) {
                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8 }}>
                           {raffle && raffle.id ? (
                             <TouchableOpacity 
-                              onPress={() => navigation.navigate('RaffleDetail', { raffle })}
+                              onPress={() => navigation.navigate('RaffleDetail', { raffle, ticket: item })}
                               style={{ flexDirection: 'row', alignItems: 'center' }}
                             >
                               <Text style={{ color: palette.primary, fontWeight: 'bold', fontSize: 13, marginRight: 4 }}>Ver Detalles</Text>
