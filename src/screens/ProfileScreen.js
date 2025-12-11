@@ -20,7 +20,10 @@ import { styles } from '../styles';
 import { FilledButton } from '../components/UI';
 import { formatTicketNumber } from '../utils';
 
+import { useNavigation } from '@react-navigation/native';
+
 export default function ProfileScreen({ navigation, api, onUserUpdate, pushToken, setPushToken, onLogout }) {
+  const nav = useNavigation();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [tickets, setTickets] = useState([]);
@@ -296,6 +299,18 @@ export default function ProfileScreen({ navigation, api, onUserUpdate, pushToken
             )}
 
             {/* REMOVED INLINE ADMIN RAFFLES */}
+
+            <View style={[styles.card, styles.glassCard]}>
+              <Text style={styles.section}>Legal</Text>
+              <TouchableOpacity 
+                style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12 }}
+                onPress={() => nav.navigate('Legal')}
+              >
+                <Ionicons name="document-text-outline" size={24} color={palette.primary} />
+                <Text style={{ color: palette.text, marginLeft: 12, fontSize: 16 }}>Términos, Privacidad y Marco Legal</Text>
+                <Ionicons name="chevron-forward" size={20} color={palette.muted} style={{ marginLeft: 'auto' }} />
+              </TouchableOpacity>
+            </View>
 
             <View style={[styles.card, styles.glassCard]}>
               <TouchableOpacity style={styles.rowBetween} onPress={() => setShowPassword(!showPassword)}>

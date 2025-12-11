@@ -29,7 +29,10 @@ const VENEZUELA_STATES = [
 
 const API_URL = ENV.apiUrl;
 
+import { useNavigation } from '@react-navigation/native';
+
 export default function AuthScreen({ onAuth }) {
+  const navigation = useNavigation();
   const [mode, setMode] = useState('login');
   const [loading, setLoading] = useState(false);
   const [twofaNeeded, setTwofaNeeded] = useState(false);
@@ -532,9 +535,14 @@ export default function AuthScreen({ onAuth }) {
                   onPress={() => setTermsAccepted(!termsAccepted)}
                 >
                   <Ionicons name={termsAccepted ? 'checkbox' : 'square-outline'} size={24} color={termsAccepted ? palette.primary : '#cbd5e1'} style={{ marginTop: 2 }} />
-                  <Text style={{ color: '#cbd5e1', fontSize: 12, marginLeft: 10, flex: 1, lineHeight: 18 }}>
-                    Acepto que <Text style={{ fontWeight: 'bold', color: '#fff' }}>MegaRifas es una herramienta de gestión</Text>. Entiendo que la plataforma no organiza, avala ni es responsable de los sorteos realizados por terceros.
-                  </Text>
+                  <View style={{ marginLeft: 10, flex: 1 }}>
+                    <Text style={{ color: '#cbd5e1', fontSize: 12, lineHeight: 18 }}>
+                      Acepto los <Text style={{ fontWeight: 'bold', color: '#fff', textDecorationLine: 'underline' }} onPress={() => navigation.navigate('Legal')}>Términos y Condiciones</Text> y la Política de Privacidad.
+                    </Text>
+                    <Text style={{ color: '#cbd5e1', fontSize: 12, lineHeight: 18, marginTop: 4 }}>
+                      Entiendo que MegaRifas es una herramienta de gestión y no organiza los sorteos.
+                    </Text>
+                  </View>
                 </TouchableOpacity>
 
                 {error ? <Text style={styles.errorText}>{error}</Text> : null}

@@ -16,6 +16,7 @@ import AuthScreen from './screens/AuthScreen';
 import RafflesStack from './navigation/RafflesStack';
 import TabsNavigator from './navigation/TabsNavigator';
 import RaffleDetailScreen from './screens/RaffleDetailScreen';
+import LegalScreen from './screens/LegalScreen';
 import { useApi } from './hooks/useApi';
 import { ToastProvider } from './components/UI';
 
@@ -234,6 +235,9 @@ function MainContent() {
           </Stack.Screen>
           <Stack.Screen name="RaffleDetail" options={{ title: 'Detalle de Rifa' }}>
             {(props) => <RaffleDetailScreen {...props} api={api} />}
+          </Stack.Screen>
+          <Stack.Screen name="Legal" options={{ headerShown: false }}>
+            {(props) => <LegalScreen {...props} />}
           </Stack.Screen>
         </>
         ) : (
