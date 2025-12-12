@@ -125,19 +125,29 @@ export default function AdminScreen({ api, user, modulesConfig }) {
       { id: 'lottery', title: 'Sorteo en Vivo', icon: 'dice-outline', color: '#f87171' },
       { id: 'raffles', title: 'Crear/Editar', icon: 'create-outline', color: '#a78bfa' },
       { id: 'dashboard', title: 'Dashboard', icon: 'speedometer-outline', color: '#22c55e' },
+      { id: 'progress', title: 'Progreso', icon: 'bar-chart-outline', color: '#38bdf8' },
+      { id: 'payments', title: 'Pagos', icon: 'cash-outline', color: '#10b981' },
+      { id: 'tickets', title: 'Tickets', icon: 'qr-code-outline', color: '#f97316' },
+      { id: 'style', title: 'Estilo', icon: 'color-fill-outline', color: '#fbbf24' },
       { id: 'news', title: 'Novedades', icon: 'newspaper-outline', color: '#60a5fa' },
     ];
     
-    if (user?.role === 'superadmin' && modulesConfig?.superadmin) {
-      if (modulesConfig.superadmin.audit) {
+    if (user?.role === 'superadmin') {
+      // Superadmin siempre ve los bloques críticos aunque el backend no mande config
+      items.push({ id: 'sa_users', title: 'Usuarios', icon: 'people-outline', color: '#22d3ee', requiresSuperadmin: true });
+      items.push({ id: 'sa_tech_support', title: 'Soporte Técnico', icon: 'call-outline', color: '#38bdf8', requiresSuperadmin: true });
+      items.push({ id: 'sa_smtp', title: 'Correo SMTP', icon: 'mail-outline', color: '#facc15', requiresSuperadmin: true });
+      if (!modulesConfig || modulesConfig?.superadmin?.audit !== false) {
         items.push({ id: 'audit', title: 'Auditoría', icon: 'receipt-outline', color: '#facc15' });
       }
-      if (modulesConfig.superadmin.branding) {
+      if (!modulesConfig || modulesConfig?.superadmin?.branding !== false) {
         items.push({ id: 'branding', title: 'Branding', icon: 'color-palette-outline', color: '#c084fc' });
       }
-      if (modulesConfig.superadmin.modules) {
+      if (!modulesConfig || modulesConfig?.superadmin?.modules !== false) {
         items.push({ id: 'modules', title: 'Módulos', icon: 'layers-outline', color: '#4ade80' });
       }
+      items.push({ id: 'sa_mail', title: 'Logs de Correo', icon: 'mail-open-outline', color: '#f472b6', requiresSuperadmin: true });
+      items.push({ id: 'sa_actions', title: 'Acciones Críticas', icon: 'alert-circle-outline', color: '#ef4444', requiresSuperadmin: true });
     }
     
     return items;
