@@ -1,5 +1,14 @@
 services:
   - type: web
+    name: rifas-web
+    env: node
+    rootDir: src/screens/web
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NEXT_PUBLIC_API_BASE_URL
+        sync: falseservices:
+  - type: web
     name: pagina-web
     env: node
     branch: main
