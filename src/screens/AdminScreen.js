@@ -14,8 +14,10 @@ import {
   StyleSheet,
   Switch,
   Animated,
-  Modal
+  Modal,
+  Platform
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -171,6 +173,10 @@ export default function AdminScreen({ api, user, modulesConfig }) {
   const [raffleErrors, setRaffleErrors] = useState({});
   const [savingRaffle, setSavingRaffle] = useState(false);
   const [showLotteryModal, setShowLotteryModal] = useState(false);
+  const [startPickerVisible, setStartPickerVisible] = useState(false);
+  const [endPickerVisible, setEndPickerVisible] = useState(false);
+  const [startDateValue, setStartDateValue] = useState(new Date());
+  const [endDateValue, setEndDateValue] = useState(new Date());
 
   const LOTTERIES = [
     'Super Gana (Lotería del Táchira)',
@@ -208,6 +214,12 @@ export default function AdminScreen({ api, user, modulesConfig }) {
 
   useEffect(() => {
     if (activeSection === 'dashboard') loadMetrics();
+  }, [activeSection]);
+
+  useEffect(() => {
+    setShowLotteryModal(false);
+    setStartPickerVisible(false);
+    setEndPickerVisible(false);
   }, [activeSection]);
 
   // Lottery Control State
@@ -708,6 +720,20 @@ export default function AdminScreen({ api, user, modulesConfig }) {
     });
   };
 
+  useEffect(() => {
+    if (raffleForm.startDate) {
+      const d = new Date(raffleForm.startDate);
+      if (!Number.isNaN(d.getTime())) setStartDateValue(d);
+    }
+  }, [raffleForm.startDate]);
+
+  useEffect(() => {
+    if (raffleForm.endDate) {
+      const d = new Date(raffleForm.endDate);
+      if (!Number.isNaN(d.getTime())) setEndDateValue(d);
+    }
+  }, [raffleForm.endDate]);
+
   const saveStyle = async () => {
     if (!selectedRaffle) return;
     setSavingStyle(true);
@@ -778,6 +804,22 @@ export default function AdminScreen({ api, user, modulesConfig }) {
       Alert.alert('Ups', data?.error || 'No se pudo guardar.');
     }
     setSavingRaffle(false);
+  };
+
+  const onStartDateChange = (_event, selectedDate) => {
+    if (Platform.OS !== 'ios') setStartPickerVisible(false);
+    if (!_event || _event.type === 'dismissed') return;
+    const nextDate = selectedDate || startDateValue;
+    setStartDateValue(nextDate);
+    setRaffleForm((s) => ({ ...s, startDate: nextDate.toISOString().slice(0, 10) }));
+  };
+
+  const onEndDateChange = (_event, selectedDate) => {
+    if (Platform.OS !== 'ios') setEndPickerVisible(false);
+    if (!_event || _event.type === 'dismissed') return;
+    const nextDate = selectedDate || endDateValue;
+    setEndDateValue(nextDate);
+    setRaffleForm((s) => ({ ...s, endDate: nextDate.toISOString().slice(0, 10) }));
   };
 
   const regenerateSecurityCode = async () => {
@@ -1045,8 +1087,38 @@ export default function AdminScreen({ api, user, modulesConfig }) {
               </View>
 
               <TextInput style={styles.input} placeholder="Total tickets" value={raffleForm.totalTickets} onChangeText={(v) => setRaffleForm((s) => ({ ...s, totalTickets: v }))} keyboardType="numeric" />
-              <TextInput style={styles.input} placeholder="Inicio (YYYY-MM-DD)" value={raffleForm.startDate} onChangeText={(v) => setRaffleForm((s) => ({ ...s, startDate: v }))} />
-              <TextInput style={styles.input} placeholder="Cierre (YYYY-MM-DD)" value={raffleForm.endDate} onChangeText={(v) => setRaffleForm((s) => ({ ...s, endDate: v }))} />
+              <TouchableOpacity
+                style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+                onPress={() => setStartPickerVisible(true)}
+              >
+                <Text style={{ color: raffleForm.startDate ? '#fff' : '#94a3b8' }}>{raffleForm.startDate || 'Inicio'}</Text>
+                <Ionicons name="calendar-outline" size={18} color="#cbd5e1" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+                onPress={() => setEndPickerVisible(true)}
+              >
+                <Text style={{ color: raffleForm.endDate ? '#fff' : '#94a3b8' }}>{raffleForm.endDate || 'Cierre'}</Text>
+                <Ionicons name="calendar-outline" size={18} color="#cbd5e1" />
+              </TouchableOpacity>
+              {startPickerVisible && (
+                <DateTimePicker
+                  value={startDateValue}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
+                  onChange={onStartDateChange}
+                  minimumDate={new Date()}
+                />
+              )}
+              {endPickerVisible && (
+                <DateTimePicker
+                  value={endDateValue}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
+                  onChange={onEndDateChange}
+                  minimumDate={startDateValue || new Date()}
+                />
+              )}
               <TextInput style={styles.input} placeholder="Código de seguridad" value={raffleForm.securityCode} onChangeText={(v) => setRaffleForm((s) => ({ ...s, securityCode: v }))} secureTextEntry />
               
               <Text style={{ color: palette.secondary, fontWeight: 'bold', marginTop: 10, marginBottom: 4 }}>Premios Rápidos (Instant Wins)</Text>
@@ -1129,21 +1201,6 @@ export default function AdminScreen({ api, user, modulesConfig }) {
             </View>
           )}
 
-          {/* Fallback para secciones no implementadas aún */}
-          {activeSection && !['raffles','sa_tech_support','support','account'].includes(activeSection) && (
-            <View style={styles.card}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                  <TouchableOpacity onPress={() => setActiveSection(null)}><Ionicons name="arrow-back" size={24} color="#fff" /></TouchableOpacity>
-                  <Text style={[styles.title, { marginBottom: 0, marginLeft: 12, fontSize: 20 }]}>Sección en preparación</Text>
-              </View>
-              <Text style={styles.muted}>Esta opción estará disponible pronto. Si necesitas priorizarla, avísame.</Text>
-            </View>
-          )}
-
-          {/* ... Include other sections ... */}
-          {/* For brevity in this turn, I'll assume the other sections are copied correctly. 
-              I will paste the full content of the other sections to ensure it works. */}
-          
           {activeSection === 'sa_tech_support' && (
             <View style={styles.card}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>

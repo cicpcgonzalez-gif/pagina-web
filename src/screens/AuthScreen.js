@@ -14,6 +14,7 @@ import {
   Animated,
   Modal
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { ENV } from '../config/env';
@@ -68,8 +69,19 @@ export default function AuthScreen({ onAuth }) {
   const [rememberMe, setRememberMe] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [statePickerVisible, setStatePickerVisible] = useState(false);
+  const [dobPickerVisible, setDobPickerVisible] = useState(false);
+  const [dobDate, setDobDate] = useState(new Date());
 
   const handleChange = (key, value) => setForm((f) => ({ ...f, [key]: value }));
+
+  const handleDobChange = (_event, selectedDate) => {
+    if (Platform.OS !== 'ios') setDobPickerVisible(false);
+    if (!_event || _event.type === 'dismissed') return;
+    const currentDate = selectedDate || dobDate;
+    setDobDate(currentDate);
+    const iso = currentDate.toISOString().slice(0, 10);
+    handleChange('dob', iso);
+  };
 
   useEffect(() => {
     Animated.timing(heroAnim, {
@@ -78,6 +90,12 @@ export default function AuthScreen({ onAuth }) {
       useNativeDriver: true
     }).start();
   }, [heroAnim]);
+
+  useEffect(() => {
+    if (!form.dob) return;
+    const parsed = new Date(form.dob);
+    if (!Number.isNaN(parsed.getTime())) setDobDate(parsed);
+  }, [form.dob]);
 
   const handleLogin = async () => {
     const errors = {};
@@ -499,7 +517,15 @@ export default function AuthScreen({ onAuth }) {
                 </TouchableOpacity>
                 {fieldErrors.state && <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>* Requerido</Text>}
                 <TextInput style={[styles.input, styles.inputSoft]} placeholder="Cédula de Identidad" value={form.cedula} onChangeText={(v) => handleChange('cedula', v)} keyboardType="numeric" placeholderTextColor="#cbd5e1" />
-                <TextInput style={[styles.input, styles.inputSoft]} placeholder="Fecha de nacimiento (YYYY-MM-DD)" value={form.dob} onChangeText={(v) => handleChange('dob', v)} placeholderTextColor="#cbd5e1" />
+                <TouchableOpacity
+                  style={[styles.input, styles.inputSoft, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+                  onPress={() => setDobPickerVisible(true)}
+                >
+                  <Text style={{ color: form.dob ? '#fff' : '#cbd5e1' }}>
+                    {form.dob || 'Fecha de nacimiento'}
+                  </Text>
+                  <Ionicons name="calendar-outline" size={18} color="#cbd5e1" />
+                </TouchableOpacity>
                 
                 <Text style={{ color: '#e2e8f0', fontSize: 14, fontWeight: '700', marginBottom: 10, marginTop: 10 }}>Contacto</Text>
                 <TextInput style={[styles.input, styles.inputSoft]} placeholder="Teléfono Móvil" value={form.phone} onChangeText={(v) => handleChange('phone', v)} keyboardType="phone-pad" placeholderTextColor="#cbd5e1" />
@@ -569,6 +595,15 @@ export default function AuthScreen({ onAuth }) {
               </View>
             </View>
           </Modal>
+          {dobPickerVisible && (
+            <DateTimePicker
+              value={dobDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
+              onChange={handleDobChange}
+              maximumDate={new Date()}
+            />
+          )}
         </KeyboardAvoidingView>
       </LinearGradient>
     </SafeAreaView>
