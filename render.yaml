@@ -4,19 +4,12 @@ services:
     env: node
     rootDir: src/screens/web
     buildCommand: npm install && npm run build
-    startCommand: npm run start
-    envVars:
-      - key: NEXT_PUBLIC_API_BASE_URL
-        sync: falseservices:
-  - type: web
-    name: pagina-web
-    env: node
-    branch: main
-    rootDir: src/screens/web
-    buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
-      - key: NEXT_PUBLIC_API_URL
-        value: https://megarifas-backend.onrender.com
+      - key: NEXT_PUBLIC_API_BASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+        sync: false
       - key: NODE_VERSION
-        value: "20"
+        value: '20'
+
