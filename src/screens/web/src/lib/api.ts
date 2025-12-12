@@ -28,9 +28,24 @@ async function safeFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json();
 }
 
+type RemoteRaffle = {
+  id?: string | number;
+  name?: string;
+  title?: string;
+  ticketPrice?: number;
+  price?: number;
+  totalTickets?: number;
+  ticketsTotal?: number;
+  soldTickets?: number;
+  _count?: { tickets?: number };
+  endDate?: string;
+  drawDate?: string;
+  status?: string;
+};
+
 export async function fetchRaffles(): Promise<Raffle[]> {
   try {
-    const raw = await safeFetch<any[]>("/raffles");
+    const raw = await safeFetch<RemoteRaffle[]>("/raffles");
     return raw.map((item, index) => {
       const total = item.totalTickets ?? item.ticketsTotal ?? 0;
       const sold = item.soldTickets ?? item._count?.tickets ?? 0;

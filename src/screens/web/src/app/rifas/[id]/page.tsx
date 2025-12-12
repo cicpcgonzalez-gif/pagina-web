@@ -1,16 +1,25 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { getRaffle } from "@/lib/api"; // Asumimos que existe esta función
 
 // Mock de datos de rifa mientras no haya API real
-const mockRaffle = {
+type RaffleDetail = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  ticketsSold: number;
+  totalTickets: number;
+};
+
+const mockRaffle: RaffleDetail = {
   id: "1",
   name: "Gran Rifa de Navidad",
-  description:
-    "Participa para ganar un increíble auto 0km. ¡No te quedes fuera!",
+  description: "Participa para ganar un increíble auto 0km. ¡No te quedes fuera!",
   price: 10,
   image: "https://via.placeholder.com/600x400.png?text=Auto+0km",
   ticketsSold: 1250,
@@ -20,7 +29,7 @@ const mockRaffle = {
 export default function RaffleDetailPage() {
   const params = useParams();
   const id = params.id as string;
-  const [raffle, setRaffle] = useState<any>(null);
+  const [raffle, setRaffle] = useState<RaffleDetail | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
 
@@ -74,10 +83,12 @@ export default function RaffleDetailPage() {
     <main className="container mx-auto px-4 py-8">
       <div className="grid md:grid-cols-2 gap-8">
         <div>
-          <img
+          <Image
             src={raffle.image}
             alt={raffle.name}
-            className="w-full h-auto rounded-lg shadow-lg"
+            width={600}
+            height={400}
+            className="h-auto w-full rounded-lg shadow-lg"
           />
         </div>
         <div className="flex flex-col justify-center">

@@ -1,5 +1,7 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getAuthToken, getUserRole } from "@/lib/session";
 import { CreateRaffleModal } from "@/components/admin/CreateRaffleModal";
@@ -21,24 +23,26 @@ export default function AdminPage() {
     }
   }, []);
 
-  const actions = useMemo(
+  const adminActions = useMemo(
     () => [
-      {
-        title: "Crear rifa",
-        detail: "Define premios, precio y stock de boletos.",
-      },
-      {
-        title: "Cargar pagos",
-        detail: "Sincroniza pagos manuales o revisa callbacks de la pasarela.",
-      },
-      {
-        title: "Validar boleto",
-        detail: "Escanea o ingresa código para marcar como usado.",
-      },
-      {
-        title: "Reportes",
-        detail: "Ventas por fecha, estado de sorteos y liquidaciones.",
-      },
+      { key: "create", title: "Crear rifa", detail: "Define premios, precio y fecha de sorteo." },
+      { key: "raffles", title: "Listado de rifas", detail: "Activas, próximas y finalizadas.", href: "/admin/raffles" },
+      { key: "payments", title: "Cargar pagos", detail: "Sincroniza pagos manuales o callbacks.", href: "/admin/payments" },
+      { key: "tickets", title: "Validar boleto", detail: "Escanea o ingresa código para redimir.", href: "/admin/tickets" },
+      { key: "reports", title: "Reportes", detail: "Ventas, estado de rifas y liquidaciones.", href: "/admin/reports" },
+      { key: "exports", title: "Exportes", detail: "Descarga CSV/PDF de ventas y boletos.", href: "/admin/exports" },
+    ],
+    [],
+  );
+
+  const superActions = useMemo(
+    () => [
+      { key: "users", title: "Gestión de usuarios", detail: "Altas/bajas, bloqueo y verificación KYC.", href: "/admin/users" },
+      { key: "roles", title: "Roles y permisos", detail: "Asignar admin/superadmin y límites de acceso.", href: "/admin/roles" },
+      { key: "audit", title: "Auditoría", detail: "Revisar logs de seguridad y acciones críticas.", href: "/admin/audit" },
+      { key: "config", title: "Parámetros del sistema", detail: "Branding, pasarelas y variables globales.", href: "/admin/config" },
+      { key: "fraud", title: "Riesgos y fraude", detail: "Alertas, listas negras y scoring.", href: "/admin/fraud" },
+      { key: "notifs", title: "Notificaciones", detail: "Templates de email/push y remitentes.", href: "/admin/notifs" },
     ],
     [],
   );
@@ -65,16 +69,21 @@ export default function AdminPage() {
     );
   }
 
+  const isSuper = role?.toLowerCase() === "superadmin";
+
   return (
     <main className="mx-auto max-w-6xl px-4 pb-20 pt-10 bg-night-sky text-white">
       <div className="flex flex-col gap-4">
-        <p className="text-xs uppercase tracking-[0.25em] text-white/70">Panel admin</p>
+        <p className="text-xs uppercase tracking-[0.25em] text-white/70">
+          {isSuper ? "Panel superadmin" : "Panel admin"}
+        </p>
         <h1 className="font-[var(--font-display)] text-3xl text-white sm:text-4xl">
           Operaciones clave desde el navegador.
         </h1>
         <p className="text-base text-white/80">
-          Usa tu rol de administrador para gestionar rifas, pagos y validaciones.
-          Conecta estos bloques a tus endpoints internos.
+          {isSuper
+            ? "Gestiona rifas, pagos y además gobierno de usuarios, permisos y auditoría."
+            : "Usa tu rol de administrador para gestionar rifas, pagos y validaciones."}
         </p>
       </div>
 
@@ -91,24 +100,68 @@ export default function AdminPage() {
       </section>
 
       <section className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {actions.map((action) => {
-          if (action.title === "Crear rifa") {
-            return <CreateRaffleModal key={action.title} />;
+        {adminActions.map((action) => {
+          if (action.key === "create") {
+            return <CreateRaffleModal key={action.key} />;
           }
           return (
             <div
-              key={action.title}
+              key={action.key}
               className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/10 p-4 shadow-sm shadow-black/20"
             >
               <h3 className="text-lg font-semibold text-white">{action.title}</h3>
               <p className="text-sm text-white/80">{action.detail}</p>
-              <button className="rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60">
-                Configurar
-              </button>
+              {action.href ? (
+                <Link
+                  href={action.href}
+                  className="inline-flex items-center justify-center rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60"
+                >
+                  Ir
+                </Link>
+              ) : (
+                <button className="rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60">
+                  Configurar
+                </button>
+              )}
             </div>
           );
         })}
       </section>
+
+      {isSuper && (
+        <section className="mt-8 rounded-2xl border border-white/10 bg-white/10 p-6 shadow-md shadow-black/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.25em] text-white/70">Superadmin</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Gobierno y seguridad</h2>
+              <p className="text-sm text-white/80">Operaciones reservadas para superadmin.</p>
+            </div>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {superActions.map((action) => (
+              <div
+                key={action.key}
+                className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm shadow-black/20"
+              >
+                <h3 className="text-lg font-semibold text-white">{action.title}</h3>
+                <p className="text-sm text-white/80">{action.detail}</p>
+                {action.href ? (
+                  <Link
+                    href={action.href}
+                    className="inline-flex items-center justify-center rounded-lg border border-[#22d3ee]/40 bg-[#22d3ee]/10 px-3 py-2 text-sm font-semibold text-[#dff7ff] transition hover:-translate-y-[1px] hover:border-[#22d3ee]/80"
+                  >
+                    Ir
+                  </Link>
+                ) : (
+                  <button className="rounded-lg border border-[#22d3ee]/40 bg-[#22d3ee]/10 px-3 py-2 text-sm font-semibold text-[#dff7ff] transition hover:-translate-y-[1px] hover:border-[#22d3ee]/80">
+                    Configurar
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="mt-10 rounded-2xl border border-white/10 bg-white/10 p-6 shadow-md shadow-black/20">
         <h2 className="text-xl font-semibold text-white">Integración sugerida</h2>

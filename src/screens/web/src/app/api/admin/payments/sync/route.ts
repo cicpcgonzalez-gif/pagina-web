@@ -7,7 +7,7 @@ async function syncPayments() {
   return { status: "ok", synced: 25, new: 5 };
 }
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     // Aquí se añadiría la validación de autenticación y rol de admin
     const result = await syncPayments();

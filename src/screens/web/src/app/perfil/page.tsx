@@ -1,12 +1,30 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useEffect, useState } from "react";
 import { fetchMyTickets, fetchProfile } from "@/lib/api";
 import { clearAuthToken, getAuthToken, getUserRole } from "@/lib/session";
 
+type Profile = {
+  email?: string;
+  phone?: string;
+  role?: string;
+  name?: string;
+};
+
+type Ticket = {
+  id?: string | number;
+  serial?: string;
+  code?: string;
+  raffleId?: string | number;
+  raffle?: { id?: string | number };
+  status?: string;
+  state?: string;
+};
+
 export default function PerfilPage() {
-  const [profile, setProfile] = useState<any>(null);
-  const [tickets, setTickets] = useState<any[]>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -90,8 +108,8 @@ export default function PerfilPage() {
             <h2 className="text-lg font-semibold text-white">Boletos</h2>
             <div className="mt-3 space-y-2 text-sm text-white/85">
               {tickets.length === 0 && <p>No tienes boletos registrados.</p>}
-              {tickets.map((t) => (
-                <div key={t.id ?? t.serial ?? Math.random()} className="rounded-lg border border-white/10 bg-white/10 px-3 py-2">
+              {tickets.map((t, idx) => (
+                <div key={t.id ?? t.serial ?? t.code ?? `ticket-${idx}`} className="rounded-lg border border-white/10 bg-white/10 px-3 py-2">
                   <div className="flex justify-between"><span>Serial</span><span>{t.serial ?? t.code ?? "-"}</span></div>
                   <div className="flex justify-between"><span>Rifa</span><span>{t.raffleId ?? t.raffle?.id ?? "-"}</span></div>
                   <div className="flex justify-between"><span>Estado</span><span>{t.status ?? t.state ?? "-"}</span></div>
