@@ -4,27 +4,11 @@
 import { useEffect, useState } from "react";
 import { fetchMyTickets, fetchProfile } from "@/lib/api";
 import { clearAuthToken, getAuthToken, getUserRole } from "@/lib/session";
-
-type Profile = {
-  email?: string;
-  phone?: string;
-  role?: string;
-  name?: string;
-};
-
-type Ticket = {
-  id?: string | number;
-  serial?: string;
-  code?: string;
-  raffleId?: string | number;
-  raffle?: { id?: string | number };
-  status?: string;
-  state?: string;
-};
+import type { UserProfile, UserTicket } from "@/lib/types";
 
 export default function PerfilPage() {
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [tickets, setTickets] = useState<UserTicket[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
 

@@ -55,6 +55,7 @@ export default function RaffleDetailPage() {
 
   const handlePurchase = () => {
     // Lógica para añadir al carrito o proceder al pago
+    if (!raffle) return;
     alert(`Has añadido ${quantity} boleto(s) para "${raffle.name}".`);
     // Aquí iría la lógica para redirigir al checkout o abrir un modal de pago
   };

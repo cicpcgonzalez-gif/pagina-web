@@ -1,5 +1,5 @@
 import { mockRaffles, mockStatus } from "./mock";
-import type { Raffle, SystemStatus } from "./types";
+import type { Raffle, SystemStatus, UserProfile, UserTicket } from "./types";
 import { getAuthToken } from "./session";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -122,12 +122,12 @@ export async function initiatePayment(payload: {
   });
 }
 
-export async function fetchProfile() {
-  return safeFetch("/me");
+export async function fetchProfile(): Promise<UserProfile> {
+  return safeFetch<UserProfile>("/me");
 }
 
-export async function fetchMyTickets() {
-  return safeFetch("/me/tickets");
+export async function fetchMyTickets(): Promise<UserTicket[]> {
+  return safeFetch<UserTicket[]>("/me/tickets");
 }
 
 export async function requestPasswordReset(payload: { email: string }) {
