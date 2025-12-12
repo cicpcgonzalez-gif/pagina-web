@@ -1,7 +1,32 @@
 "use client";
 
 import { useState } from "react";
+import type { FormEvent } from "react";
 import { requestPasswordReset, resetPassword } from "@/lib/api";
+
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+
+async function getCaptchaToken(action: string) {
+  if (!RECAPTCHA_SITE_KEY) return null;
+  if (!(window as any).grecaptcha) {
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = `https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`;
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error("No se pudo cargar reCAPTCHA"));
+      document.head.appendChild(script);
+    });
+  }
+  return new Promise<string | null>((resolve) => {
+    (window as any).grecaptcha.ready(() => {
+      (window as any).grecaptcha
+        .execute(RECAPTCHA_SITE_KEY, { action })
+        .then((token: string) => resolve(token))
+        .catch(() => resolve(null));
+    });
+  });
+}
 
 export default function RecuperarPage() {
   const [email, setEmail] = useState("");
@@ -10,12 +35,13 @@ export default function RecuperarPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  const requestCode = async (e: React.FormEvent) => {
+  const requestCode = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
     try {
-      await requestPasswordReset({ email });
+      const captchaToken = await getCaptchaToken("password-reset-request");
+      await requestPasswordReset({ email, captchaToken: captchaToken || undefined });
       setMessage("Código enviado. Revisa tu correo.");
     } catch (error) {
       const msg = error instanceof Error ? error.message : "No se pudo enviar el código.";
@@ -25,12 +51,13 @@ export default function RecuperarPage() {
     }
   };
 
-  const submitReset = async (e: React.FormEvent) => {
+  const submitReset = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
     try {
-      await resetPassword({ token, password });
+      const captchaToken = await getCaptchaToken("password-reset-submit");
+      await resetPassword({ token, password, captchaToken: captchaToken || undefined });
       setMessage("Contraseña actualizada. Inicia sesión.");
     } catch (error) {
       const msg = error instanceof Error ? error.message : "No se pudo resetear.";
@@ -51,6 +78,7 @@ export default function RecuperarPage() {
       <section className="mt-8 grid gap-6 md:grid-cols-2">
         <form className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5" onSubmit={requestCode}>
           <h2 className="text-lg font-semibold text-white">1. Solicitar código</h2>
+          {RECAPTCHA_SITE_KEY && <p className="text-xs text-white/60">Protegido con reCAPTCHA v3</p>}
           <div className="flex flex-col gap-2">
             <label className="text-sm text-slate-200" htmlFor="email">Email</label>
             <input

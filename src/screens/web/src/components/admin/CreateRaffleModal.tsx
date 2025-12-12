@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { adminCreateRaffle } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -27,37 +28,18 @@ export function CreateRaffleModal() {
     e.preventDefault();
     setMessage("Creando rifa...");
 
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("description", description);
-    formData.append("price", String(price));
-    formData.append("status", status);
-    formData.append("drawDate", new Date(drawDate).toISOString());
-
-    if (flyer) {
-      formData.append("flyer", flyer);
-    }
-
-    if (images) {
-      for (let i = 0; i < images.length; i++) {
-        formData.append("images", images[i]);
-      }
-    }
-
     try {
-      const response = await fetch("/api/admin/raffles", {
-        method: "POST",
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Error al crear la rifa.");
-      }
-
-      setMessage(`Rifa "${result.name}" creada con éxito. ID: ${result.id}`);
-      // Aquí se podría cerrar el modal y refrescar la lista de rifas
+      const payload = {
+        title: name,
+        description,
+        price,
+        status,
+        drawDate: drawDate ? new Date(drawDate).toISOString() : undefined,
+      };
+      const result = await adminCreateRaffle(payload);
+      const createdName = (result as any)?.title || (result as any)?.name || name;
+      const createdId = (result as any)?.id ? ` ID: ${(result as any).id}` : "";
+      setMessage(`Rifa "${createdName}" creada con éxito.${createdId}`);
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Error desconocido.";
       setMessage(msg);

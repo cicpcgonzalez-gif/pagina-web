@@ -1,10 +1,28 @@
 import { mockRaffles, mockStatus } from "./mock";
-import type { Raffle, SystemStatus, UserProfile, UserTicket } from "./types";
-import { getAuthToken } from "./session";
+import type { ModuleConfig, Raffle, SystemStatus, UserProfile, UserTicket } from "./types";
+import { getAuthToken, getRefreshToken, setAuthToken, setRefreshToken } from "./session";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-async function safeFetch<T>(path: string, init?: RequestInit): Promise<T> {
+const uuid = () => {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+};
+
+const clientHeaders = () => {
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "server";
+  return {
+    "X-Client-Platform": "web",
+    "X-Request-Id": uuid(),
+    "X-Client-Time": new Date().toISOString(),
+    "X-User-Agent": ua,
+  };
+};
+
+async function doFetch<T>(path: string, init?: RequestInit): Promise<{ ok: boolean; status: number; raw: string; parsed?: T }>
+{
   if (!API_BASE) {
     throw new Error("API_BASE no configurado");
   }
@@ -15,17 +33,42 @@ async function safeFetch<T>(path: string, init?: RequestInit): Promise<T> {
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...clientHeaders(),
       ...(init?.headers || {}),
     },
     cache: "no-store",
   });
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || `Error ${response.status}`);
+  const raw = await response.text();
+  let parsed: T | undefined;
+  try {
+    parsed = raw ? (JSON.parse(raw) as T) : ({} as T);
+  } catch {
+    parsed = raw as unknown as T;
   }
 
-  return response.json();
+  return { ok: response.ok, status: response.status, raw, parsed };
+}
+
+async function safeFetch<T>(path: string, init?: RequestInit, options?: { skipRefresh?: boolean }): Promise<T> {
+  if (!API_BASE) {
+    throw new Error("API_BASE no configurado");
+  }
+
+  const first = await doFetch<T>(path, init);
+  if (first.ok) return (first.parsed as T) ?? ({} as T);
+
+  // Intentar refresh sólo una vez y sólo si 401/403
+  if (!options?.skipRefresh && (first.status === 401 || first.status === 403)) {
+    const refreshed = await tryRefreshToken();
+    if (refreshed) {
+      const retry = await doFetch<T>(path, init);
+      if (retry.ok) return (retry.parsed as T) ?? ({} as T);
+      throw new Error(retry.raw || `Error ${retry.status}`);
+    }
+  }
+
+  throw new Error(first.raw || `Error ${first.status}`);
 }
 
 type RemoteRaffle = {
@@ -66,14 +109,45 @@ export async function fetchRaffles(): Promise<Raffle[]> {
   }
 }
 
+export async function fetchRaffle(id: string | number) {
+  const data = await safeFetch<RemoteRaffle & { description?: string; stats?: { total?: number; sold?: number; remaining?: number }; style?: { bannerImage?: string; gallery?: string[]; themeColor?: string } }>(`/raffles/${id}`);
+
+  const total = data.totalTickets ?? data.ticketsTotal ?? data.stats?.total ?? 0;
+  const sold = data.soldTickets ?? data._count?.tickets ?? data.stats?.sold ?? 0;
+  const remaining = data.stats?.remaining ?? (total ? Math.max(total - sold, 0) : 0);
+
+  return {
+    id: String(data.id ?? id),
+    title: data.name ?? data.title ?? "Rifa",
+    price: Number(data.ticketPrice ?? data.price ?? 0),
+    ticketsAvailable: remaining,
+    ticketsTotal: total || 1,
+    drawDate: data.endDate ?? data.drawDate ?? "Por definir",
+    status: (data.status ?? "activa").toLowerCase() === "activa" ? "activa" : "cerrada",
+    description: data.description,
+    stats: data.stats,
+    style: data.style,
+  } satisfies Raffle & {
+    description?: string;
+    stats?: { total?: number; sold?: number; remaining?: number };
+    style?: { bannerImage?: string; gallery?: string[]; themeColor?: string };
+  };
+}
+
 export async function login(payload: {
   email: string;
   password: string;
-}): Promise<{ token: string; accessToken?: string; user: { role?: string } }> {
-  return safeFetch("/auth/login", {
+  captchaToken?: string;
+}): Promise<{ token: string; accessToken?: string; refreshToken?: string; user: { role?: string } }> {
+  const data = await safeFetch("/auth/login", {
     method: "POST",
     body: JSON.stringify(payload),
   });
+  const token = (data as any)?.token || (data as any)?.accessToken;
+  const refresh = (data as any)?.refreshToken;
+  if (token) setAuthToken(token);
+  if (refresh) setRefreshToken(refresh);
+  return data as any;
 }
 
 export async function register(payload: {
@@ -81,11 +155,23 @@ export async function register(payload: {
   email: string;
   phone?: string;
   password: string;
-}): Promise<{ token?: string; accessToken?: string; user?: { role?: string } }> {
-  return safeFetch("/register", {
+  firstName?: string;
+  lastName?: string;
+  state?: string;
+  address?: string;
+  dob?: string;
+  cedula?: string;
+  captchaToken?: string;
+}): Promise<{ token?: string; accessToken?: string; refreshToken?: string; user?: { role?: string }; require2FA?: boolean }> {
+  const data = await safeFetch("/register", {
     method: "POST",
     body: JSON.stringify(payload),
   });
+  const token = (data as any)?.token || (data as any)?.accessToken;
+  const refresh = (data as any)?.refreshToken;
+  if (token) setAuthToken(token);
+  if (refresh) setRefreshToken(refresh);
+  return data as any;
 }
 
 export async function fetchSystemStatus(): Promise<SystemStatus[]> {
@@ -104,19 +190,75 @@ export async function fetchSystemStatus(): Promise<SystemStatus[]> {
   }
 }
 
-export async function purchaseTickets(raffleId: number, quantity: number) {
-  return safeFetch(`/raffles/${raffleId}/purchase`, {
-    method: "POST",
-    body: JSON.stringify({ quantity }),
-  });
+export async function fetchModules(): Promise<ModuleConfig> {
+  return safeFetch<ModuleConfig>("/modules");
 }
 
+export async function refreshSession() {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return null;
+  const data = await safeFetch<{ token?: string; accessToken?: string; refreshToken?: string }>(
+    "/auth/refresh",
+    {
+      method: "POST",
+      body: JSON.stringify({ refreshToken }),
+    },
+    { skipRefresh: true },
+  );
+  const token = data?.token || data?.accessToken;
+  if (token) setAuthToken(token);
+  if (data?.refreshToken) setRefreshToken(data.refreshToken);
+  return token;
+}
+
+let lastPurchaseAt: number | null = null;
+export async function purchaseTickets(raffleId: number, quantity: number) {
+  const now = Date.now();
+  if (lastPurchaseAt && now - lastPurchaseAt < 1000) {
+    throw new Error("Demasiadas solicitudes rápidas. Intenta en un segundo.");
+  }
+  lastPurchaseAt = now;
+  const clientRequestId = uuid();
+  const result = await safeFetch(`/raffles/${raffleId}/purchase`, {
+    method: "POST",
+    body: JSON.stringify({ quantity, clientRequestId }),
+  });
+  return typeof result === "object" && result !== null ? { ...result, clientRequestId } : result;
+}
+
+let lastPaymentAt: number | null = null;
 export async function initiatePayment(payload: {
   raffleId: number;
   quantity: number;
   provider?: string;
 }): Promise<{ paymentUrl?: string; status?: string }> {
-  return safeFetch(`/payments/initiate`, {
+  const now = Date.now();
+  if (lastPaymentAt && now - lastPaymentAt < 1000) {
+    throw new Error("Demasiadas solicitudes de pago seguidas. Intenta de nuevo.");
+  }
+  lastPaymentAt = now;
+  const clientRequestId = uuid();
+  const result = await safeFetch(`/payments/initiate`, {
+    method: "POST",
+    body: JSON.stringify({ ...payload, clientRequestId }),
+  });
+  return typeof result === "object" && result !== null ? { ...result, clientRequestId } : result;
+}
+
+async function tryRefreshToken() {
+  try {
+    const token = await refreshSession();
+    return !!token;
+  } catch {
+    return false;
+  }
+}
+
+export async function submitManualPayment(
+  raffleId: number,
+  payload: { quantity: number; reference?: string; note?: string; proof?: string },
+) {
+  return safeFetch(`/raffles/${raffleId}/manual-payments`, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -130,6 +272,66 @@ export async function fetchMyTickets(): Promise<UserTicket[]> {
   return safeFetch<UserTicket[]>("/me/tickets");
 }
 
+export async function fetchMyRaffles() {
+  return safeFetch<Array<Record<string, unknown>>>("/me/raffles");
+}
+
+export async function fetchWallet() {
+  return safeFetch<{ balance?: number; transactions?: Array<Record<string, unknown>> }>("/wallet");
+}
+
+export async function fetchMyPayments() {
+  // Algunos entornos exponen pagos como /payments, otros /me/payments.
+  const candidates = ["/payments/my", "/me/payments", "/payments"];
+
+  for (const path of candidates) {
+    try {
+      return await safeFetch<Array<Record<string, unknown>>>(path);
+    } catch {
+      // probamos la siguiente ruta
+    }
+  }
+
+  return [];
+}
+
+export async function fetchWinners() {
+  return safeFetch<Array<Record<string, unknown>>>("/winners");
+}
+
+export async function updateProfile(payload: Partial<UserProfile> & { avatar?: string }) {
+  return safeFetch<{ user: UserProfile }>("/me", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function changePassword(payload: { currentPassword: string; newPassword: string }) {
+  return safeFetch("/me/change-password", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteAccount() {
+  return safeFetch("/me", {
+    method: "DELETE",
+  });
+}
+
+export async function adminCreateRaffle(payload: {
+  title: string;
+  description?: string;
+  price?: number;
+  status?: string;
+  drawDate?: string;
+}) {
+  return safeFetch("/raffles", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function requestPasswordReset(payload: { email: string }) {
   return safeFetch("/auth/forgot-password", {
     method: "POST",
@@ -139,6 +341,78 @@ export async function requestPasswordReset(payload: { email: string }) {
 
 export async function resetPassword(payload: { token: string; password: string }) {
   return safeFetch("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function requestPasswordRecovery(payload: { email: string }) {
+  return safeFetch("/auth/password/reset/request", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function verifyEmailCode(payload: { email: string; code: string }) {
+  return safeFetch("/verify-email", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function resendVerification(payload: { email: string }) {
+  return safeFetch("/auth/verify/resend", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function verifyTwoFactor(payload: { email: string; code: string }) {
+  return safeFetch("/auth/2fa", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchAdminPayments() {
+  try {
+    return await safeFetch<Array<Record<string, unknown>>>("/admin/payments");
+  } catch {
+    return [];
+  }
+}
+
+export async function syncPayments() {
+  return safeFetch<{ synced?: number; message?: string }>("/admin/payments/sync", {
+    method: "POST",
+  });
+}
+
+export async function reconcilePayment(paymentId: string | number) {
+  return safeFetch<{ status?: string; message?: string }>(`/admin/payments/${paymentId}/reconcile`, {
+    method: "POST",
+  });
+}
+
+export async function fetchAdminWinners() {
+  try {
+    return await safeFetch<Array<Record<string, unknown>>>("/admin/winners");
+  } catch {
+    return [];
+  }
+}
+
+export async function publishWinner(payload: {
+  raffleId?: string | number;
+  raffleTitle?: string;
+  winnerName?: string;
+  prize?: string;
+  testimonial?: string;
+  photoUrl?: string;
+  drawDate?: string;
+  ticketNumber?: string;
+}) {
+  return safeFetch("/admin/winners", {
     method: "POST",
     body: JSON.stringify(payload),
   });

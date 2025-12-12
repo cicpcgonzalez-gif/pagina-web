@@ -1,10 +1,43 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { fetchModules } from "@/lib/api";
+import { getUserRole } from "@/lib/session";
+import type { ModuleConfig } from "@/lib/types";
 
 export default function AdminTicketsPage() {
   const [code, setCode] = useState("");
   const [result, setResult] = useState<string | null>(null);
+  const [modulesConfig, setModulesConfig] = useState<ModuleConfig | null>(null);
+  const [modulesError, setModulesError] = useState<string | null>(null);
+  const [loadingModules, setLoadingModules] = useState(true);
+
+  const role = getUserRole()?.toLowerCase();
+
+  useEffect(() => {
+    let mounted = true;
+    fetchModules()
+      .then((data) => {
+        if (!mounted) return;
+        setModulesConfig(data || null);
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        setModulesError(err instanceof Error ? err.message : "No se pudieron cargar módulos");
+      })
+      .finally(() => {
+        if (mounted) setLoadingModules(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const ticketsEnabled = useMemo(() => {
+    if (!modulesConfig) return true;
+    if (role === "superadmin") return modulesConfig.superadmin?.tickets !== false;
+    return modulesConfig.admin?.tickets !== false;
+  }, [modulesConfig, role]);
 
   const recent = useMemo(
     () => [
@@ -34,10 +67,24 @@ export default function AdminTicketsPage() {
     }
   };
 
+  if (!loadingModules && !ticketsEnabled) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 pb-16 pt-10 text-white bg-night-sky">
+        <div className="rounded-2xl border border-white/10 bg-white/10 p-6 shadow-md shadow-black/30">
+          <p className="text-lg font-semibold">Módulo de tickets desactivado.</p>
+          <p className="mt-2 text-sm text-white/75">Habilita el módulo en configuración para validar boletos.</p>
+          {modulesError && <p className="mt-2 text-xs text-red-200">{modulesError}</p>}
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto max-w-4xl px-4 pb-16 pt-10 text-white bg-night-sky">
       <h1 className="text-3xl font-bold">Validar boletos</h1>
       <p className="mt-2 text-white/80">Escanea o ingresa el código del boleto. Mock de prueba.</p>
+      {loadingModules && <p className="mt-2 text-xs text-white/60">Cargando módulos…</p>}
+      {modulesError && <p className="mt-2 text-xs text-red-200">{modulesError}</p>}
 
       <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-black/30">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

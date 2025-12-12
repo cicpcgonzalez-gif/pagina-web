@@ -1,6 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { fetchModules } from "@/lib/api";
+import { getUserRole } from "@/lib/session";
+import type { ModuleConfig } from "@/lib/types";
 
 type Template = { id: string; name: string; channel: "email" | "push"; active: boolean; subject?: string };
 
@@ -13,20 +16,64 @@ export default function AdminNotifsPage() {
     ],
   );
   const [testStatus, setTestStatus] = useState<string | null>(null);
+  const [modulesConfig, setModulesConfig] = useState<ModuleConfig | null>(null);
+  const [modulesError, setModulesError] = useState<string | null>(null);
+  const [loadingModules, setLoadingModules] = useState(true);
 
-  const toggle = (id: string) => {
-    setTemplates((prev) => prev.map((t) => (t.id === id ? { ...t, active: !t.active } : t)));
-  };
+  const role = getUserRole()?.toLowerCase();
+  const isSuper = role === "superadmin";
+
+  useEffect(() => {
+    let mounted = true;
+    fetchModules()
+      .then((data) => {
+        if (!mounted) return;
+        setModulesConfig(data || null);
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        setModulesError(err instanceof Error ? err.message : "No se pudieron cargar módulos");
+      })
+      .finally(() => {
+        if (mounted) setLoadingModules(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const smtpEnabled = useMemo(() => {
+    if (!modulesConfig) return true;
+    return isSuper ? modulesConfig.superadmin?.smtp !== false : modulesConfig.admin?.support !== false;
+  }, [modulesConfig, isSuper]);
 
   const sendTest = (tpl: Template) => {
     const channel = tpl.channel === "email" ? "correo" : "push";
     setTestStatus(`Test enviado (${channel}) con plantilla "${tpl.name}" (mock).`);
   };
 
+  const toggle = (id: string) => {
+    setTemplates((prev) => prev.map((t) => (t.id === id ? { ...t, active: !t.active } : t)));
+  };
+
+  if (!loadingModules && !smtpEnabled) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 pb-16 pt-10 text-white bg-night-sky">
+        <div className="rounded-2xl border border-white/10 bg-white/10 p-6 shadow-md shadow-black/30">
+          <p className="text-lg font-semibold">Módulo de notificaciones/SMTP desactivado.</p>
+          <p className="mt-2 text-sm text-white/75">Actívalo en configuración para enviar correos y push.</p>
+          {modulesError && <p className="mt-2 text-xs text-red-200">{modulesError}</p>}
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto max-w-4xl px-4 pb-16 pt-10 text-white bg-night-sky">
       <h1 className="text-3xl font-bold">Notificaciones</h1>
-      <p className="mt-2 text-white/80">Activa/desactiva plantillas y envía test (mock).</p>
+      <p className="mt-2 text-white/80">Activa plantillas y envía test (mock).</p>
+      {loadingModules && <p className="mt-2 text-xs text-white/60">Cargando módulos…</p>}
+      {modulesError && <p className="mt-2 text-xs text-red-200">{modulesError}</p>}
 
       <div className="mt-6 grid gap-3">
         {templates.map((tpl) => (

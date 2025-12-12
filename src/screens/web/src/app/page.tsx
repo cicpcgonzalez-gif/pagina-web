@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { fetchRaffles } from "@/lib/api";
+import { ProfileLinkButton } from "@/components/ProfileLinkButton";
+import { HomeLoginCard } from "@/components/HomeLoginCard";
 
 const banners = [
   {
@@ -72,10 +74,11 @@ export default async function Home() {
             <div className="absolute -left-10 -top-10 h-24 w-24 rounded-full bg-[#3b82f6]/30 blur-3xl" />
             <div className="absolute -right-12 bottom-0 h-24 w-24 rounded-full bg-[#22d3ee]/25 blur-3xl" />
             <div className="relative space-y-4 text-sm text-white">
+              <HomeLoginCard />
               {banners.map((banner) => (
                 <div key={banner.title} className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
                   <div
-                    className="h-40 w-full bg-cover bg-center"
+                    className="h-32 w-full bg-cover bg-center"
                     style={{ backgroundImage: `linear-gradient(120deg, rgba(10,14,28,0.5), rgba(10,14,28,0.1)), url(${banner.image})` }}
                   />
                   <div className="space-y-2 p-4">
@@ -181,12 +184,9 @@ export default async function Home() {
                     >
                       Comprar
                     </Link>
-                    <Link
-                      href="/perfil"
-                      className="rounded-lg border border-white/20 px-3 py-2 text-white transition hover:border-white/40"
-                    >
+                    <ProfileLinkButton className="rounded-lg border border-white/20 px-3 py-2 text-white transition hover:border-white/40">
                       Perfil
-                    </Link>
+                    </ProfileLinkButton>
                   </div>
                 </article>
               );

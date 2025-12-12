@@ -1,8 +1,42 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { fetchModules } from "@/lib/api";
+import { getUserRole } from "@/lib/session";
+import type { ModuleConfig } from "@/lib/types";
 
 export default function AdminReportsPage() {
+  const [modulesConfig, setModulesConfig] = useState<ModuleConfig | null>(null);
+  const [modulesError, setModulesError] = useState<string | null>(null);
+  const [loadingModules, setLoadingModules] = useState(true);
+
+  const role = getUserRole()?.toLowerCase();
+
+  useEffect(() => {
+    let mounted = true;
+    fetchModules()
+      .then((data) => {
+        if (!mounted) return;
+        setModulesConfig(data || null);
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        setModulesError(err instanceof Error ? err.message : "No se pudieron cargar módulos");
+      })
+      .finally(() => {
+        if (mounted) setLoadingModules(false);
+      });
+    return () => {
+        mounted = false;
+    };
+  }, []);
+
+  const reportsEnabled = useMemo(() => {
+    if (!modulesConfig) return true;
+    if (role === "superadmin") return modulesConfig.superadmin?.reports !== false;
+    return modulesConfig.admin?.reports !== false;
+  }, [modulesConfig, role]);
+
   const summary = useMemo(
     () => [
       { label: "Ventas hoy", value: "$1,240" },
@@ -68,11 +102,25 @@ export default function AdminReportsPage() {
     [],
   );
 
+  if (!loadingModules && !reportsEnabled) {
+    return (
+      <main className="mx-auto max-w-5xl px-4 pb-16 pt-10 text-white bg-night-sky">
+        <div className="rounded-2xl border border-white/10 bg-white/10 p-6 shadow-md shadow-black/30">
+          <p className="text-lg font-semibold">Módulo de reportes desactivado.</p>
+          <p className="mt-2 text-sm text-white/75">Actívalo para ver métricas y exportes.</p>
+          {modulesError && <p className="mt-2 text-xs text-red-200">{modulesError}</p>}
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto max-w-5xl px-4 pb-16 pt-10 text-white bg-night-sky">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold">Reportes</h1>
         <p className="text-white/80">Métricas mock. Conecta aquí GET `/api/admin/reports`.</p>
+        {loadingModules && <span className="text-xs text-white/60">Cargando módulos…</span>}
+        {modulesError && <span className="text-xs text-red-200">{modulesError}</span>}
       </div>
 
       <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

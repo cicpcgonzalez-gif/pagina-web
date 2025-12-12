@@ -1,6 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { fetchModules } from "@/lib/api";
+import { getUserRole } from "@/lib/session";
+import type { ModuleConfig } from "@/lib/types";
 
 type UserRow = { name: string; email: string; role: "user" | "admin" | "superadmin"; scopes: string[]; locked: boolean };
 
@@ -17,6 +20,36 @@ export default function AdminRolesPage() {
 
   const [rows, setRows] = useState(initial);
   const [selected, setSelected] = useState<UserRow | null>(null);
+  const [modulesConfig, setModulesConfig] = useState<ModuleConfig | null>(null);
+  const [modulesError, setModulesError] = useState<string | null>(null);
+  const [loadingModules, setLoadingModules] = useState(true);
+
+  const role = getUserRole()?.toLowerCase();
+  const isSuper = role === "superadmin";
+
+  useEffect(() => {
+    let mounted = true;
+    fetchModules()
+      .then((data) => {
+        if (!mounted) return;
+        setModulesConfig(data || null);
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        setModulesError(err instanceof Error ? err.message : "No se pudieron cargar módulos");
+      })
+      .finally(() => {
+        if (mounted) setLoadingModules(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const rolesEnabled = useMemo(() => {
+    if (!modulesConfig) return isSuper;
+    return isSuper && modulesConfig.superadmin?.users !== false;
+  }, [modulesConfig, isSuper]);
 
   const toggleLock = (email: string) => {
     setRows((prev) => prev.map((r) => (r.email === email ? { ...r, locked: !r.locked } : r)));
@@ -46,10 +79,35 @@ export default function AdminRolesPage() {
 
   const scopesText = (scopes: string[]) => (scopes.includes("all") ? "Todo" : scopes.join(", "));
 
+  if (!isSuper) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 pb-16 pt-10 text-white bg-night-sky">
+        <div className="rounded-2xl border border-white/10 bg-white/10 p-6 shadow-md shadow-black/30">
+          <p className="text-lg font-semibold">Solo superadmin.</p>
+          <p className="mt-2 text-sm text-white/75">Cambia a una cuenta superadmin para gestionar roles.</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!loadingModules && !rolesEnabled) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 pb-16 pt-10 text-white bg-night-sky">
+        <div className="rounded-2xl border border-white/10 bg-white/10 p-6 shadow-md shadow-black/30">
+          <p className="text-lg font-semibold">Módulo de roles/usuarios desactivado.</p>
+          <p className="mt-2 text-sm text-white/75">Actívalo en configuración.</p>
+          {modulesError && <p className="mt-2 text-xs text-red-200">{modulesError}</p>}
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto max-w-5xl px-4 pb-16 pt-10 text-white bg-night-sky">
       <h1 className="text-3xl font-bold">Roles y permisos</h1>
       <p className="mt-2 text-white/80">Promueve, reduce y bloquea accesos (mock local).</p>
+      {loadingModules && <p className="mt-2 text-xs text-white/60">Cargando módulos…</p>}
+      {modulesError && <p className="mt-2 text-xs text-red-200">{modulesError}</p>}
 
       <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg shadow-black/30">
         <table className="w-full text-left text-sm text-white/80">
