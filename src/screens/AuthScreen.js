@@ -332,30 +332,6 @@ export default function AuthScreen({ onAuth }) {
               </TouchableOpacity>
             </View>
           </ScrollView>
-
-          <Modal visible={statePickerVisible} transparent animationType="fade" onRequestClose={() => setStatePickerVisible(false)}>
-            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
-              <View style={{ backgroundColor: '#0f172a', borderRadius: 12, padding: 16, maxHeight: '80%' }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>Selecciona tu estado</Text>
-                  <TouchableOpacity onPress={() => setStatePickerVisible(false)}>
-                    <Ionicons name="close" size={22} color="#cbd5e1" />
-                  </TouchableOpacity>
-                </View>
-                <ScrollView>
-                  {VENEZUELA_STATES.map((st) => (
-                    <TouchableOpacity
-                      key={st}
-                      onPress={() => { handleChange('state', st); setStatePickerVisible(false); setFieldErrors((e) => ({ ...e, state: false })); }}
-                      style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)' }}
-                    >
-                      <Text style={{ color: '#e2e8f0', fontSize: 14 }}>{st}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            </View>
-          </Modal>
         </KeyboardAvoidingView>
       </LinearGradient>
     </SafeAreaView>
@@ -570,6 +546,29 @@ export default function AuthScreen({ onAuth }) {
               <Text style={{ color: palette.muted, fontSize: 10, marginTop: 2, opacity: 0.5 }}>© 2025 MegaRifas. Todos los derechos reservados.</Text>
             </View>
           </ScrollView>
+          <Modal visible={statePickerVisible} transparent animationType="fade" onRequestClose={() => setStatePickerVisible(false)}>
+            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
+              <View style={{ backgroundColor: '#0f172a', borderRadius: 12, padding: 16, maxHeight: '80%' }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>Selecciona tu estado</Text>
+                  <TouchableOpacity onPress={() => setStatePickerVisible(false)}>
+                    <Ionicons name="close" size={22} color="#cbd5e1" />
+                  </TouchableOpacity>
+                </View>
+                <ScrollView>
+                  {VENEZUELA_STATES.map((st) => (
+                    <TouchableOpacity
+                      key={st}
+                      onPress={() => { handleChange('state', st); setStatePickerVisible(false); setFieldErrors((e) => ({ ...e, state: false })); }}
+                      style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)' }}
+                    >
+                      <Text style={{ color: '#e2e8f0', fontSize: 14 }}>{st}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </View>
+          </Modal>
         </KeyboardAvoidingView>
       </LinearGradient>
     </SafeAreaView>

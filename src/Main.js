@@ -236,15 +236,15 @@ function MainContent() {
           <Stack.Screen name="RaffleDetail" options={{ title: 'Detalle de Rifa' }}>
             {(props) => <RaffleDetailScreen {...props} api={api} />}
           </Stack.Screen>
-          <Stack.Screen name="Legal" options={{ headerShown: false }}>
-            {(props) => <LegalScreen {...props} />}
-          </Stack.Screen>
         </>
         ) : (
           <Stack.Screen name="Auth" options={{ headerShown: false }}>
             {() => <AuthScreen onAuth={handleAuth} />}
           </Stack.Screen>
         )}
+        <Stack.Screen name="Legal" options={{ headerShown: false }}>
+          {(props) => <LegalScreen {...props} />}
+        </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );

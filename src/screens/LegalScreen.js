@@ -15,6 +15,9 @@ Al descargar, acceder o utilizar la aplicación MegaRifas, usted acepta estar su
 2. Elegibilidad
 El servicio está disponible solo para personas mayores de 18 años. Al registrarse, usted declara y garantiza que tiene la edad legal para participar en sorteos según la legislación de su jurisdicción.
 
+3. Rol de MegaRifas
+MegaRifas es una herramienta tecnológica para que organizadores independientes gestionen sus rifas. Los organizadores son los únicos responsables legales y operativos de cada sorteo, la entrega de premios y la comunicación con los participantes. MegaRifas no organiza, administra ni se hace responsable por la ejecución de los sorteos.
+
 3. Reglas de los Sorteos
 - Cada rifa tiene sus propias reglas específicas, fecha de sorteo y premios detallados en la descripción.
 - Los tickets son digitales y se generan con una firma criptográfica única para garantizar su autenticidad.
@@ -31,6 +34,19 @@ Todo el contenido, marcas y logotipos mostrados en la aplicación son propiedad 
 
 6. Modificaciones
 Nos reservamos el derecho de modificar estos términos en cualquier momento. Las modificaciones entrarán en vigor inmediatamente después de su publicación en la aplicación.
+      `
+    },
+    {
+      title: 'Responsabilidad de los Organizadores',
+      content: `
+1. Responsabilidad exclusiva
+Cada organizador es responsable de la legalidad del sorteo, de los permisos o licencias requeridas, de la veracidad de la información publicada y de entregar los premios ofrecidos.
+
+2. Manejo de fondos y premios
+Los pagos, transferencias y entrega de premios son gestionados directamente por el organizador. MegaRifas no recibe, custodia ni distribuye fondos o premios en nombre de los organizadores.
+
+3. Reclamaciones
+Cualquier duda o reclamación sobre un sorteo debe dirigirse al organizador correspondiente. MegaRifas puede colaborar con información técnica del sorteo, pero no asume responsabilidad por daños, pérdidas o incumplimientos.
       `
     },
     {
