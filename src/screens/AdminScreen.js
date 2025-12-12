@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import {
   SafeAreaView,
   View,
@@ -142,20 +142,6 @@ export default function AdminScreen({ api, user, modulesConfig }) {
     
     return items;
   }, [user, modulesConfig]);
-      { id: 'winner', title: 'Publicar Ganador', icon: 'trophy-outline', color: '#fbbf24' },
-      { id: 'progress', title: 'Progreso Rifas', icon: 'bar-chart-outline', color: '#c084fc' },
-      { id: 'payments', title: 'Pagos Manuales', icon: 'cash-outline', color: '#4ade80' },
-      { id: 'style', title: 'Personalizar', icon: 'color-palette-outline', color: '#f472b6' },
-      { id: 'tickets', title: 'Tickets', icon: 'ticket-outline', color: '#fbbf24' },
-      { id: 'sa_smtp', title: 'Config SMTP', icon: 'mail-outline', color: '#f472b6', requiresSuperadmin: true },
-      { id: 'sa_branding', title: 'Branding', icon: 'color-palette-outline', color: '#fbbf24', requiresSuperadmin: true },
-      { id: 'sa_users', title: 'Usuarios', icon: 'people-outline', color: '#22d3ee', requiresSuperadmin: true },
-      { id: 'sa_modules', title: 'Módulos', icon: 'grid-outline', color: '#a78bfa', requiresSuperadmin: true },
-      { id: 'sa_audit', title: 'Auditoría', icon: 'list-outline', color: '#fbbf24', requiresSuperadmin: true },
-      { id: 'sa_mail', title: 'Log Correo', icon: 'mail-open-outline', color: '#22d3ee', requiresSuperadmin: true },
-      { id: 'sa_actions', title: 'Log Acciones', icon: 'clipboard-outline', color: '#fbbf24', requiresSuperadmin: true }
-    ];
-  }, []);
 
   const [payments, setPayments] = useState([]);
   const [loadingPayments, setLoadingPayments] = useState(false);

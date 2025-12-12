@@ -1,7 +1,8 @@
 {
   "expo": {
     "name": "MegaRifas",
-    "slug": "megarifasapps",
+    "slug": "megarifas-mobile-rifaapk",
+    "owner": "rifaapk",
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,11 +16,6 @@
     "assetBundlePatterns": [
       "**/*"
     ],
-    "extra": {
-      "eas": {
-        "projectId": "d217637f-70ce-446b-8763-76a51b14b0a7"
-      }
-    },
     "android": {
       "package": "com.megarifas.app",
       "versionCode": 2,
@@ -50,9 +46,10 @@
         "policy": "appVersion"
       }
     },
-    "owner": "megarifasapps-organization",
-    "updates": {
-      "url": "https://u.expo.dev/d217637f-70ce-446b-8763-76a51b14b0a7"
+    "extra": {
+      "eas": {
+        "projectId": "6d2e9b8a-a626-4761-baa1-0b61882210ec"
+      }
     }
   }
 }

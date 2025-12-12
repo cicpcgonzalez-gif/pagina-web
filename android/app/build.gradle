@@ -1,6 +1,7 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
+apply plugin: "kotlin-kapt"
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
@@ -172,10 +173,18 @@ dependencies {
     }
 }
 
-apply from: new File(["node", "--print", "require.resolve('@react-native-community/cli-platform-android/package.json', { paths: [require.resolve('react-native/package.json')] })"].execute(null, rootDir).text.trim(), "../native_modules.gradle");
-applyNativeModulesAppBuildGradle(project)
-
-kotlin {
-    jvmToolchain(17)
+kapt {
+    javacOptions {
+        option("-J--add-opens=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED")
+        option("-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED")
+        option("-J--add-opens=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED")
+        option("-J--add-opens=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED")
+        option("-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED")
+        option("-J--add-opens=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED")
+        option("-J--add-opens=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED")
+        option("-J--add-opens=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED")
+    }
 }
 
+apply from: new File(["node", "--print", "require.resolve('@react-native-community/cli-platform-android/package.json', { paths: [require.resolve('react-native/package.json')] })"].execute(null, rootDir).text.trim(), "../native_modules.gradle");
+applyNativeModulesAppBuildGradle(project)
