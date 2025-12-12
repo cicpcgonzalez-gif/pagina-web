@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -66,7 +67,10 @@ export function CreateRaffleModal() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>Crear Rifa</Button>
+        <Button className="inline-flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          Crear rifa
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
