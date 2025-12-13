@@ -63,7 +63,22 @@ export default function RifasPage() {
     };
   }, []);
 
-  if (checkingAuth) return null;
+  const filteredRaffles = useMemo(() => {
+    const arr = raffles.slice();
+    if (filter === "cheap") {
+      return arr.sort((a, b) => a.price - b.price);
+    }
+    if (filter === "closing") {
+      return arr.sort((a, b) => {
+        const ta = new Date(a.drawDate).getTime();
+        const tb = new Date(b.drawDate).getTime();
+        const safeA = Number.isFinite(ta) ? ta : Number.MAX_SAFE_INTEGER;
+        const safeB = Number.isFinite(tb) ? tb : Number.MAX_SAFE_INTEGER;
+        return safeA - safeB;
+      });
+    }
+    return arr;
+  }, [raffles, filter]);
 
   const handlePurchase = async (raffleId: string | number) => {
     setMessage(null);
@@ -94,22 +109,7 @@ export default function RifasPage() {
     }
   };
 
-  const filteredRaffles = useMemo(() => {
-    const arr = raffles.slice();
-    if (filter === "cheap") {
-      return arr.sort((a, b) => a.price - b.price);
-    }
-    if (filter === "closing") {
-      return arr.sort((a, b) => {
-        const ta = new Date(a.drawDate).getTime();
-        const tb = new Date(b.drawDate).getTime();
-        const safeA = Number.isFinite(ta) ? ta : Number.MAX_SAFE_INTEGER;
-        const safeB = Number.isFinite(tb) ? tb : Number.MAX_SAFE_INTEGER;
-        return safeA - safeB;
-      });
-    }
-    return arr;
-  }, [raffles, filter]);
+  if (checkingAuth) return null;
 
   const navButtons = [
     { href: "/rifas", label: "Rifas" },
