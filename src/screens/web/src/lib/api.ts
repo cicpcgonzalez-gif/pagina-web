@@ -332,7 +332,7 @@ export async function adminCreateRaffle(payload: {
   });
 }
 
-export async function requestPasswordReset(payload: { email: string }) {
+export async function requestPasswordReset(payload: { email: string; captchaToken?: string }) {
   return safeFetch("/auth/forgot-password", {
     method: "POST",
     body: JSON.stringify(payload),
