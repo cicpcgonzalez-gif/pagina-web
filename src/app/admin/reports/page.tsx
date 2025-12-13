@@ -5,6 +5,12 @@ import { fetchAdminReports, fetchModules } from "@/lib/api";
 import { getUserRole } from "@/lib/session";
 import type { ModuleConfig } from "@/lib/types";
 
+type HourlyMetric = { label?: string; sales?: number };
+type DailyMetric = { date?: string; sales?: number };
+type StateMetric = { state?: string; count?: number };
+type BuyerMetric = { name?: string; tickets?: number; amount?: number };
+type RaffleMetric = { name?: string; sold?: number; sales?: number; total?: number; tickets?: number; revenue?: number };
+
 export default function AdminReportsPage() {
   const [modulesConfig, setModulesConfig] = useState<ModuleConfig | null>(null);
   const [modulesError, setModulesError] = useState<string | null>(null);
@@ -69,15 +75,15 @@ export default function AdminReportsPage() {
     ];
   }, [reports]);
 
-  const hourly = useMemo(() => (Array.isArray((reports as any)?.hourly) ? (reports as any)?.hourly : []), [reports]);
+  const hourly = useMemo<HourlyMetric[]>(() => (Array.isArray((reports as any)?.hourly) ? ((reports as any)?.hourly as HourlyMetric[]) : []), [reports]);
 
-  const daily = useMemo(() => (Array.isArray((reports as any)?.daily) ? (reports as any)?.daily : []), [reports]);
+  const daily = useMemo<DailyMetric[]>(() => (Array.isArray((reports as any)?.daily) ? ((reports as any)?.daily as DailyMetric[]) : []), [reports]);
 
-  const byState = useMemo(() => (Array.isArray((reports as any)?.byState) ? (reports as any)?.byState : []), [reports]);
+  const byState = useMemo<StateMetric[]>(() => (Array.isArray((reports as any)?.byState) ? ((reports as any)?.byState as StateMetric[]) : []), [reports]);
 
-  const topBuyers = useMemo(() => (Array.isArray((reports as any)?.topBuyers) ? (reports as any)?.topBuyers : []), [reports]);
+  const topBuyers = useMemo<BuyerMetric[]>(() => (Array.isArray((reports as any)?.topBuyers) ? ((reports as any)?.topBuyers as BuyerMetric[]) : []), [reports]);
 
-  const topRaffles = useMemo(() => (Array.isArray((reports as any)?.topRaffles) ? (reports as any)?.topRaffles : []), [reports]);
+  const topRaffles = useMemo<RaffleMetric[]>(() => (Array.isArray((reports as any)?.topRaffles) ? ((reports as any)?.topRaffles as RaffleMetric[]) : []), [reports]);
 
   if (!loadingModules && !reportsEnabled) {
     return (
