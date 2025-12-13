@@ -24,8 +24,10 @@ function redirectToLogin(req: NextRequest, requestId: string) {
 }
 
 function clientKey(req: NextRequest) {
-  const ip = req.ip || req.headers.get("x-forwarded-for") || "unknown";
-  return Array.isArray(ip) ? ip[0] : ip.split(",")[0].trim();
+  const forwarded = req.headers.get("x-forwarded-for");
+  const headerIp = forwarded ? forwarded.split(",")[0].trim() : null;
+  const fallbackIp = (req as any).ip || (req as any).socket?.remoteAddress;
+  return headerIp || fallbackIp || "unknown";
 }
 
 function isAuthPath(pathname: string) {
