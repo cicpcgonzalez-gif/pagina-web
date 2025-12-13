@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchModules, fetchAdminPayments, reconcilePayment, syncPayments } from "@/lib/api";
 import { getUserRole } from "@/lib/session";
 import type { ModuleConfig } from "@/lib/types";
