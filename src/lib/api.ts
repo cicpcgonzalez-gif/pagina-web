@@ -1,5 +1,5 @@
 import { mockRaffles, mockStatus } from "./mock";
-import type { ModuleConfig, Raffle, SystemStatus, UserProfile, UserTicket } from "./types";
+import type { AdminUser, ModuleConfig, Raffle, SystemStatus, UserProfile, UserTicket } from "./types";
 import { getAuthToken, getRefreshToken, setAuthToken, setRefreshToken } from "./session";
 
 // Usar siempre la URL del backend si está configurada; si falta, usar la API pública en Render.
@@ -358,6 +358,10 @@ export async function fetchMyPayments() {
   }
 
   return [];
+}
+
+export async function fetchAdminUsers(): Promise<AdminUser[]> {
+  return safeFetch<AdminUser[]>("/admin/users");
 }
 
 export async function fetchWinners() {

@@ -101,6 +101,15 @@ export type Winner = {
   drawDate?: string;
 };
 
+export type AdminUser = {
+  id?: string | number;
+  name?: string;
+  email?: string;
+  role?: string;
+  status?: string;
+  createdAt?: string;
+};
+
 export type ModuleConfig = {
   user?: Record<string, boolean>;
   admin?: Record<string, boolean>;
