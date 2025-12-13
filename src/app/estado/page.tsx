@@ -11,7 +11,7 @@ const stateStyle: Record<string, string> = {
 };
 
 export default async function EstadoPage() {
-  const token = cookies().get("auth_token")?.value;
+  const token = (await cookies()).get("auth_token")?.value;
   if (!token) {
     redirect("/login?redirect=/estado");
   }
