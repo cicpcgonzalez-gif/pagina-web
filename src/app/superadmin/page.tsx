@@ -189,24 +189,24 @@ export default function SuperAdminPage() {
   }, [raffles]);
 
   const quickActions = [
-    { label: "Dashboard", href: "#top", color: "#22c55e" },
+    { label: "Dashboard", href: "/superadmin", color: "#22c55e" },
     { label: "Progreso", href: "/admin/raffles", color: "#2dd4bf" },
     { label: "Sorteo en Vivo", href: "/rifas", color: "#38bdf8" },
     { label: "Pagos", href: "/admin/payments", color: "#f59e0b" },
     { label: "Tickets", href: "/admin/reports", color: "#6366f1" },
-    { label: "Estilo", href: "#section-settings", color: "#c084fc" },
-    { label: "Novedades", href: "#section-critical", color: "#fb7185" },
+    { label: "Estilo", href: "/superadmin", color: "#c084fc" },
+    { label: "Novedades", href: "/superadmin", color: "#fb7185" },
     { label: "Rifas", href: "/rifas", color: "#22d3ee" },
     { label: "Métricas", href: "/admin/reports", color: "#22c55e" },
-    { label: "Usuarios", href: "#section-users", color: "#38bdf8" },
-    { label: "Módulos", href: "#section-modules", color: "#4ade80" },
-    { label: "Branding", href: "#section-settings", color: "#c084fc" },
-    { label: "SMTP", href: "#section-settings", color: "#facc15" },
-    { label: "Soporte", href: "#section-settings", color: "#38bdf8" },
-    { label: "Logs de correo", href: "#section-modules", color: "#f472b6" },
-    { label: "Auditoría", href: "#section-audit", color: "#fbbf24" },
-    { label: "Acciones críticas", href: "#section-critical", color: "#ef4444" },
-    { label: "Anuncios", href: "#section-critical", color: "#fb7185" },
+    { label: "Usuarios", href: "/admin", color: "#38bdf8" },
+    { label: "Módulos", href: "/superadmin", color: "#4ade80" },
+    { label: "Branding", href: "/superadmin", color: "#c084fc" },
+    { label: "SMTP", href: "/superadmin", color: "#facc15" },
+    { label: "Soporte", href: "/superadmin", color: "#38bdf8" },
+    { label: "Logs de correo", href: "/superadmin", color: "#f472b6" },
+    { label: "Auditoría", href: "/superadmin", color: "#fbbf24" },
+    { label: "Acciones críticas", href: "/superadmin", color: "#ef4444" },
+    { label: "Anuncios", href: "/superadmin", color: "#fb7185" },
   ];
 
   const statusClass = (status: string) => {
@@ -398,359 +398,26 @@ export default function SuperAdminPage() {
         </section>
 
         <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
-          <p className="text-xs uppercase tracking-[0.25em] text-white/70">Menú principal</p>
-          <h2 className="mt-2 text-2xl font-semibold text-white">Accesos rápidos</h2>
-          <p className="text-sm text-white/75">Mismo layout que la app: toca para ir directo a cada bloque.</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {quickActions.map((qa) => (
-              <Link
-                key={qa.label}
-                href={qa.href}
-                className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left text-white transition hover:-translate-y-[1px] hover:border-white/30"
-              >
-                <div>
-                  <p className="text-xs text-white/60">Superadmin</p>
-                  <p className="text-sm font-semibold text-white">{qa.label}</p>
-                </div>
-                <span className="h-8 w-8 shrink-0 rounded-full" style={{ backgroundColor: qa.color, opacity: 0.3 }} />
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section id="section-raffles" className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-white/70">Rifas creadas por admin</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">Datos en vivo</h2>
-              <p className="text-sm text-white/80">Cada tarjeta refleja el estado real de la rifa.</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href="/admin/raffles"
-                className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60"
-              >
-                Panel admin
-              </Link>
-              <Link
-                href="/rifas"
-                className="rounded-lg border border-[#22d3ee]/50 bg-[#22d3ee]/15 px-4 py-2 text-sm font-semibold text-[#dff7ff] transition hover:-translate-y-[1px] hover:border-[#22d3ee]/80"
-              >
-                Ver público
-              </Link>
-            </div>
-          </div>
-
-          <div className="mt-6 space-y-4">
-            {rafflesLoading && <p className="text-sm text-white/70">Cargando rifas en vivo...</p>}
-            {rafflesError && <p className="text-sm text-red-200">{rafflesError}. Conecta el backend y vuelve a intentar.</p>}
-            {!rafflesLoading && !rafflesError && raffles.length === 0 && <p className="text-sm text-white/70">No hay rifas creadas por admin aún.</p>}
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {raffles.map((raffle) => {
-                const sold = (raffle.ticketsTotal ?? 0) - (raffle.ticketsAvailable ?? 0);
-                const progress = raffle.ticketsTotal ? Math.min(100, Math.round((sold / raffle.ticketsTotal) * 100)) : 0;
-                return (
-                  <div key={raffle.id} className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm shadow-black/20">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h3 className="text-lg font-semibold text-white">{raffle.title}</h3>
-                        <p className="text-xs text-white/60">ID: {raffle.id}</p>
-                      </div>
-                      <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${raffle.status === "activa" ? "bg-emerald-500/15 text-emerald-200" : "bg-white/15 text-white/80"}`}>
-                        {raffle.status}
-                      </span>
-                    </div>
-
-                    <div className="space-y-1 text-sm text-white/80">
-                      <p>Precio ticket: ${raffle.price?.toLocaleString()}</p>
-                      <p>Venta: {sold.toLocaleString()} / {raffle.ticketsTotal?.toLocaleString()} tickets</p>
-                      <p>Disponible: {raffle.ticketsAvailable?.toLocaleString()}</p>
-                      <p>Sorteo: {raffle.drawDate}</p>
-                    </div>
-
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
-                      <div className="h-full bg-[#22d3ee]" style={{ width: `${progress}%` }} aria-label={`Progreso ${progress}%`} />
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 text-sm">
-                      <Link
-                        href={`/rifas/${raffle.id}`}
-                        className="rounded-lg border border-white/20 px-3 py-2 font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60"
-                      >
-                        Ver rifa
-                      </Link>
-                      <Link
-                        href="/admin/raffles"
-                        className="rounded-lg border border-[#22d3ee]/40 bg-[#22d3ee]/10 px-3 py-2 font-semibold text-[#dff7ff] transition hover:-translate-y-[1px] hover:border-[#22d3ee]/80"
-                      >
-                        Editar en admin
-                      </Link>
-                    </div>
+          <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
+            <p className="text-xs uppercase tracking-[0.25em] text-white/70">Menú principal</p>
+            <h2 className="mt-2 text-2xl font-semibold text-white">Accesos rápidos</h2>
+            <p className="text-sm text-white/75">Solo botones, sin vistas de prueba.</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {quickActions.map((qa) => (
+                <Link
+                  key={qa.label}
+                  href={qa.href}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left text-white transition hover:-translate-y-[1px] hover:border-white/30"
+                >
+                  <div>
+                    <p className="text-xs text-white/60">Superadmin</p>
+                    <p className="text-sm font-semibold text-white">{qa.label}</p>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        <section id="section-settings" className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20 lg:grid-cols-2">
-          <div className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.25em] text-white/70">Configuración crítica</p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <p className="text-sm font-semibold text-white">Branding</p>
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Título" value={branding.title} onChange={(e) => setBranding((s) => ({ ...s, title: e.target.value }))} />
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Tagline" value={branding.tagline} onChange={(e) => setBranding((s) => ({ ...s, tagline: e.target.value }))} />
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Color primario" value={branding.primaryColor} onChange={(e) => setBranding((s) => ({ ...s, primaryColor: e.target.value }))} />
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Color secundario" value={branding.secondaryColor} onChange={(e) => setBranding((s) => ({ ...s, secondaryColor: e.target.value }))} />
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Logo URL" value={branding.logoUrl} onChange={(e) => setBranding((s) => ({ ...s, logoUrl: e.target.value }))} />
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Banner URL" value={branding.bannerUrl} onChange={(e) => setBranding((s) => ({ ...s, bannerUrl: e.target.value }))} />
-                <textarea className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Políticas" value={branding.policies} onChange={(e) => setBranding((s) => ({ ...s, policies: e.target.value }))} />
-                <button onClick={saveBranding} className="mt-3 w-full rounded-lg bg-[#22d3ee] px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-black/30 transition hover:-translate-y-[1px]">Guardar branding</button>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <p className="text-sm font-semibold text-white">Empresa</p>
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Nombre" value={companyForm.name} onChange={(e) => setCompanyForm((s) => ({ ...s, name: e.target.value }))} />
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Dirección" value={companyForm.address} onChange={(e) => setCompanyForm((s) => ({ ...s, address: e.target.value }))} />
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="RIF" value={companyForm.rif} onChange={(e) => setCompanyForm((s) => ({ ...s, rif: e.target.value }))} />
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Teléfono" value={companyForm.phone} onChange={(e) => setCompanyForm((s) => ({ ...s, phone: e.target.value }))} />
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Email" value={companyForm.email} onChange={(e) => setCompanyForm((s) => ({ ...s, email: e.target.value }))} />
-                <button onClick={saveCompany} className="mt-3 w-full rounded-lg bg-[#22c55e] px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-black/30 transition hover:-translate-y-[1px]">Guardar empresa</button>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.25em] text-white/70">SMTP y soporte</p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <p className="text-sm font-semibold text-white">Correo SMTP</p>
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Host" value={smtpForm.host} onChange={(e) => setSmtpForm((s) => ({ ...s, host: e.target.value }))} />
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Puerto" value={smtpForm.port} onChange={(e) => setSmtpForm((s) => ({ ...s, port: e.target.value }))} />
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Usuario" value={smtpForm.user} onChange={(e) => setSmtpForm((s) => ({ ...s, user: e.target.value }))} />
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Contraseña" value={smtpForm.pass} onChange={(e) => setSmtpForm((s) => ({ ...s, pass: e.target.value }))} />
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="From name" value={smtpForm.fromName} onChange={(e) => setSmtpForm((s) => ({ ...s, fromName: e.target.value }))} />
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="From email" value={smtpForm.fromEmail} onChange={(e) => setSmtpForm((s) => ({ ...s, fromEmail: e.target.value }))} />
-                <button onClick={saveSMTP} className="mt-3 w-full rounded-lg bg-[#facc15] px-3 py-2 text-sm font-semibold text-night shadow-sm shadow-black/30 transition hover:-translate-y-[1px]">Guardar SMTP</button>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <p className="text-sm font-semibold text-white">Soporte técnico</p>
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Teléfono" value={techForm.phone} onChange={(e) => setTechForm((s) => ({ ...s, phone: e.target.value }))} />
-                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Email" value={techForm.email} onChange={(e) => setTechForm((s) => ({ ...s, email: e.target.value }))} />
-                <button onClick={saveTech} className="mt-3 w-full rounded-lg bg-[#3b82f6] px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-black/30 transition hover:-translate-y-[1px]">Guardar soporte</button>
-              </div>
-            </div>
-            {settingsLoading && <p className="text-xs text-white/60">Cargando configuración…</p>}
-            {settingsError && <p className="text-xs text-red-200">{settingsError}</p>}
-          </div>
-        </section>
-
-        <section id="section-modules" className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20 lg:grid-cols-[1.2fr_0.8fr]">
-          <div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.25em] text-white/70">Módulos</p>
-                <p className="text-sm text-white/75">Activa/desactiva capacidades para admin y superadmin.</p>
-              </div>
-              {modulesState && <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] text-white/80">{Object.keys(modulesState).length} grupos</span>}
-            </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {(["admin", "superadmin"] as const).map((scope) => (
-                <div key={scope} className="rounded-xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-sm font-semibold text-white">{scope === "admin" ? "Admin" : "Superadmin"}</p>
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                    {Object.entries((modulesState as any)?.[scope] || {}).map(([key, value]) => (
-                      <button
-                        key={key}
-                        onClick={() => toggleModule(scope, key)}
-                        className={`rounded-full border px-3 py-1 font-semibold transition hover:-translate-y-[1px] ${value ? "border-emerald-200/40 bg-emerald-500/15 text-emerald-100" : "border-white/20 bg-white/10 text-white/75"}`}
-                      >
-                        {key}
-                      </button>
-                    ))}
-                    {!modulesState && <span className="text-white/60">Sin datos de módulos.</span>}
-                  </div>
-                </div>
+                  <span className="h-8 w-8 shrink-0 rounded-full" style={{ backgroundColor: qa.color, opacity: 0.3 }} />
+                </Link>
               ))}
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-[0.25em] text-white/70">Logs de correo</p>
-              <button onClick={loadLogs} className="rounded-md border border-white/20 px-3 py-1 text-xs font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60">Refrescar</button>
-            </div>
-            {logsError && <p className="text-xs text-red-200">{logsError}</p>}
-            <div className="max-h-64 overflow-auto rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/80">
-              {mailLogs.map((log, idx) => (
-                <div key={idx} className="border-b border-white/10 py-2 last:border-none">
-                  <p className="font-semibold text-white">{(log as any)?.subject || (log as any)?.title || "Sin asunto"}</p>
-                  <p className="text-white/60">Para: {(log as any)?.to || (log as any)?.email || "N/D"}</p>
-                  <p className="text-white/60">Estado: {(log as any)?.status || "desconocido"}</p>
-                </div>
-              ))}
-              {!mailLogs.length && <p className="text-white/60">Sin logs cargados.</p>}
-            </div>
-          </div>
-        </section>
-
-        <section id="section-audit" className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20 lg:grid-cols-2">
-          <div>
-            <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-[0.25em] text-white/70">Auditoría usuarios</p>
-              <button onClick={loadAudit} className="rounded-md border border-white/20 px-3 py-1 text-xs font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60">Refrescar</button>
-            </div>
-            {auditError && <p className="text-xs text-red-200">{auditError}</p>}
-            <div className="mt-2 max-h-64 overflow-auto rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/80">
-              {auditUsers.map((row, idx) => (
-                <div key={idx} className="border-b border-white/10 py-2 last:border-none">
-                  <p className="font-semibold text-white">{(row as any)?.action || (row as any)?.event || "Acción"}</p>
-                  <p className="text-white/60">Usuario: {(row as any)?.user || (row as any)?.email || "N/D"}</p>
-                  <p className="text-white/60">Fecha: {(row as any)?.createdAt || (row as any)?.date || "—"}</p>
-                </div>
-              ))}
-              {!auditUsers.length && <p className="text-white/60">Sin auditoría de usuarios.</p>}
-            </div>
-          </div>
-
-          <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-white/70">Auditoría acciones críticas</p>
-            <div className="mt-2 max-h-64 overflow-auto rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/80">
-              {auditActions.map((row, idx) => (
-                <div key={idx} className="border-b border-white/10 py-2 last:border-none">
-                  <p className="font-semibold text-white">{(row as any)?.action || (row as any)?.event || "Acción"}</p>
-                  <p className="text-white/60">Actor: {(row as any)?.user || (row as any)?.email || "N/D"}</p>
-                  <p className="text-white/60">Detalle: {(row as any)?.detail || (row as any)?.description || "—"}</p>
-                </div>
-              ))}
-              {!auditActions.length && <p className="text-white/60">Sin acciones registradas.</p>}
-            </div>
-          </div>
-        </section>
-
-        <section id="section-critical" className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-white/70">Acciones críticas</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">Borrar rifas y anuncios</h2>
-              <p className="text-sm text-white/80">Mismo set de acciones duras del superadmin móvil. Ejecuta contra backend real.</p>
-            </div>
-            <button
-              onClick={() => {
-                loadAnnouncements();
-                loadRaffles();
-              }}
-              className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60"
-            >
-              Refrescar datos
-            </button>
-          </div>
-
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <p className="text-sm font-semibold text-white">Eliminar rifa</p>
-              <p className="text-xs text-white/60">ID de rifa exacto (se elimina definitivamente).</p>
-              <input
-                className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white"
-                placeholder="ID de la rifa"
-                value={deleteRaffleId}
-                onChange={(e) => setDeleteRaffleId(e.target.value)}
-              />
-              <button
-                onClick={() => handleDeleteRaffle()}
-                disabled={deletingRaffle}
-                className="mt-3 w-full rounded-lg bg-rose-500 px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-black/30 transition hover:-translate-y-[1px] disabled:opacity-70"
-              >
-                {deletingRaffle ? "Eliminando..." : "Eliminar rifa"}
-              </button>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <p className="text-sm font-semibold text-white">Eliminar anuncio</p>
-              <p className="text-xs text-white/60">ID de anuncio (sección novedades).</p>
-              <input
-                className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white"
-                placeholder="ID del anuncio"
-                value={deleteAnnouncementId}
-                onChange={(e) => setDeleteAnnouncementId(e.target.value)}
-              />
-              <button
-                onClick={() => handleDeleteAnnouncement()}
-                disabled={deletingAnnouncement}
-                className="mt-3 w-full rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-night shadow-sm shadow-black/30 transition hover:-translate-y-[1px] disabled:opacity-70"
-              >
-                {deletingAnnouncement ? "Eliminando..." : "Eliminar anuncio"}
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-6 rounded-xl border border-white/10 bg-white/5 p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-white">Listado de anuncios</p>
-              {announcementsLoading && <span className="text-xs text-white/60">Cargando…</span>}
-              {announcementsError && <span className="text-xs text-red-200">{announcementsError}</span>}
-            </div>
-            <div className="mt-3 max-h-64 overflow-auto rounded-lg border border-white/10">
-              <table className="w-full text-left text-sm text-white/80">
-                <thead className="bg-white/10 text-xs uppercase text-white/70">
-                  <tr>
-                    <th className="px-3 py-2">ID</th>
-                    <th className="px-3 py-2">Título</th>
-                    <th className="px-3 py-2">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {announcements.map((a, idx) => (
-                    <tr key={String((a as any)?.id ?? idx)} className="border-t border-white/10">
-                      <td className="px-3 py-2 font-semibold text-white">{(a as any)?.id ?? idx}</td>
-                      <td className="px-3 py-2">{(a as any)?.title || "(sin título)"}</td>
-                      <td className="px-3 py-2 text-xs">
-                        <button
-                          onClick={() => handleDeleteAnnouncement((a as any)?.id)}
-                          className="rounded-md border border-white/20 px-2 py-1 text-rose-100 transition hover:border-rose-200/60"
-                        >
-                          Borrar
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {!announcements.length && !announcementsLoading && (
-                    <tr className="border-t border-white/10">
-                      <td colSpan={3} className="px-3 py-4 text-center text-white/60">Sin anuncios cargados.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        <section id="section-users" className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-white/70">Usuarios (superadmin)</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">Gestión en vivo</h2>
-              <p className="text-sm text-white/80">Crea cuentas y controla estado/seguridad.</p>
-            </div>
-            <button
-              onClick={loadUsers}
-              className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60"
-            >
-              Refrescar
-            </button>
-          </div>
-
-          <div className="mt-4 grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <p className="text-sm font-semibold text-white">Crear usuario</p>
-              <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Email" value={newUser.email} onChange={(e) => setNewUser((s) => ({ ...s, email: e.target.value }))} />
-              <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Contraseña" value={newUser.password} onChange={(e) => setNewUser((s) => ({ ...s, password: e.target.value }))} />
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <input className="rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Nombre" value={newUser.firstName} onChange={(e) => setNewUser((s) => ({ ...s, firstName: e.target.value }))} />
-                <input className="rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Apellido" value={newUser.lastName} onChange={(e) => setNewUser((s) => ({ ...s, lastName: e.target.value }))} />
+          </section>
               </div>
               <div className="mt-3 flex gap-2 text-xs">
                 {["user", "admin", "superadmin"].map((r) => (
