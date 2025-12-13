@@ -191,34 +191,69 @@ export default function SuperAdminPage() {
   }, [raffles]);
 
   const quickActions: Array<{ label: string; color: string; panel?: string; href?: string }> = [
-    { label: "Dashboard", href: "/superadmin", color: "#22c55e" },
+    { label: "Dashboard", panel: "dashboard", color: "#22c55e" },
     { label: "Progreso", panel: "rifas", color: "#2dd4bf" },
     { label: "Sorteo en Vivo", href: "/rifas", color: "#38bdf8" },
     { label: "Pagos", href: "/admin/payments", color: "#f59e0b" },
-    { label: "Tickets", href: "/admin/reports", color: "#6366f1" },
+    { label: "Tickets", href: "/admin/tickets", color: "#6366f1" },
     { label: "Estilo", panel: "branding", color: "#c084fc" },
-    { label: "Novedades", panel: "criticas", color: "#fb7185" },
+    { label: "Novedades", panel: "novedades", color: "#fb7185" },
     { label: "Rifas", panel: "rifas", color: "#22d3ee" },
     { label: "Métricas", href: "/admin/reports", color: "#22c55e" },
     { label: "Usuarios", panel: "usuarios", color: "#38bdf8" },
     { label: "Módulos", panel: "modulos", color: "#4ade80" },
     { label: "Branding", panel: "branding", color: "#c084fc" },
-    { label: "SMTP", panel: "branding", color: "#facc15" },
-    { label: "Soporte", panel: "branding", color: "#38bdf8" },
-    { label: "Logs de correo", panel: "modulos", color: "#f472b6" },
+    { label: "SMTP", panel: "smtp", color: "#facc15" },
+    { label: "Soporte", panel: "soporte", color: "#38bdf8" },
+    { label: "Logs de correo", panel: "logs", color: "#f472b6" },
     { label: "Auditoría", panel: "auditoria", color: "#fbbf24" },
     { label: "Acciones críticas", panel: "criticas", color: "#ef4444" },
-    { label: "Anuncios", panel: "criticas", color: "#fb7185" },
+    { label: "Anuncios", panel: "novedades", color: "#fb7185" },
   ];
 
   const renderPanel = () => {
     switch (activePanel) {
+      case "dashboard":
+        return (
+          <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.25em] text-white/70">Dashboard</p>
+                <h2 className="mt-2 text-2xl font-semibold text-white">Estado general</h2>
+                <p className="text-sm text-white/80">Totales en vivo del backend.</p>
+              </div>
+              <button
+                onClick={() => {
+                  loadRaffles();
+                  loadUsers();
+                  loadSettings();
+                  loadLogs();
+                  loadAudit();
+                  loadAnnouncements();
+                }}
+                className="rounded-lg border border-[#22d3ee]/40 bg-[#22d3ee]/15 px-4 py-2 text-sm font-semibold text-[#dff7ff] transition hover:-translate-y-[1px] hover:border-[#22d3ee]/80"
+              >
+                Refrescar todo
+              </button>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[{ label: "Rifas", value: totals.totalRaffles }, { label: "Activas", value: totals.active }, { label: "Tickets", value: totals.totalTickets.toLocaleString() }, { label: "Vendidos", value: totals.soldTickets.toLocaleString() }].map((card) => (
+                <div key={card.label} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs text-white/60">{card.label}</p>
+                  <p className="text-2xl font-semibold text-white">{card.value}</p>
+                </div>
+              ))}
+            </div>
+            {lastUpdated && <p className="mt-3 text-[11px] text-white/60">Última actualización: {lastUpdated.toLocaleTimeString()}</p>}
+          </section>
+        );
+
       case "branding":
         return (
           <section className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20 lg:grid-cols-2">
             <div className="space-y-3">
-              <p className="text-xs uppercase tracking-[0.25em] text-white/70">Configuración crítica</p>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <p className="text-xs uppercase tracking-[0.25em] text-white/70">Branding y estilo</p>
+              <div className="grid gap-3">
                 <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                   <p className="text-sm font-semibold text-white">Branding</p>
                   <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Título" value={branding.title} onChange={(e) => setBranding((s) => ({ ...s, title: e.target.value }))} />
@@ -230,42 +265,156 @@ export default function SuperAdminPage() {
                   <textarea className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Políticas" value={branding.policies} onChange={(e) => setBranding((s) => ({ ...s, policies: e.target.value }))} />
                   <button onClick={saveBranding} className="mt-3 w-full rounded-lg bg-[#22d3ee] px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-black/30 transition hover:-translate-y-[1px]">Guardar branding</button>
                 </div>
-
-                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-sm font-semibold text-white">Empresa</p>
-                  <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Nombre" value={companyForm.name} onChange={(e) => setCompanyForm((s) => ({ ...s, name: e.target.value }))} />
-                  <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Dirección" value={companyForm.address} onChange={(e) => setCompanyForm((s) => ({ ...s, address: e.target.value }))} />
-                  <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="RIF" value={companyForm.rif} onChange={(e) => setCompanyForm((s) => ({ ...s, rif: e.target.value }))} />
-                  <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Teléfono" value={companyForm.phone} onChange={(e) => setCompanyForm((s) => ({ ...s, phone: e.target.value }))} />
-                  <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Email" value={companyForm.email} onChange={(e) => setCompanyForm((s) => ({ ...s, email: e.target.value }))} />
-                  <button onClick={saveCompany} className="mt-3 w-full rounded-lg bg-[#22c55e] px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-black/30 transition hover:-translate-y-[1px]">Guardar empresa</button>
-                </div>
               </div>
             </div>
 
             <div className="space-y-3">
-              <p className="text-xs uppercase tracking-[0.25em] text-white/70">SMTP y soporte</p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-sm font-semibold text-white">Correo SMTP</p>
-                  <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Host" value={smtpForm.host} onChange={(e) => setSmtpForm((s) => ({ ...s, host: e.target.value }))} />
-                  <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Puerto" value={smtpForm.port} onChange={(e) => setSmtpForm((s) => ({ ...s, port: e.target.value }))} />
-                  <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Usuario" value={smtpForm.user} onChange={(e) => setSmtpForm((s) => ({ ...s, user: e.target.value }))} />
-                  <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Contraseña" value={smtpForm.pass} onChange={(e) => setSmtpForm((s) => ({ ...s, pass: e.target.value }))} />
-                  <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="From name" value={smtpForm.fromName} onChange={(e) => setSmtpForm((s) => ({ ...s, fromName: e.target.value }))} />
-                  <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="From email" value={smtpForm.fromEmail} onChange={(e) => setSmtpForm((s) => ({ ...s, fromEmail: e.target.value }))} />
-                  <button onClick={saveSMTP} className="mt-3 w-full rounded-lg bg-[#facc15] px-3 py-2 text-sm font-semibold text-night shadow-sm shadow-black/30 transition hover:-translate-y-[1px]">Guardar SMTP</button>
-                </div>
-
-                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-sm font-semibold text-white">Soporte técnico</p>
-                  <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Teléfono" value={techForm.phone} onChange={(e) => setTechForm((s) => ({ ...s, phone: e.target.value }))} />
-                  <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Email" value={techForm.email} onChange={(e) => setTechForm((s) => ({ ...s, email: e.target.value }))} />
-                  <button onClick={saveTech} className="mt-3 w-full rounded-lg bg-[#3b82f6] px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-black/30 transition hover:-translate-y-[1px]">Guardar soporte</button>
-                </div>
+              <p className="text-xs uppercase tracking-[0.25em] text-white/70">Empresa</p>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <p className="text-sm font-semibold text-white">Datos legales</p>
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Nombre" value={companyForm.name} onChange={(e) => setCompanyForm((s) => ({ ...s, name: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Dirección" value={companyForm.address} onChange={(e) => setCompanyForm((s) => ({ ...s, address: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="RIF" value={companyForm.rif} onChange={(e) => setCompanyForm((s) => ({ ...s, rif: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Teléfono" value={companyForm.phone} onChange={(e) => setCompanyForm((s) => ({ ...s, phone: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Email" value={companyForm.email} onChange={(e) => setCompanyForm((s) => ({ ...s, email: e.target.value }))} />
+                <button onClick={saveCompany} className="mt-3 w-full rounded-lg bg-[#22c55e] px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-black/30 transition hover:-translate-y-[1px]">Guardar empresa</button>
               </div>
               {settingsLoading && <p className="text-xs text-white/60">Cargando configuración…</p>}
               {settingsError && <p className="text-xs text-red-200">{settingsError}</p>}
+            </div>
+          </section>
+        );
+
+      case "smtp":
+        return (
+          <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
+            <p className="text-xs uppercase tracking-[0.25em] text-white/70">Correo SMTP</p>
+            <h2 className="mt-2 text-2xl font-semibold text-white">Credenciales y remitente</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <input className="rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Host" value={smtpForm.host} onChange={(e) => setSmtpForm((s) => ({ ...s, host: e.target.value }))} />
+              <input className="rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Puerto" value={smtpForm.port} onChange={(e) => setSmtpForm((s) => ({ ...s, port: e.target.value }))} />
+              <input className="rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Usuario" value={smtpForm.user} onChange={(e) => setSmtpForm((s) => ({ ...s, user: e.target.value }))} />
+              <input className="rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Contraseña" value={smtpForm.pass} onChange={(e) => setSmtpForm((s) => ({ ...s, pass: e.target.value }))} />
+              <input className="rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="From name" value={smtpForm.fromName} onChange={(e) => setSmtpForm((s) => ({ ...s, fromName: e.target.value }))} />
+              <input className="rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="From email" value={smtpForm.fromEmail} onChange={(e) => setSmtpForm((s) => ({ ...s, fromEmail: e.target.value }))} />
+            </div>
+            <button onClick={saveSMTP} className="mt-4 w-full rounded-lg bg-[#facc15] px-3 py-2 text-sm font-semibold text-night shadow-sm shadow-black/30 transition hover:-translate-y-[1px]">Guardar SMTP</button>
+            {settingsLoading && <p className="mt-2 text-xs text-white/60">Cargando configuración…</p>}
+            {settingsError && <p className="mt-2 text-xs text-red-200">{settingsError}</p>}
+          </section>
+        );
+
+      case "soporte":
+        return (
+          <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
+            <p className="text-xs uppercase tracking-[0.25em] text-white/70">Soporte técnico</p>
+            <h2 className="mt-2 text-2xl font-semibold text-white">Contacto para clientes</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <input className="rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Teléfono" value={techForm.phone} onChange={(e) => setTechForm((s) => ({ ...s, phone: e.target.value }))} />
+              <input className="rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Email" value={techForm.email} onChange={(e) => setTechForm((s) => ({ ...s, email: e.target.value }))} />
+            </div>
+            <button onClick={saveTech} className="mt-4 w-full rounded-lg bg-[#3b82f6] px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-black/30 transition hover:-translate-y-[1px]">Guardar soporte</button>
+            {settingsLoading && <p className="mt-2 text-xs text-white/60">Cargando configuración…</p>}
+            {settingsError && <p className="mt-2 text-xs text-red-200">{settingsError}</p>}
+          </section>
+        );
+
+      case "logs":
+        return (
+          <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.25em] text-white/70">Logs de correo</p>
+                <p className="text-sm text-white/75">Últimos envíos y estado.</p>
+              </div>
+              <button onClick={loadLogs} className="rounded-md border border-white/20 px-3 py-1 text-xs font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60">Refrescar</button>
+            </div>
+            {logsError && <p className="mt-2 text-xs text-red-200">{logsError}</p>}
+            <div className="mt-3 max-h-72 overflow-auto rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/80">
+              {mailLogs.map((log, idx) => (
+                <div key={idx} className="border-b border-white/10 py-2 last:border-none">
+                  <p className="font-semibold text-white">{(log as any)?.subject || (log as any)?.title || "Sin asunto"}</p>
+                  <p className="text-white/60">Para: {(log as any)?.to || (log as any)?.email || "N/D"}</p>
+                  <p className="text-white/60">Estado: {(log as any)?.status || "desconocido"}</p>
+                </div>
+              ))}
+              {!mailLogs.length && <p className="text-white/60">Sin logs cargados.</p>}
+            </div>
+          </section>
+        );
+
+      case "novedades":
+        return (
+          <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.25em] text-white/70">Novedades</p>
+                <h2 className="mt-2 text-2xl font-semibold text-white">Anuncios publicados</h2>
+                <p className="text-sm text-white/80">Lista en vivo; puedes borrar uno por ID.</p>
+              </div>
+              <button
+                onClick={loadAnnouncements}
+                className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60"
+              >
+                Refrescar
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_0.4fr]">
+              <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg shadow-black/30">
+                <div className="flex items-center justify-between px-4 py-3 text-sm text-white/80 bg-white/10">
+                  <span>Listado</span>
+                  {announcementsLoading && <span className="text-xs text-white/60">Cargando…</span>}
+                  {announcementsError && <span className="text-xs text-red-200">{announcementsError}</span>}
+                </div>
+                <table className="w-full text-left text-sm text-white/80">
+                  <thead className="bg-white/10 text-xs uppercase text-white/70">
+                    <tr>
+                      <th className="px-4 py-2">ID</th>
+                      <th className="px-4 py-2">Título</th>
+                      <th className="px-4 py-2">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {announcements.map((a, idx) => (
+                      <tr key={String((a as any)?.id ?? idx)} className="border-t border-white/10">
+                        <td className="px-4 py-2 font-semibold text-white">{(a as any)?.id ?? idx}</td>
+                        <td className="px-4 py-2">{(a as any)?.title || "(sin título)"}</td>
+                        <td className="px-4 py-2 text-xs">
+                          <button
+                            onClick={() => handleDeleteAnnouncement((a as any)?.id)}
+                            className="rounded-md border border-white/20 px-2 py-1 text-rose-100 transition hover:border-rose-200/60"
+                          >
+                            Borrar
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {!announcements.length && !announcementsLoading && (
+                      <tr className="border-t border-white/10">
+                        <td colSpan={3} className="px-4 py-4 text-center text-white/60">Sin anuncios cargados.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-black/30">
+                <p className="text-sm font-semibold text-white">Eliminar anuncio por ID</p>
+                <input
+                  className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white"
+                  placeholder="ID del anuncio"
+                  value={deleteAnnouncementId}
+                  onChange={(e) => setDeleteAnnouncementId(e.target.value)}
+                />
+                <button
+                  onClick={() => handleDeleteAnnouncement()}
+                  disabled={deletingAnnouncement}
+                  className="mt-3 w-full rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-night shadow-sm shadow-black/30 transition hover:-translate-y-[1px] disabled:opacity-70"
+                >
+                  {deletingAnnouncement ? "Eliminando..." : "Eliminar anuncio"}
+                </button>
+              </div>
             </div>
           </section>
         );
