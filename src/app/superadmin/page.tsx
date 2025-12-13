@@ -11,7 +11,82 @@ import {
   fetchSuperadminMailLogs,
   fetchSuperadminSettings,
   superadminCreateUser,
-        
+  superadminRevokeSessions,
+  superadminResetTwoFactor,
+  superadminUpdateUserStatus,
+  fetchAnnouncements,
+  deleteAnnouncement,
+  deleteRaffle,
+  updateSuperadminBranding,
+  updateSuperadminCompany,
+  updateSuperadminModules,
+  updateSuperadminSMTP,
+  updateSuperadminTechSupport,
+} from "@/lib/api";
+import type { AdminUser, ModuleConfig, Raffle } from "@/lib/types";
+
+const defaultBranding = { title: "", tagline: "", primaryColor: "#22d3ee", secondaryColor: "#0ea5e9", logoUrl: "", bannerUrl: "", policies: "" };
+const defaultCompany = { name: "", address: "", rif: "", phone: "", email: "" };
+const defaultSMTP = { host: "", port: "587", user: "", pass: "", secure: false, fromName: "", fromEmail: "" };
+const defaultTech = { phone: "", email: "" };
+
+export default function SuperAdminPage() {
+  const [role, setRole] = useState<string | null>(null);
+  const [denied, setDenied] = useState(false);
+  const [modulesConfig, setModulesConfig] = useState<ModuleConfig | null>(null);
+  const [modulesError, setModulesError] = useState<string | null>(null);
+  const [modulesState, setModulesState] = useState<Record<string, unknown> | null>(null);
+  const [raffles, setRaffles] = useState<Raffle[]>([]);
+  const [rafflesError, setRafflesError] = useState<string | null>(null);
+  const [rafflesLoading, setRafflesLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [usersError, setUsersError] = useState<string | null>(null);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [branding, setBranding] = useState(defaultBranding);
+  const [companyForm, setCompanyForm] = useState(defaultCompany);
+  const [smtpForm, setSmtpForm] = useState(defaultSMTP);
+  const [techForm, setTechForm] = useState(defaultTech);
+  const [mailLogs, setMailLogs] = useState<Array<Record<string, unknown>>>([]);
+  const [auditUsers, setAuditUsers] = useState<Array<Record<string, unknown>>>([]);
+  const [auditActions, setAuditActions] = useState<Array<Record<string, unknown>>>([]);
+  const [announcements, setAnnouncements] = useState<Array<Record<string, unknown>>>([]);
+  const [announcementsLoading, setAnnouncementsLoading] = useState(false);
+  const [announcementsError, setAnnouncementsError] = useState<string | null>(null);
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [logsError, setLogsError] = useState<string | null>(null);
+  const [auditError, setAuditError] = useState<string | null>(null);
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [newUser, setNewUser] = useState({ email: "", password: "", role: "user", firstName: "", lastName: "" });
+  const [actingUser, setActingUser] = useState<string | number | null>(null);
+  const [deleteAnnouncementId, setDeleteAnnouncementId] = useState("");
+  const [deleteRaffleId, setDeleteRaffleId] = useState("");
+  const [deletingAnnouncement, setDeletingAnnouncement] = useState(false);
+  const [deletingRaffle, setDeletingRaffle] = useState(false);
+  const [toast, setToast] = useState<{ message: string; variant: "success" | "error" } | null>(null);
+
+  useEffect(() => {
+    const token = getAuthToken();
+    const r = getUserRole();
+    setRole(r);
+    if (!token || !r || r.toLowerCase() !== "superadmin") {
+      setDenied(true);
+    }
+  }, []);
+
+  const loadModules = useCallback(async () => {
+    try {
+      const data = await fetchModules();
+      setModulesConfig(data || null);
+      setModulesState(data || null);
+    } catch (err) {
+      setModulesError(err instanceof Error ? err.message : "No se pudieron cargar módulos");
+    }
+  }, []);
+
+  const loadRaffles = useCallback(async () => {
+    setRafflesLoading(true);
     try {
       const data = await fetchRafflesLive();
       setRaffles(data);
