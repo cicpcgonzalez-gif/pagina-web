@@ -656,7 +656,7 @@ export default function SuperAdminPage() {
                 onChange={(e) => setDeleteRaffleId(e.target.value)}
               />
               <button
-                onClick={handleDeleteRaffle}
+                onClick={() => handleDeleteRaffle()}
                 disabled={deletingRaffle}
                 className="mt-3 w-full rounded-lg bg-rose-500 px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-black/30 transition hover:-translate-y-[1px] disabled:opacity-70"
               >
@@ -674,7 +674,7 @@ export default function SuperAdminPage() {
                 onChange={(e) => setDeleteAnnouncementId(e.target.value)}
               />
               <button
-                onClick={handleDeleteAnnouncement}
+                onClick={() => handleDeleteAnnouncement()}
                 disabled={deletingAnnouncement}
                 className="mt-3 w-full rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-night shadow-sm shadow-black/30 transition hover:-translate-y-[1px] disabled:opacity-70"
               >
