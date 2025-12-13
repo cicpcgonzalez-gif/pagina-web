@@ -189,6 +189,13 @@ export default function SuperAdminPage() {
   }, [raffles]);
 
   const quickActions = [
+    { label: "Dashboard", href: "#top", color: "#22c55e" },
+    { label: "Progreso", href: "#section-raffles", color: "#2dd4bf" },
+    { label: "Sorteo en Vivo", href: "/rifas", color: "#38bdf8" },
+    { label: "Pagos", href: "/admin/payments", color: "#f59e0b" },
+    { label: "Tickets", href: "/admin/reports", color: "#6366f1" },
+    { label: "Estilo", href: "#section-settings", color: "#c084fc" },
+    { label: "Novedades", href: "#section-critical", color: "#fb7185" },
     { label: "Rifas", href: "#section-raffles", color: "#22d3ee" },
     { label: "Métricas", href: "/admin/reports", color: "#22c55e" },
     { label: "Usuarios", href: "#section-users", color: "#38bdf8" },
