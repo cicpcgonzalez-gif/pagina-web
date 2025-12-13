@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getAuthToken, getUserRole } from "@/lib/session";
-import { fetchModules, fetchRafflesLive } from "@/lib/api";
-import type { ModuleConfig, Raffle } from "@/lib/types";
+import { fetchAdminUsers, fetchModules, fetchRafflesLive } from "@/lib/api";
+import type { AdminUser, ModuleConfig, Raffle } from "@/lib/types";
 
 export default function SuperAdminPage() {
   const [role, setRole] = useState<string | null>(null);
@@ -15,6 +15,9 @@ export default function SuperAdminPage() {
   const [rafflesError, setRafflesError] = useState<string | null>(null);
   const [rafflesLoading, setRafflesLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [usersError, setUsersError] = useState<string | null>(null);
+  const [usersLoading, setUsersLoading] = useState(false);
 
   useEffect(() => {
     const token = getAuthToken();
@@ -60,8 +63,24 @@ export default function SuperAdminPage() {
       }
     };
 
+    const loadUsers = async () => {
+      setUsersLoading(true);
+      try {
+        const data = await fetchAdminUsers();
+        if (mounted) {
+          setUsers(data || []);
+          setUsersError(null);
+        }
+      } catch (err) {
+        if (mounted) setUsersError(err instanceof Error ? err.message : "No se pudieron cargar usuarios");
+      } finally {
+        if (mounted) setUsersLoading(false);
+      }
+    };
+
     loadModules();
     loadRaffles();
+    loadUsers();
     const interval = setInterval(loadRaffles, 15000);
 
     return () => {
@@ -77,6 +96,12 @@ export default function SuperAdminPage() {
     const active = raffles.filter((r) => r.status === "activa").length;
     return { totalRaffles, totalTickets, soldTickets, active };
   }, [raffles]);
+
+  const statusClass = (status: string) => {
+    if (status === "activo") return "bg-emerald-500/15 text-emerald-100 border-emerald-200/30";
+    if (status === "pendiente") return "bg-amber-500/15 text-amber-100 border-amber-200/30";
+    return "bg-rose-500/15 text-rose-100 border-rose-200/30";
+  };
 
   if (denied) {
     return (
@@ -229,6 +254,75 @@ export default function SuperAdminPage() {
                 );
               })}
             </div>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.25em] text-white/70">Usuarios (superadmin)</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Gestión en vivo</h2>
+              <p className="text-sm text-white/80">Los registros provienen de /admin/users con tu token superadmin.</p>
+            </div>
+            <button
+              onClick={() => {
+                setUsersLoading(true);
+                fetchAdminUsers()
+                  .then((data) => {
+                    setUsers(data || []);
+                    setUsersError(null);
+                  })
+                  .catch((err) => setUsersError(err instanceof Error ? err.message : "No se pudieron cargar usuarios"))
+                  .finally(() => setUsersLoading(false));
+              }}
+              className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60"
+            >
+              Refrescar
+            </button>
+          </div>
+
+          {usersLoading && <p className="mt-3 text-xs text-white/60">Cargando usuarios…</p>}
+          {usersError && <p className="mt-3 text-xs text-red-200">{usersError}</p>}
+
+          <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg shadow-black/30">
+            <table className="w-full text-left text-sm text-white/80">
+              <thead className="bg-white/10 text-xs uppercase text-white/70">
+                <tr>
+                  <th className="px-4 py-3">Nombre</th>
+                  <th className="px-4 py-3">Email</th>
+                  <th className="px-4 py-3">Rol</th>
+                  <th className="px-4 py-3">Estado</th>
+                  <th className="px-4 py-3">Creado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => {
+                  const status = (u.status || "").toLowerCase();
+                  const roleLabel = u.role || "usuario";
+                  const statusLabel = status || "desconocido";
+                  return (
+                    <tr key={String(u.id || u.email || Math.random())} className="border-t border-white/10">
+                      <td className="px-4 py-3 font-semibold text-white">{u.name || "Sin nombre"}</td>
+                      <td className="px-4 py-3">{u.email || "—"}</td>
+                      <td className="px-4 py-3">{roleLabel}</td>
+                      <td className="px-4 py-3">
+                        <span className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${statusClass(statusLabel)}`}>
+                          {statusLabel}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-white/70">{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "—"}</td>
+                    </tr>
+                  );
+                })}
+                {!usersLoading && users.length === 0 && (
+                  <tr className="border-t border-white/10">
+                    <td colSpan={5} className="px-4 py-6 text-center text-white/70">
+                      No hay usuarios cargados desde el backend.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </section>
       </div>
