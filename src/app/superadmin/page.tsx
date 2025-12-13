@@ -3,32 +3,18 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getAuthToken, getUserRole } from "@/lib/session";
-import { fetchModules } from "@/lib/api";
-import type { ModuleConfig } from "@/lib/types";
-
-const baseActions = [
-  { key: "account", title: "Mi Cuenta", detail: "Datos del admin y sesión.", href: "/perfil" },
-  { key: "support", title: "Mi Soporte", detail: "WhatsApp/IG visibles en rifas.", href: "/admin/notifs" },
-  { key: "push", title: "Notificaciones", detail: "Mensajes push a compradores.", href: "/admin/notifs" },
-  { key: "company", title: "Empresa", detail: "RIF, dirección y contacto público.", href: "/admin/config" },
-  { key: "bank", title: "Datos Bancarios", detail: "Cuentas y medios de cobro.", href: "/admin/config" },
-  { key: "security", title: "Cód. Seguridad", detail: "Control de fraude y código.", href: "/admin/fraud" },
-  { key: "lottery", title: "Sorteo en Vivo", detail: "Validar número ganador.", href: "/admin/tickets" },
-  { key: "raffles", title: "Crear/Editar rifas", detail: "Activas, próximas y finalizadas.", href: "/admin/raffles" },
-  { key: "dashboard", title: "Dashboard", detail: "Métricas en vivo por rifa y estado.", href: "/admin/reports" },
-  { key: "progress", title: "Progreso", detail: "Curva de ventas y cierre de rifas.", href: "/admin/reports" },
-  { key: "payments", title: "Pagos", detail: "Sincroniza pagos y verifica comprobantes.", href: "/admin/payments" },
-  { key: "winners", title: "Ganadores", detail: "Publica resultados y evidencia.", href: "/admin/ganadores" },
-  { key: "tickets", title: "Tickets", detail: "Validar o redimir boletos.", href: "/admin/tickets" },
-  { key: "style", title: "Estilo", detail: "Galería, banner y acentos por rifa.", href: "/admin/raffles" },
-  { key: "news", title: "Novedades", detail: "Avisos y anuncios para el mural.", href: "/admin/notifs" },
-];
+import { fetchModules, fetchRafflesLive } from "@/lib/api";
+import type { ModuleConfig, Raffle } from "@/lib/types";
 
 export default function SuperAdminPage() {
   const [role, setRole] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
   const [modulesConfig, setModulesConfig] = useState<ModuleConfig | null>(null);
   const [modulesError, setModulesError] = useState<string | null>(null);
+  const [raffles, setRaffles] = useState<Raffle[]>([]);
+  const [rafflesError, setRafflesError] = useState<string | null>(null);
+  const [rafflesLoading, setRafflesLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => {
     const token = getAuthToken();
@@ -45,7 +31,8 @@ export default function SuperAdminPage() {
 
   useEffect(() => {
     let mounted = true;
-    const load = async () => {
+
+    const loadModules = async () => {
       try {
         const data = await fetchModules();
         if (mounted) setModulesConfig(data || null);
@@ -53,40 +40,43 @@ export default function SuperAdminPage() {
         if (mounted) setModulesError(err instanceof Error ? err.message : "No se pudieron cargar módulos");
       }
     };
-    load();
+
+    const loadRaffles = async () => {
+      setRafflesLoading(true);
+      try {
+        const data = await fetchRafflesLive();
+        if (mounted) {
+          setRaffles(data);
+          setRafflesError(null);
+          setLastUpdated(new Date());
+        }
+      } catch (err) {
+        if (mounted) {
+          setRaffles([]);
+          setRafflesError(err instanceof Error ? err.message : "No se pudieron cargar rifas en vivo");
+        }
+      } finally {
+        if (mounted) setRafflesLoading(false);
+      }
+    };
+
+    loadModules();
+    loadRaffles();
+    const interval = setInterval(loadRaffles, 15000);
+
     return () => {
       mounted = false;
+      clearInterval(interval);
     };
   }, []);
 
-  const superActions = useMemo(() => {
-    const moduleKey = (key: string) => {
-      if (key === "sa_users" || key === "users") return "users";
-      if (key === "sa_tech_support" || key === "tech") return "techSupport";
-      if (key === "sa_smtp" || key === "smtp") return "smtp";
-      if (key === "sa_mail" || key === "mail") return "mailLogs";
-      if (key === "sa_actions" || key === "critical") return "criticalActions";
-      return key;
-    };
-
-    const list = [
-      { key: "sa_users", title: "Usuarios", detail: "Altas/bajas, bloqueo y KYC.", href: "/admin/users" },
-      { key: "sa_tech_support", title: "Soporte Técnico", detail: "Contactos y escalamiento.", href: "/admin/notifs" },
-      { key: "sa_smtp", title: "Correo SMTP", detail: "Remitentes y credenciales.", href: "/admin/notifs" },
-      { key: "audit", title: "Auditoría", detail: "Logs de seguridad y acciones críticas.", href: "/admin/audit" },
-      { key: "branding", title: "Branding", detail: "Colores, logo, banner y políticas.", href: "/admin/config" },
-      { key: "modules", title: "Módulos", detail: "Activar/desactivar features.", href: "/admin/config" },
-      { key: "sa_mail", title: "Logs de Correo", detail: "Monitoreo de envíos.", href: "/admin/notifs" },
-      { key: "sa_actions", title: "Acciones Críticas", detail: "Eliminar rifa, cierre forzado.", href: "/admin/fraud" },
-    ];
-
-    return list.filter((a) => modulesConfig?.superadmin?.[moduleKey(a.key)] !== false);
-  }, [modulesConfig]);
-
-  const adminActions = useMemo(
-    () => baseActions.filter((a) => modulesConfig?.admin?.[a.key] !== false),
-    [modulesConfig],
-  );
+  const totals = useMemo(() => {
+    const totalRaffles = raffles.length;
+    const totalTickets = raffles.reduce((acc, r) => acc + (r.ticketsTotal ?? 0), 0);
+    const soldTickets = raffles.reduce((acc, r) => acc + ((r.ticketsTotal ?? 0) - (r.ticketsAvailable ?? 0)), 0);
+    const active = raffles.filter((r) => r.status === "activa").length;
+    return { totalRaffles, totalTickets, soldTickets, active };
+  }, [raffles]);
 
   if (denied) {
     return (
@@ -108,7 +98,7 @@ export default function SuperAdminPage() {
             <p className="text-xs uppercase tracking-[0.25em] text-white/70">Panel superadmin</p>
             <h1 className="font-[var(--font-display)] text-4xl leading-tight sm:text-5xl">Gobierno total del portal.</h1>
             <p className="max-w-2xl text-white/80">
-              Controla branding, módulos, SMTP, usuarios, roles, auditoría y acciones críticas.
+              Sólo se muestra información real proveniente de las rifas creadas por admins. Datos vivos, sin demos ni mocks.
             </p>
             <div className="flex flex-wrap gap-2 text-sm">
               <Link
@@ -119,77 +109,127 @@ export default function SuperAdminPage() {
               </Link>
             </div>
             {modulesError && <p className="text-xs text-red-200">Módulos: {modulesError}</p>}
+            {modulesConfig && (
+              <p className="text-xs text-white/60">Módulos activos: admin {Object.keys(modulesConfig.admin || {}).length} · superadmin {Object.keys(modulesConfig.superadmin || {}).length}</p>
+            )}
           </div>
 
           <div className="space-y-3 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl shadow-black/30">
             <div className="flex items-center justify-between text-sm text-white/70">
-              <span>Flujo superadmin</span>
-              <span className="rounded-full bg-white/10 px-2 py-1 text-[11px] font-semibold text-white/80">Checklist</span>
+              <span>Datos en vivo</span>
+              <span className="rounded-full bg-white/10 px-2 py-1 text-[11px] font-semibold text-white/80">15s auto-refresh</span>
             </div>
-            <ol className="space-y-2 text-sm text-white/80">
-              <li>1) Ajusta branding, políticas y módulos.</li>
-              <li>2) Configura SMTP y soporte técnico.</li>
-              <li>3) Administra usuarios/roles y auditoría.</li>
-              <li>4) Supervisa pagos críticos y acciones sensibles.</li>
-            </ol>
+            <div className="grid grid-cols-2 gap-3 text-sm text-white/85 sm:grid-cols-4">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                <p className="text-xs text-white/60">Rifas</p>
+                <p className="text-xl font-semibold text-white">{totals.totalRaffles}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                <p className="text-xs text-white/60">Activas</p>
+                <p className="text-xl font-semibold text-white">{totals.active}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                <p className="text-xs text-white/60">Tickets totales</p>
+                <p className="text-xl font-semibold text-white">{totals.totalTickets.toLocaleString()}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                <p className="text-xs text-white/60">Tickets vendidos</p>
+                <p className="text-xl font-semibold text-white">{totals.soldTickets.toLocaleString()}</p>
+              </div>
+            </div>
+            {lastUpdated && (
+              <p className="text-[11px] text-white/60">Última actualización: {lastUpdated.toLocaleTimeString()}</p>
+            )}
           </div>
         </section>
 
         <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-white/70">Superadmin</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">Gobierno y seguridad</h2>
-              <p className="text-sm text-white/80">Branding, módulos, SMTP, usuarios y auditoría.</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-white/70">Rifas creadas por admin</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Datos en vivo</h2>
+              <p className="text-sm text-white/80">Cada tarjeta refleja el estado real de la rifa.</p>
             </div>
-          </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {superActions.map((action) => (
-              <div
-                key={action.key}
-                className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/10 p-4 shadow-sm shadow-black/20"
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/admin/raffles"
+                className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60"
               >
-                <h3 className="text-lg font-semibold text-white">{action.title}</h3>
-                <p className="text-sm text-white/75">{action.detail}</p>
-                {action.href ? (
-                  <Link
-                    href={action.href}
-                    className="inline-flex items-center justify-center rounded-lg border border-[#22d3ee]/40 bg-[#22d3ee]/10 px-3 py-2 text-sm font-semibold text-[#dff7ff] transition hover:-translate-y-[1px] hover:border-[#22d3ee]/80"
-                  >
-                    Ir
-                  </Link>
-                ) : (
-                  <button className="rounded-lg border border-[#22d3ee]/40 bg-[#22d3ee]/10 px-3 py-2 text-sm font-semibold text-[#dff7ff] transition hover:-translate-y-[1px] hover:border-[#22d3ee]/80">
-                    Configurar
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {adminActions.map((action) => (
-            <div
-              key={action.key}
-              className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm shadow-black/20"
-            >
-              <h3 className="text-lg font-semibold text-white">{action.title}</h3>
-              <p className="text-sm text-white/75">{action.detail}</p>
-              {action.href ? (
-                <Link
-                  href={action.href}
-                  className="inline-flex items-center justify-center rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60"
-                >
-                  Ir
-                </Link>
-              ) : (
-                <button className="rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60">
-                  Configurar
-                </button>
-              )}
+                Panel admin
+              </Link>
+              <Link
+                href="/rifas"
+                className="rounded-lg border border-[#22d3ee]/50 bg-[#22d3ee]/15 px-4 py-2 text-sm font-semibold text-[#dff7ff] transition hover:-translate-y-[1px] hover:border-[#22d3ee]/80"
+              >
+                Ver público
+              </Link>
             </div>
-          ))}
+          </div>
+
+          <div className="mt-6 space-y-4">
+            {rafflesLoading && (
+              <p className="text-sm text-white/70">Cargando rifas en vivo...</p>
+            )}
+            {rafflesError && (
+              <p className="text-sm text-red-200">{rafflesError}. Conecta el backend y vuelve a intentar.</p>
+            )}
+            {!rafflesLoading && !rafflesError && raffles.length === 0 && (
+              <p className="text-sm text-white/70">No hay rifas creadas por admin aún.</p>
+            )}
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {raffles.map((raffle) => {
+                const sold = (raffle.ticketsTotal ?? 0) - (raffle.ticketsAvailable ?? 0);
+                const progress = raffle.ticketsTotal ? Math.min(100, Math.round((sold / raffle.ticketsTotal) * 100)) : 0;
+                return (
+                  <div
+                    key={raffle.id}
+                    className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm shadow-black/20"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">{raffle.title}</h3>
+                        <p className="text-xs text-white/60">ID: {raffle.id}</p>
+                      </div>
+                      <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${raffle.status === "activa" ? "bg-emerald-500/15 text-emerald-200" : "bg-white/15 text-white/80"}`}>
+                        {raffle.status}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1 text-sm text-white/80">
+                      <p>Precio ticket: ${raffle.price?.toLocaleString()}</p>
+                      <p>Venta: {sold.toLocaleString()} / {raffle.ticketsTotal?.toLocaleString()} tickets</p>
+                      <p>Disponible: {raffle.ticketsAvailable?.toLocaleString()}</p>
+                      <p>Sorteo: {raffle.drawDate}</p>
+                    </div>
+
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                      <div
+                        className="h-full bg-[#22d3ee]"
+                        style={{ width: `${progress}%` }}
+                        aria-label={`Progreso ${progress}%`}
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 text-sm">
+                      <Link
+                        href={`/rifas/${raffle.id}`}
+                        className="rounded-lg border border-white/20 px-3 py-2 font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60"
+                      >
+                        Ver rifa
+                      </Link>
+                      <Link
+                        href="/admin/raffles"
+                        className="rounded-lg border border-[#22d3ee]/40 bg-[#22d3ee]/10 px-3 py-2 font-semibold text-[#dff7ff] transition hover:-translate-y-[1px] hover:border-[#22d3ee]/80"
+                      >
+                        Editar en admin
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </section>
       </div>
     </main>

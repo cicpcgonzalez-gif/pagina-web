@@ -89,27 +89,36 @@ type RemoteRaffle = {
   status?: string;
 };
 
+const mapRemoteRaffles = (raw: RemoteRaffle[]) => {
+  return raw.map((item, index) => {
+    const total = item.totalTickets ?? item.ticketsTotal ?? 0;
+    const sold = item.soldTickets ?? item._count?.tickets ?? 0;
+    return {
+      id: String(item.id ?? `raffle-${index}`),
+      title: item.name ?? item.title ?? "Rifa",
+      price: Number(item.ticketPrice ?? item.price ?? 0),
+      ticketsAvailable: Math.max(0, total - sold),
+      ticketsTotal: total || 1,
+      drawDate: item.endDate ?? item.drawDate ?? "Por definir",
+      status: (item.status ?? "activa").toLowerCase() === "activa"
+        ? "activa"
+        : "cerrada",
+    } satisfies Raffle;
+  });
+};
+
 export async function fetchRaffles(): Promise<Raffle[]> {
   try {
     const raw = await safeFetch<RemoteRaffle[]>("/raffles");
-    return raw.map((item, index) => {
-      const total = item.totalTickets ?? item.ticketsTotal ?? 0;
-      const sold = item.soldTickets ?? item._count?.tickets ?? 0;
-      return {
-        id: String(item.id ?? `raffle-${index}`),
-        title: item.name ?? item.title ?? "Rifa",
-        price: Number(item.ticketPrice ?? item.price ?? 0),
-        ticketsAvailable: Math.max(0, total - sold),
-        ticketsTotal: total || 1,
-        drawDate: item.endDate ?? item.drawDate ?? "Por definir",
-        status: (item.status ?? "activa").toLowerCase() === "activa"
-          ? "activa"
-          : "cerrada",
-      } satisfies Raffle;
-    });
+    return mapRemoteRaffles(raw);
   } catch {
     return mockRaffles;
   }
+}
+
+export async function fetchRafflesLive(): Promise<Raffle[]> {
+  const raw = await safeFetch<RemoteRaffle[]>("/raffles");
+  return mapRemoteRaffles(raw);
 }
 
 export async function fetchRaffle(id: string | number) {
