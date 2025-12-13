@@ -1,16 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getAuthToken, getUserRole } from "@/lib/session";
-import { fetchAdminUsers, fetchModules, fetchRafflesLive } from "@/lib/api";
+import {
+  fetchAdminUsers,
+  fetchModules,
+  fetchRafflesLive,
+  fetchSuperadminAudit,
+  fetchSuperadminMailLogs,
+  fetchSuperadminSettings,
+  superadminCreateUser,
+  superadminRevokeSessions,
+  superadminResetTwoFactor,
+  superadminUpdateUserStatus,
+  updateSuperadminBranding,
+  updateSuperadminCompany,
+  updateSuperadminModules,
+  updateSuperadminSMTP,
+  updateSuperadminTechSupport,
+} from "@/lib/api";
 import type { AdminUser, ModuleConfig, Raffle } from "@/lib/types";
+
+const defaultBranding = { title: "", tagline: "", primaryColor: "#22d3ee", secondaryColor: "#0ea5e9", logoUrl: "", bannerUrl: "", policies: "" };
+const defaultCompany = { name: "", address: "", rif: "", phone: "", email: "" };
+const defaultSMTP = { host: "", port: "587", user: "", pass: "", secure: false, fromName: "", fromEmail: "" };
+const defaultTech = { phone: "", email: "" };
 
 export default function SuperAdminPage() {
   const [role, setRole] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
   const [modulesConfig, setModulesConfig] = useState<ModuleConfig | null>(null);
   const [modulesError, setModulesError] = useState<string | null>(null);
+  const [modulesState, setModulesState] = useState<Record<string, unknown> | null>(null);
   const [raffles, setRaffles] = useState<Raffle[]>([]);
   const [rafflesError, setRafflesError] = useState<string | null>(null);
   const [rafflesLoading, setRafflesLoading] = useState(false);
@@ -18,76 +40,121 @@ export default function SuperAdminPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersError, setUsersError] = useState<string | null>(null);
   const [usersLoading, setUsersLoading] = useState(false);
+  const [branding, setBranding] = useState(defaultBranding);
+  const [companyForm, setCompanyForm] = useState(defaultCompany);
+  const [smtpForm, setSmtpForm] = useState(defaultSMTP);
+  const [techForm, setTechForm] = useState(defaultTech);
+  const [mailLogs, setMailLogs] = useState<Array<Record<string, unknown>>>([]);
+  const [auditUsers, setAuditUsers] = useState<Array<Record<string, unknown>>>([]);
+  const [auditActions, setAuditActions] = useState<Array<Record<string, unknown>>>([]);
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [logsError, setLogsError] = useState<string | null>(null);
+  const [auditError, setAuditError] = useState<string | null>(null);
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [newUser, setNewUser] = useState({ email: "", password: "", role: "user", firstName: "", lastName: "" });
+  const [actingUser, setActingUser] = useState<string | number | null>(null);
+  const [toast, setToast] = useState<{ message: string; variant: "success" | "error" } | null>(null);
 
   useEffect(() => {
     const token = getAuthToken();
     const r = getUserRole();
     setRole(r);
-    if (!token) {
+    if (!token || !r || r.toLowerCase() !== "superadmin") {
       setDenied(true);
-      return;
     }
-    if (!r || r.toLowerCase() !== "superadmin") {
-      setDenied(true);
+  }, []);
+
+  const loadModules = useCallback(async () => {
+    try {
+      const data = await fetchModules();
+      setModulesConfig(data || null);
+      setModulesState((data as any)?.modules || (data as any)?.superadmin || null);
+    } catch (err) {
+      setModulesError(err instanceof Error ? err.message : "No se pudieron cargar módulos");
+    }
+  }, []);
+
+  const loadRaffles = useCallback(async () => {
+    setRafflesLoading(true);
+    try {
+      const data = await fetchRafflesLive();
+      setRaffles(data);
+      setRafflesError(null);
+      setLastUpdated(new Date());
+    } catch (err) {
+      setRaffles([]);
+      setRafflesError(err instanceof Error ? err.message : "No se pudieron cargar rifas en vivo");
+    } finally {
+      setRafflesLoading(false);
+    }
+  }, []);
+
+  const loadUsers = useCallback(async () => {
+    setUsersLoading(true);
+    try {
+      const data = await fetchAdminUsers();
+      setUsers(data || []);
+      setUsersError(null);
+    } catch (err) {
+      setUsersError(err instanceof Error ? err.message : "No se pudieron cargar usuarios");
+    } finally {
+      setUsersLoading(false);
+    }
+  }, []);
+
+  const loadSettings = useCallback(async () => {
+    setSettingsLoading(true);
+    setSettingsError(null);
+    try {
+      const data = await fetchSuperadminSettings();
+      setBranding({ ...defaultBranding, ...(data as any)?.branding });
+      setCompanyForm({ ...defaultCompany, ...(data as any)?.company });
+      setSmtpForm({ ...defaultSMTP, ...(data as any)?.smtp });
+      setTechForm({ ...defaultTech, ...(data as any)?.techSupport });
+      if ((data as any)?.modules) setModulesState((data as any)?.modules);
+    } catch (err) {
+      setSettingsError(err instanceof Error ? err.message : "No se pudieron cargar settings superadmin");
+    } finally {
+      setSettingsLoading(false);
+    }
+  }, []);
+
+  const loadLogs = useCallback(async () => {
+    setLogsError(null);
+    try {
+      const logs = await fetchSuperadminMailLogs();
+      setMailLogs(logs || []);
+    } catch (err) {
+      setLogsError(err instanceof Error ? err.message : "No se pudieron cargar logs de correo");
+    }
+  }, []);
+
+  const loadAudit = useCallback(async () => {
+    setAuditError(null);
+    try {
+      const [usersLog, actionsLog] = await Promise.all([
+        fetchSuperadminAudit("users"),
+        fetchSuperadminAudit("actions"),
+      ]);
+      setAuditUsers(usersLog || []);
+      setAuditActions(actionsLog || []);
+    } catch (err) {
+      setAuditError(err instanceof Error ? err.message : "No se pudo cargar auditoría");
     }
   }, []);
 
   useEffect(() => {
-    let mounted = true;
-
-    const loadModules = async () => {
-      try {
-        const data = await fetchModules();
-        if (mounted) setModulesConfig(data || null);
-      } catch (err) {
-        if (mounted) setModulesError(err instanceof Error ? err.message : "No se pudieron cargar módulos");
-      }
-    };
-
-    const loadRaffles = async () => {
-      setRafflesLoading(true);
-      try {
-        const data = await fetchRafflesLive();
-        if (mounted) {
-          setRaffles(data);
-          setRafflesError(null);
-          setLastUpdated(new Date());
-        }
-      } catch (err) {
-        if (mounted) {
-          setRaffles([]);
-          setRafflesError(err instanceof Error ? err.message : "No se pudieron cargar rifas en vivo");
-        }
-      } finally {
-        if (mounted) setRafflesLoading(false);
-      }
-    };
-
-    const loadUsers = async () => {
-      setUsersLoading(true);
-      try {
-        const data = await fetchAdminUsers();
-        if (mounted) {
-          setUsers(data || []);
-          setUsersError(null);
-        }
-      } catch (err) {
-        if (mounted) setUsersError(err instanceof Error ? err.message : "No se pudieron cargar usuarios");
-      } finally {
-        if (mounted) setUsersLoading(false);
-      }
-    };
-
+    if (denied) return;
     loadModules();
     loadRaffles();
     loadUsers();
+    loadSettings();
+    loadLogs();
+    loadAudit();
     const interval = setInterval(loadRaffles, 15000);
-
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
-  }, []);
+    return () => clearInterval(interval);
+  }, [denied, loadModules, loadRaffles, loadUsers, loadSettings, loadLogs, loadAudit]);
 
   const totals = useMemo(() => {
     const totalRaffles = raffles.length;
@@ -98,9 +165,90 @@ export default function SuperAdminPage() {
   }, [raffles]);
 
   const statusClass = (status: string) => {
-    if (status === "activo") return "bg-emerald-500/15 text-emerald-100 border-emerald-200/30";
-    if (status === "pendiente") return "bg-amber-500/15 text-amber-100 border-amber-200/30";
+    if (status === "activo" || status === "active") return "bg-emerald-500/15 text-emerald-100 border-emerald-200/30";
+    if (status === "pendiente" || status === "pending") return "bg-amber-500/15 text-amber-100 border-amber-200/30";
     return "bg-rose-500/15 text-rose-100 border-rose-200/30";
+  };
+
+  const notify = (message: string, variant: "success" | "error") => {
+    setToast({ message, variant });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const toggleModule = async (scope: "admin" | "superadmin", key: string) => {
+    const next = { ...(modulesState || {}) } as Record<string, any>;
+    next[scope] = { ...(next[scope] || {}), [key]: !next[scope]?.[key] };
+    setModulesState(next);
+    try {
+      await updateSuperadminModules(next);
+      notify("Módulos actualizados", "success");
+    } catch (err) {
+      notify(err instanceof Error ? err.message : "No se pudieron guardar módulos", "error");
+    }
+  };
+
+  const saveBranding = async () => {
+    try {
+      await updateSuperadminBranding(branding);
+      notify("Branding guardado", "success");
+    } catch (err) {
+      notify(err instanceof Error ? err.message : "No se pudo guardar branding", "error");
+    }
+  };
+
+  const saveCompany = async () => {
+    try {
+      await updateSuperadminCompany(companyForm);
+      notify("Empresa guardada", "success");
+    } catch (err) {
+      notify(err instanceof Error ? err.message : "No se pudo guardar empresa", "error");
+    }
+  };
+
+  const saveSMTP = async () => {
+    try {
+      await updateSuperadminSMTP(smtpForm);
+      notify("SMTP guardado", "success");
+    } catch (err) {
+      notify(err instanceof Error ? err.message : "No se pudo guardar SMTP", "error");
+    }
+  };
+
+  const saveTech = async () => {
+    try {
+      await updateSuperadminTechSupport(techForm);
+      notify("Soporte técnico guardado", "success");
+    } catch (err) {
+      notify(err instanceof Error ? err.message : "No se pudo guardar soporte", "error");
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!newUser.email || !newUser.password) return notify("Email y contraseña son requeridos", "error");
+    setCreatingUser(true);
+    try {
+      await superadminCreateUser(newUser);
+      notify("Usuario creado", "success");
+      setNewUser({ email: "", password: "", role: "user", firstName: "", lastName: "" });
+      loadUsers();
+    } catch (err) {
+      notify(err instanceof Error ? err.message : "No se pudo crear usuario", "error");
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
+  const patchUser = async (id: string | number, patch: Record<string, unknown>, success: string) => {
+    setActingUser(id);
+    try {
+      await superadminUpdateUserStatus(id, patch);
+      notify(success, "success");
+      loadUsers();
+    } catch (err) {
+      notify(err instanceof Error ? err.message : "Acción no aplicada", "error");
+    } finally {
+      setActingUser(null);
+    }
   };
 
   if (denied) {
@@ -117,14 +265,18 @@ export default function SuperAdminPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] text-white">
+      {toast && (
+        <div className="fixed right-4 top-4 z-30 flex items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm shadow-lg shadow-black/40 backdrop-blur">
+          <span className={`h-2 w-2 rounded-full ${toast.variant === "success" ? "bg-emerald-400" : "bg-rose-400"}`} />
+          <span>{toast.message}</span>
+        </div>
+      )}
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 pb-20 pt-10">
         <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div className="space-y-3">
             <p className="text-xs uppercase tracking-[0.25em] text-white/70">Panel superadmin</p>
             <h1 className="font-[var(--font-display)] text-4xl leading-tight sm:text-5xl">Gobierno total del portal.</h1>
-            <p className="max-w-2xl text-white/80">
-              Sólo se muestra información real proveniente de las rifas creadas por admins. Datos vivos, sin demos ni mocks.
-            </p>
+            <p className="max-w-2xl text-white/80">Sin mocks: datos vivos de rifas, usuarios y configuración crítica.</p>
             <div className="flex flex-wrap gap-2 text-sm">
               <Link
                 href="/rifas"
@@ -132,6 +284,18 @@ export default function SuperAdminPage() {
               >
                 Ver mural de rifas
               </Link>
+              <button
+                onClick={() => {
+                  loadRaffles();
+                  loadUsers();
+                  loadSettings();
+                  loadLogs();
+                  loadAudit();
+                }}
+                className="rounded-full border border-[#22d3ee]/40 bg-[#22d3ee]/15 px-4 py-2 text-sm font-semibold text-[#dff7ff] transition hover:-translate-y-[1px] hover:border-[#22d3ee]/80"
+              >
+                Refrescar todo
+              </button>
             </div>
             {modulesError && <p className="text-xs text-red-200">Módulos: {modulesError}</p>}
             {modulesConfig && (
@@ -145,26 +309,14 @@ export default function SuperAdminPage() {
               <span className="rounded-full bg-white/10 px-2 py-1 text-[11px] font-semibold text-white/80">15s auto-refresh</span>
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm text-white/85 sm:grid-cols-4">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <p className="text-xs text-white/60">Rifas</p>
-                <p className="text-xl font-semibold text-white">{totals.totalRaffles}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <p className="text-xs text-white/60">Activas</p>
-                <p className="text-xl font-semibold text-white">{totals.active}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <p className="text-xs text-white/60">Tickets totales</p>
-                <p className="text-xl font-semibold text-white">{totals.totalTickets.toLocaleString()}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <p className="text-xs text-white/60">Tickets vendidos</p>
-                <p className="text-xl font-semibold text-white">{totals.soldTickets.toLocaleString()}</p>
-              </div>
+              {[{ label: "Rifas", value: totals.totalRaffles }, { label: "Activas", value: totals.active }, { label: "Tickets", value: totals.totalTickets.toLocaleString() }, { label: "Vendidos", value: totals.soldTickets.toLocaleString() }].map((card) => (
+                <div key={card.label} className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                  <p className="text-xs text-white/60">{card.label}</p>
+                  <p className="text-xl font-semibold text-white">{card.value}</p>
+                </div>
+              ))}
             </div>
-            {lastUpdated && (
-              <p className="text-[11px] text-white/60">Última actualización: {lastUpdated.toLocaleTimeString()}</p>
-            )}
+            {lastUpdated && <p className="text-[11px] text-white/60">Última actualización: {lastUpdated.toLocaleTimeString()}</p>}
           </div>
         </section>
 
@@ -192,25 +344,16 @@ export default function SuperAdminPage() {
           </div>
 
           <div className="mt-6 space-y-4">
-            {rafflesLoading && (
-              <p className="text-sm text-white/70">Cargando rifas en vivo...</p>
-            )}
-            {rafflesError && (
-              <p className="text-sm text-red-200">{rafflesError}. Conecta el backend y vuelve a intentar.</p>
-            )}
-            {!rafflesLoading && !rafflesError && raffles.length === 0 && (
-              <p className="text-sm text-white/70">No hay rifas creadas por admin aún.</p>
-            )}
+            {rafflesLoading && <p className="text-sm text-white/70">Cargando rifas en vivo...</p>}
+            {rafflesError && <p className="text-sm text-red-200">{rafflesError}. Conecta el backend y vuelve a intentar.</p>}
+            {!rafflesLoading && !rafflesError && raffles.length === 0 && <p className="text-sm text-white/70">No hay rifas creadas por admin aún.</p>}
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {raffles.map((raffle) => {
                 const sold = (raffle.ticketsTotal ?? 0) - (raffle.ticketsAvailable ?? 0);
                 const progress = raffle.ticketsTotal ? Math.min(100, Math.round((sold / raffle.ticketsTotal) * 100)) : 0;
                 return (
-                  <div
-                    key={raffle.id}
-                    className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm shadow-black/20"
-                  >
+                  <div key={raffle.id} className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm shadow-black/20">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <h3 className="text-lg font-semibold text-white">{raffle.title}</h3>
@@ -229,11 +372,7 @@ export default function SuperAdminPage() {
                     </div>
 
                     <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
-                      <div
-                        className="h-full bg-[#22d3ee]"
-                        style={{ width: `${progress}%` }}
-                        aria-label={`Progreso ${progress}%`}
-                      />
+                      <div className="h-full bg-[#22d3ee]" style={{ width: `${progress}%` }} aria-label={`Progreso ${progress}%`} />
                     </div>
 
                     <div className="flex flex-wrap gap-2 text-sm">
@@ -257,72 +396,238 @@ export default function SuperAdminPage() {
           </div>
         </section>
 
+        <section className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20 lg:grid-cols-2">
+          <div className="space-y-3">
+            <p className="text-xs uppercase tracking-[0.25em] text-white/70">Configuración crítica</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <p className="text-sm font-semibold text-white">Branding</p>
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Título" value={branding.title} onChange={(e) => setBranding((s) => ({ ...s, title: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Tagline" value={branding.tagline} onChange={(e) => setBranding((s) => ({ ...s, tagline: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Color primario" value={branding.primaryColor} onChange={(e) => setBranding((s) => ({ ...s, primaryColor: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Color secundario" value={branding.secondaryColor} onChange={(e) => setBranding((s) => ({ ...s, secondaryColor: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Logo URL" value={branding.logoUrl} onChange={(e) => setBranding((s) => ({ ...s, logoUrl: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Banner URL" value={branding.bannerUrl} onChange={(e) => setBranding((s) => ({ ...s, bannerUrl: e.target.value }))} />
+                <textarea className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Políticas" value={branding.policies} onChange={(e) => setBranding((s) => ({ ...s, policies: e.target.value }))} />
+                <button onClick={saveBranding} className="mt-3 w-full rounded-lg bg-[#22d3ee] px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-black/30 transition hover:-translate-y-[1px]">Guardar branding</button>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <p className="text-sm font-semibold text-white">Empresa</p>
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Nombre" value={companyForm.name} onChange={(e) => setCompanyForm((s) => ({ ...s, name: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Dirección" value={companyForm.address} onChange={(e) => setCompanyForm((s) => ({ ...s, address: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="RIF" value={companyForm.rif} onChange={(e) => setCompanyForm((s) => ({ ...s, rif: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Teléfono" value={companyForm.phone} onChange={(e) => setCompanyForm((s) => ({ ...s, phone: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Email" value={companyForm.email} onChange={(e) => setCompanyForm((s) => ({ ...s, email: e.target.value }))} />
+                <button onClick={saveCompany} className="mt-3 w-full rounded-lg bg-[#22c55e] px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-black/30 transition hover:-translate-y-[1px]">Guardar empresa</button>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-xs uppercase tracking-[0.25em] text-white/70">SMTP y soporte</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <p className="text-sm font-semibold text-white">Correo SMTP</p>
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Host" value={smtpForm.host} onChange={(e) => setSmtpForm((s) => ({ ...s, host: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Puerto" value={smtpForm.port} onChange={(e) => setSmtpForm((s) => ({ ...s, port: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Usuario" value={smtpForm.user} onChange={(e) => setSmtpForm((s) => ({ ...s, user: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Contraseña" value={smtpForm.pass} onChange={(e) => setSmtpForm((s) => ({ ...s, pass: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="From name" value={smtpForm.fromName} onChange={(e) => setSmtpForm((s) => ({ ...s, fromName: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="From email" value={smtpForm.fromEmail} onChange={(e) => setSmtpForm((s) => ({ ...s, fromEmail: e.target.value }))} />
+                <button onClick={saveSMTP} className="mt-3 w-full rounded-lg bg-[#facc15] px-3 py-2 text-sm font-semibold text-night shadow-sm shadow-black/30 transition hover:-translate-y-[1px]">Guardar SMTP</button>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <p className="text-sm font-semibold text-white">Soporte técnico</p>
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Teléfono" value={techForm.phone} onChange={(e) => setTechForm((s) => ({ ...s, phone: e.target.value }))} />
+                <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Email" value={techForm.email} onChange={(e) => setTechForm((s) => ({ ...s, email: e.target.value }))} />
+                <button onClick={saveTech} className="mt-3 w-full rounded-lg bg-[#3b82f6] px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-black/30 transition hover:-translate-y-[1px]">Guardar soporte</button>
+              </div>
+            </div>
+            {settingsLoading && <p className="text-xs text-white/60">Cargando configuración…</p>}
+            {settingsError && <p className="text-xs text-red-200">{settingsError}</p>}
+          </div>
+        </section>
+
+        <section className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20 lg:grid-cols-[1.2fr_0.8fr]">
+          <div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.25em] text-white/70">Módulos</p>
+                <p className="text-sm text-white/75">Activa/desactiva capacidades para admin y superadmin.</p>
+              </div>
+              {modulesState && <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] text-white/80">{Object.keys(modulesState).length} grupos</span>}
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {(["admin", "superadmin"] as const).map((scope) => (
+                <div key={scope} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-sm font-semibold text-white">{scope === "admin" ? "Admin" : "Superadmin"}</p>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                    {Object.entries((modulesState as any)?.[scope] || {}).map(([key, value]) => (
+                      <button
+                        key={key}
+                        onClick={() => toggleModule(scope, key)}
+                        className={`rounded-full border px-3 py-1 font-semibold transition hover:-translate-y-[1px] ${value ? "border-emerald-200/40 bg-emerald-500/15 text-emerald-100" : "border-white/20 bg-white/10 text-white/75"}`}
+                      >
+                        {key}
+                      </button>
+                    ))}
+                    {!modulesState && <span className="text-white/60">Sin datos de módulos.</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-[0.25em] text-white/70">Logs de correo</p>
+              <button onClick={loadLogs} className="rounded-md border border-white/20 px-3 py-1 text-xs font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60">Refrescar</button>
+            </div>
+            {logsError && <p className="text-xs text-red-200">{logsError}</p>}
+            <div className="max-h-64 overflow-auto rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/80">
+              {mailLogs.map((log, idx) => (
+                <div key={idx} className="border-b border-white/10 py-2 last:border-none">
+                  <p className="font-semibold text-white">{(log as any)?.subject || (log as any)?.title || "Sin asunto"}</p>
+                  <p className="text-white/60">Para: {(log as any)?.to || (log as any)?.email || "N/D"}</p>
+                  <p className="text-white/60">Estado: {(log as any)?.status || "desconocido"}</p>
+                </div>
+              ))}
+              {!mailLogs.length && <p className="text-white/60">Sin logs cargados.</p>}
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20 lg:grid-cols-2">
+          <div>
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-[0.25em] text-white/70">Auditoría usuarios</p>
+              <button onClick={loadAudit} className="rounded-md border border-white/20 px-3 py-1 text-xs font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60">Refrescar</button>
+            </div>
+            {auditError && <p className="text-xs text-red-200">{auditError}</p>}
+            <div className="mt-2 max-h-64 overflow-auto rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/80">
+              {auditUsers.map((row, idx) => (
+                <div key={idx} className="border-b border-white/10 py-2 last:border-none">
+                  <p className="font-semibold text-white">{(row as any)?.action || (row as any)?.event || "Acción"}</p>
+                  <p className="text-white/60">Usuario: {(row as any)?.user || (row as any)?.email || "N/D"}</p>
+                  <p className="text-white/60">Fecha: {(row as any)?.createdAt || (row as any)?.date || "—"}</p>
+                </div>
+              ))}
+              {!auditUsers.length && <p className="text-white/60">Sin auditoría de usuarios.</p>}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs uppercase tracking-[0.25em] text-white/70">Auditoría acciones críticas</p>
+            <div className="mt-2 max-h-64 overflow-auto rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/80">
+              {auditActions.map((row, idx) => (
+                <div key={idx} className="border-b border-white/10 py-2 last:border-none">
+                  <p className="font-semibold text-white">{(row as any)?.action || (row as any)?.event || "Acción"}</p>
+                  <p className="text-white/60">Actor: {(row as any)?.user || (row as any)?.email || "N/D"}</p>
+                  <p className="text-white/60">Detalle: {(row as any)?.detail || (row as any)?.description || "—"}</p>
+                </div>
+              ))}
+              {!auditActions.length && <p className="text-white/60">Sin acciones registradas.</p>}
+            </div>
+          </div>
+        </section>
+
         <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-[0.25em] text-white/70">Usuarios (superadmin)</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">Gestión en vivo</h2>
-              <p className="text-sm text-white/80">Los registros provienen de /admin/users con tu token superadmin.</p>
+              <p className="text-sm text-white/80">Crea cuentas y controla estado/seguridad.</p>
             </div>
             <button
-              onClick={() => {
-                setUsersLoading(true);
-                fetchAdminUsers()
-                  .then((data) => {
-                    setUsers(data || []);
-                    setUsersError(null);
-                  })
-                  .catch((err) => setUsersError(err instanceof Error ? err.message : "No se pudieron cargar usuarios"))
-                  .finally(() => setUsersLoading(false));
-              }}
+              onClick={loadUsers}
               className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60"
             >
               Refrescar
             </button>
           </div>
 
-          {usersLoading && <p className="mt-3 text-xs text-white/60">Cargando usuarios…</p>}
-          {usersError && <p className="mt-3 text-xs text-red-200">{usersError}</p>}
+          <div className="mt-4 grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <p className="text-sm font-semibold text-white">Crear usuario</p>
+              <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Email" value={newUser.email} onChange={(e) => setNewUser((s) => ({ ...s, email: e.target.value }))} />
+              <input className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Contraseña" value={newUser.password} onChange={(e) => setNewUser((s) => ({ ...s, password: e.target.value }))} />
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <input className="rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Nombre" value={newUser.firstName} onChange={(e) => setNewUser((s) => ({ ...s, firstName: e.target.value }))} />
+                <input className="rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white" placeholder="Apellido" value={newUser.lastName} onChange={(e) => setNewUser((s) => ({ ...s, lastName: e.target.value }))} />
+              </div>
+              <div className="mt-3 flex gap-2 text-xs">
+                {["user", "admin", "superadmin"].map((r) => (
+                  <button key={r} onClick={() => setNewUser((s) => ({ ...s, role: r }))} className={`flex-1 rounded-md border px-2 py-2 font-semibold transition ${newUser.role === r ? "border-[#22d3ee] bg-[#22d3ee]/20" : "border-white/20 bg-white/5 text-white/80"}`}>
+                    {r}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={handleCreateUser}
+                disabled={creatingUser}
+                className="mt-3 w-full rounded-lg bg-[#22d3ee] px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-black/30 transition hover:-translate-y-[1px] disabled:opacity-70"
+              >
+                {creatingUser ? "Creando..." : "Crear usuario"}
+              </button>
+            </div>
 
-          <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg shadow-black/30">
-            <table className="w-full text-left text-sm text-white/80">
-              <thead className="bg-white/10 text-xs uppercase text-white/70">
-                <tr>
-                  <th className="px-4 py-3">Nombre</th>
-                  <th className="px-4 py-3">Email</th>
-                  <th className="px-4 py-3">Rol</th>
-                  <th className="px-4 py-3">Estado</th>
-                  <th className="px-4 py-3">Creado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => {
-                  const status = (u.status || "").toLowerCase();
-                  const roleLabel = u.role || "usuario";
-                  const statusLabel = status || "desconocido";
-                  return (
-                    <tr key={String(u.id || u.email || Math.random())} className="border-t border-white/10">
-                      <td className="px-4 py-3 font-semibold text-white">{u.name || "Sin nombre"}</td>
-                      <td className="px-4 py-3">{u.email || "—"}</td>
-                      <td className="px-4 py-3">{roleLabel}</td>
-                      <td className="px-4 py-3">
-                        <span className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${statusClass(statusLabel)}`}>
-                          {statusLabel}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-white/70">{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "—"}</td>
-                    </tr>
-                  );
-                })}
-                {!usersLoading && users.length === 0 && (
-                  <tr className="border-t border-white/10">
-                    <td colSpan={5} className="px-4 py-6 text-center text-white/70">
-                      No hay usuarios cargados desde el backend.
-                    </td>
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg shadow-black/30">
+              {usersLoading && <p className="px-4 py-3 text-xs text-white/60">Cargando usuarios…</p>}
+              {usersError && <p className="px-4 py-3 text-xs text-red-200">{usersError}</p>}
+              <table className="w-full text-left text-sm text-white/80">
+                <thead className="bg-white/10 text-xs uppercase text-white/70">
+                  <tr>
+                    <th className="px-4 py-3">Nombre</th>
+                    <th className="px-4 py-3">Rol</th>
+                    <th className="px-4 py-3">Estado</th>
+                    <th className="px-4 py-3">Acciones</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {users.map((u) => {
+                    const status = (u.status || "").toLowerCase();
+                    return (
+                      <tr key={String(u.id || u.email)} className="border-t border-white/10">
+                        <td className="px-4 py-3">
+                          <p className="font-semibold text-white">{u.name || u.email || "Sin nombre"}</p>
+                          <p className="text-xs text-white/60">{u.email}</p>
+                        </td>
+                        <td className="px-4 py-3 capitalize">{u.role || "usuario"}</td>
+                        <td className="px-4 py-3">
+                          <span className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${statusClass(status)}`}>{status || "desconocido"}</span>
+                        </td>
+                        <td className="px-4 py-3 text-xs">
+                          <div className="flex flex-wrap gap-2">
+                            <button onClick={() => patchUser(u.id || u.email || "", { active: status !== "activo" && status !== "active" ? true : false }, status !== "activo" && status !== "active" ? "Usuario activado" : "Usuario desactivado")} className="rounded-md border border-white/20 px-2 py-1 text-white transition hover:border-white/40">
+                              {actingUser === u.id ? "..." : status !== "activo" && status !== "active" ? "Activar" : "Desactivar"}
+                            </button>
+                            <button onClick={() => patchUser(u.id || u.email || "", { verified: !(u as any)?.verified }, (u as any)?.verified ? "Verificación removida" : "Usuario verificado")} className="rounded-md border border-amber-300/50 px-2 py-1 text-amber-100 transition hover:border-amber-200/70">
+                              {actingUser === u.id ? "..." : (u as any)?.verified ? "Desverificar" : "Verificar"}
+                            </button>
+                            <button onClick={() => patchUser(u.id || u.email || "", { role: "admin" }, "Rol actualizado") } className="rounded-md border border-white/20 px-2 py-1 text-white transition hover:border-white/40">
+                              {actingUser === u.id ? "..." : "Set admin"}
+                            </button>
+                            <button onClick={() => superadminResetTwoFactor(u.id || "").then(() => notify("2FA reseteado", "success"))} className="rounded-md border border-white/20 px-2 py-1 text-white transition hover:border-white/40">
+                              Reset 2FA
+                            </button>
+                            <button onClick={() => superadminRevokeSessions(u.id || "").then(() => notify("Sesiones revocadas", "success"))} className="rounded-md border border-white/20 px-2 py-1 text-white transition hover:border-white/40">
+                              Revocar sesiones
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {!usersLoading && users.length === 0 && (
+                    <tr className="border-t border-white/10">
+                      <td colSpan={4} className="px-4 py-6 text-center text-white/70">No hay usuarios cargados desde el backend.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
       </div>

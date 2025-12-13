@@ -506,6 +506,101 @@ export async function requestExport(type: string) {
   throw lastError instanceof Error ? lastError : new Error("No se pudo generar el export");
 }
 
+export async function fetchSuperadminSettings() {
+  return safeFetch<Record<string, unknown>>("/superadmin/settings");
+}
+
+export async function updateSuperadminBranding(branding: Record<string, unknown>) {
+  return safeFetch<Record<string, unknown>>("/superadmin/settings/branding", {
+    method: "PATCH",
+    body: JSON.stringify(branding),
+  });
+}
+
+export async function updateSuperadminModules(modules: Record<string, unknown>) {
+  return safeFetch<Record<string, unknown>>("/superadmin/settings/modules", {
+    method: "PATCH",
+    body: JSON.stringify({ modules }),
+  });
+}
+
+export async function updateSuperadminCompany(company: Record<string, unknown>) {
+  return safeFetch<Record<string, unknown>>("/superadmin/settings/company", {
+    method: "PATCH",
+    body: JSON.stringify(company),
+  });
+}
+
+export async function updateSuperadminSMTP(payload: Record<string, unknown>) {
+  return safeFetch<Record<string, unknown>>("/superadmin/settings/smtp", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateSuperadminTechSupport(payload: Record<string, unknown>) {
+  return safeFetch<Record<string, unknown>>("/superadmin/settings/tech-support", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchSuperadminMailLogs() {
+  const candidates = ["/superadmin/mail/logs", "/admin/mail/logs"];
+  let lastError: unknown;
+  for (const path of candidates) {
+    try {
+      return await safeFetch<Array<Record<string, unknown>>>(path);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("No se pudieron cargar logs de correo");
+}
+
+export async function fetchSuperadminAudit(kind: "users" | "actions" = "users") {
+  const endpoints: Record<string, string[]> = {
+    users: ["/superadmin/audit/users", "/admin/audit/users", "/superadmin/audit"],
+    actions: ["/superadmin/audit/actions", "/admin/audit/actions", "/superadmin/audit"],
+  };
+  const candidates = endpoints[kind] || endpoints.users;
+  let lastError: unknown;
+  for (const path of candidates) {
+    try {
+      return await safeFetch<Array<Record<string, unknown>>>(path);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("No se pudo cargar auditoría");
+}
+
+export async function superadminCreateUser(payload: Record<string, unknown>) {
+  return safeFetch<Record<string, unknown>>("/superadmin/users", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function superadminUpdateUserStatus(userId: string | number, patch: Record<string, unknown>) {
+  return safeFetch<Record<string, unknown>>(`/superadmin/users/${userId}/status`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export async function superadminResetTwoFactor(userId: string | number) {
+  return safeFetch<Record<string, unknown>>(`/superadmin/users/${userId}/reset-2fa`, {
+    method: "POST",
+  });
+}
+
+export async function superadminRevokeSessions(userId: string | number) {
+  return safeFetch<Record<string, unknown>>(`/superadmin/users/${userId}/revoke-sessions`, {
+    method: "POST",
+  });
+}
+
 export async function fetchWinners() {
   return safeFetch<Array<Record<string, unknown>>>("/winners");
 }
