@@ -54,7 +54,7 @@ function applyRateLimit(req: NextRequest, requestId: string): NextResponse | nul
   return null;
 }
 
-export function middleware(req: NextRequest) {
+export default function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const [headersWithId, requestId] = ensureRequestId(req);
   const token = req.cookies.get("auth_token")?.value;

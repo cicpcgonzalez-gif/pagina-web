@@ -72,9 +72,11 @@ export default function SuperAdminPage() {
     const token = getAuthToken();
     const r = getUserRole();
     setRole(r);
-    if (!token || !r || r.toLowerCase() !== "superadmin") {
+    if (!token || !r) {
       setDenied(true);
+      return;
     }
+    setDenied(false);
   }, []);
 
   const loadModules = useCallback(async () => {
@@ -169,18 +171,22 @@ export default function SuperAdminPage() {
     }
   }, []);
 
+  const isSuperadmin = role?.toLowerCase() === "superadmin";
+
   useEffect(() => {
     if (denied) return;
     loadModules();
     loadRaffles();
-    loadUsers();
     loadSettings();
-    loadLogs();
-    loadAudit();
-    loadAnnouncements();
+    if (isSuperadmin) {
+      loadUsers();
+      loadLogs();
+      loadAudit();
+      loadAnnouncements();
+    }
     const interval = setInterval(loadRaffles, 15000);
     return () => clearInterval(interval);
-  }, [denied, loadModules, loadRaffles, loadUsers, loadSettings, loadLogs, loadAudit, loadAnnouncements]);
+  }, [denied, isSuperadmin, loadModules, loadRaffles, loadUsers, loadSettings, loadLogs, loadAudit, loadAnnouncements]);
 
   const totals = useMemo(() => {
     const totalRaffles = raffles.length;
@@ -190,28 +196,40 @@ export default function SuperAdminPage() {
     return { totalRaffles, totalTickets, soldTickets, active };
   }, [raffles]);
 
-  const quickActions: Array<{ label: string; color: string; panel?: string; href?: string }> = [
-    { label: "Dashboard", panel: "dashboard", color: "#22c55e" },
-    { label: "Progreso", panel: "rifas", color: "#2dd4bf" },
-    { label: "Sorteo en Vivo", href: "/rifas", color: "#38bdf8" },
-    { label: "Pagos", href: "/admin/payments", color: "#f59e0b" },
-    { label: "Tickets", href: "/admin/tickets", color: "#6366f1" },
-    { label: "Estilo", panel: "branding", color: "#c084fc" },
-    { label: "Novedades", panel: "novedades", color: "#fb7185" },
-    { label: "Rifas", panel: "rifas", color: "#22d3ee" },
-    { label: "Métricas", href: "/admin/reports", color: "#22c55e" },
-    { label: "Usuarios", panel: "usuarios", color: "#38bdf8" },
-    { label: "Módulos", panel: "modulos", color: "#4ade80" },
-    { label: "Branding", panel: "branding", color: "#c084fc" },
-    { label: "SMTP", panel: "smtp", color: "#facc15" },
-    { label: "Soporte", panel: "soporte", color: "#38bdf8" },
-    { label: "Logs de correo", panel: "logs", color: "#f472b6" },
-    { label: "Auditoría", panel: "auditoria", color: "#fbbf24" },
-    { label: "Acciones críticas", panel: "criticas", color: "#ef4444" },
-    { label: "Anuncios", panel: "novedades", color: "#fb7185" },
-  ];
+  const quickActions: Array<{ label: string; color: string; panel?: string; href?: string }> = useMemo(() => {
+    const base = [
+      { label: "Dashboard", panel: "dashboard", color: "#22c55e" },
+      { label: "Progreso", panel: "rifas", color: "#2dd4bf" },
+      { label: "Sorteo en Vivo", href: "/rifas", color: "#38bdf8" },
+      { label: "Pagos", href: "/admin/payments", color: "#f59e0b" },
+      { label: "Tickets", href: "/admin/tickets", color: "#6366f1" },
+      { label: "Métricas", href: "/admin/reports", color: "#22c55e" },
+      { label: "Estilo", panel: "branding", color: "#c084fc" },
+      { label: "Novedades", panel: "novedades", color: "#fb7185" },
+      { label: "Rifas", panel: "rifas", color: "#22d3ee" },
+    ];
+
+    if (isSuperadmin) {
+      base.push(
+        { label: "Usuarios", panel: "usuarios", color: "#38bdf8" },
+        { label: "Módulos", panel: "modulos", color: "#4ade80" },
+        { label: "Branding", panel: "branding", color: "#c084fc" },
+        { label: "SMTP", panel: "smtp", color: "#facc15" },
+        { label: "Soporte", panel: "soporte", color: "#38bdf8" },
+        { label: "Logs de correo", panel: "logs", color: "#f472b6" },
+        { label: "Auditoría", panel: "auditoria", color: "#fbbf24" },
+        { label: "Acciones críticas", panel: "criticas", color: "#ef4444" },
+        { label: "Anuncios", panel: "novedades", color: "#fb7185" }
+      );
+    }
+
+    return base;
+  }, [isSuperadmin]);
+
+  const allowedPanels = useMemo(() => new Set(quickActions.filter((q) => q.panel).map((q) => q.panel as string)), [quickActions]);
 
   const renderPanel = () => {
+    if (activePanel && !allowedPanels.has(activePanel)) return null;
     switch (activePanel) {
       case "dashboard":
         return (
@@ -286,6 +304,7 @@ export default function SuperAdminPage() {
         );
 
       case "smtp":
+        if (!isSuperadmin) return null;
         return (
           <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
             <p className="text-xs uppercase tracking-[0.25em] text-white/70">Correo SMTP</p>
@@ -305,6 +324,7 @@ export default function SuperAdminPage() {
         );
 
       case "soporte":
+        if (!isSuperadmin) return null;
         return (
           <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
             <p className="text-xs uppercase tracking-[0.25em] text-white/70">Soporte técnico</p>
@@ -320,6 +340,7 @@ export default function SuperAdminPage() {
         );
 
       case "logs":
+        if (!isSuperadmin) return null;
         return (
           <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
             <div className="flex items-center justify-between">
@@ -420,6 +441,7 @@ export default function SuperAdminPage() {
         );
 
       case "modulos":
+        if (!isSuperadmin) return null;
         return (
           <section className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20 lg:grid-cols-[1.2fr_0.8fr]">
             <div>
@@ -472,6 +494,7 @@ export default function SuperAdminPage() {
         );
 
       case "auditoria":
+        if (!isSuperadmin) return null;
         return (
           <section className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20 lg:grid-cols-2">
             <div>
@@ -509,6 +532,7 @@ export default function SuperAdminPage() {
         );
 
       case "criticas":
+        if (!isSuperadmin) return null;
         return (
           <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -609,6 +633,7 @@ export default function SuperAdminPage() {
         );
 
       case "usuarios":
+        if (!isSuperadmin) return null;
         return (
           <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1002,18 +1027,24 @@ export default function SuperAdminPage() {
                 );
               }
 
+              const labelRole = isSuperadmin ? "Superadmin" : "Admin";
+              const disabled = !!qa.panel && !allowedPanels.has(qa.panel);
+
               return (
                 <button
                   key={qa.label}
                   type="button"
+                  disabled={disabled}
                   onClick={() => {
-                    setActiveAction(qa.label);
-                    setActivePanel(qa.panel || null);
+                    if (qa.panel && allowedPanels.has(qa.panel)) {
+                      setActiveAction(qa.label);
+                      setActivePanel(qa.panel || null);
+                    }
                   }}
-                  className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-white transition hover:-translate-y-[1px] ${activeAction === qa.label ? "border-[#22d3ee]/70 bg-[#22d3ee]/15" : "border-white/10 bg-white/5 hover:border-white/30"}`}
+                  className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-white transition hover:-translate-y-[1px] ${activeAction === qa.label ? "border-[#22d3ee]/70 bg-[#22d3ee]/15" : "border-white/10 bg-white/5 hover:border-white/30"} ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   <div>
-                    <p className="text-xs text-white/60">Superadmin</p>
+                    <p className="text-xs text-white/60">{labelRole}</p>
                     <p className="text-sm font-semibold text-white">{qa.label}</p>
                   </div>
                   <span className="h-8 w-8 shrink-0 rounded-full" style={{ backgroundColor: qa.color, opacity: 0.3 }} />

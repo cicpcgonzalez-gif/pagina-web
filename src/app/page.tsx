@@ -3,6 +3,8 @@ import { fetchRaffles } from "@/lib/api";
 import { ProfileLinkButton } from "@/components/ProfileLinkButton";
 import { HomeLoginCard } from "@/components/HomeLoginCard";
 
+export const dynamic = "force-dynamic";
+
 const banners = [
   {
     title: "Publicidad destacada",
