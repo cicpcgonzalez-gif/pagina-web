@@ -89,16 +89,6 @@ export default function AdminPage() {
     return list.filter((a) => modulesConfig?.superadmin?.[moduleKey(a.key)] !== false);
   }, [modulesConfig]);
 
-  const metrics = useMemo(
-    () => [
-      { label: "Rifas activas", value: "12" },
-      { label: "Boletos vendidos", value: "3,215" },
-      { label: "Pendientes de pago", value: "74" },
-      { label: "Reembolsos", value: "3" },
-    ],
-    [],
-  );
-
   if (denied) {
     return (
       <main className="mx-auto max-w-4xl px-4 pb-20 pt-10 bg-night-sky text-white">
@@ -133,17 +123,6 @@ export default function AdminPage() {
               >
                 Ver mural de rifas
               </Link>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {metrics.map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-black/30"
-                >
-                  <p className="text-sm text-white/70">{item.label}</p>
-                  <p className="text-2xl font-semibold text-white">{item.value}</p>
-                </div>
-              ))}
             </div>
           </div>
 

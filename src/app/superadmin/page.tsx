@@ -118,14 +118,7 @@ export default function SuperAdminPage() {
                 Ver mural de rifas
               </Link>
             </div>
-            <div className="rounded-2xl border border-[#22d3ee]/30 bg-[#22d3ee]/10 p-4 text-sm text-[#dff7ff]">
-              <p className="font-semibold text-white">Superadmin</p>
-              <p className="text-white/80">Acceso completo a gobierno, seguridad y configuración crítica.</p>
-              {modulesError && <p className="mt-2 text-xs text-red-200">Módulos: {modulesError}</p>}
-              {modulesConfig && (
-                <p className="mt-1 text-xs text-white/70">Módulos cargados: superadmin {Object.keys(modulesConfig.superadmin || {}).length}</p>
-              )}
-            </div>
+            {modulesError && <p className="text-xs text-red-200">Módulos: {modulesError}</p>}
           </div>
 
           <div className="space-y-3 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl shadow-black/30">
