@@ -601,6 +601,22 @@ export async function superadminRevokeSessions(userId: string | number) {
   });
 }
 
+export async function fetchAnnouncements() {
+  return safeFetch<Array<Record<string, unknown>>>("/announcements");
+}
+
+export async function deleteAnnouncement(id: string | number) {
+  return safeFetch<Record<string, unknown>>(`/admin/announcements/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function deleteRaffle(raffleId: string | number) {
+  return safeFetch<Record<string, unknown>>(`/raffles/${raffleId}`, {
+    method: "DELETE",
+  });
+}
+
 export async function fetchWinners() {
   return safeFetch<Array<Record<string, unknown>>>("/winners");
 }

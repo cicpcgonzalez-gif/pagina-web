@@ -14,6 +14,9 @@ import {
   superadminRevokeSessions,
   superadminResetTwoFactor,
   superadminUpdateUserStatus,
+  fetchAnnouncements,
+  deleteAnnouncement,
+  deleteRaffle,
   updateSuperadminBranding,
   updateSuperadminCompany,
   updateSuperadminModules,
@@ -47,6 +50,9 @@ export default function SuperAdminPage() {
   const [mailLogs, setMailLogs] = useState<Array<Record<string, unknown>>>([]);
   const [auditUsers, setAuditUsers] = useState<Array<Record<string, unknown>>>([]);
   const [auditActions, setAuditActions] = useState<Array<Record<string, unknown>>>([]);
+  const [announcements, setAnnouncements] = useState<Array<Record<string, unknown>>>([]);
+  const [announcementsLoading, setAnnouncementsLoading] = useState(false);
+  const [announcementsError, setAnnouncementsError] = useState<string | null>(null);
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [logsError, setLogsError] = useState<string | null>(null);
@@ -54,6 +60,10 @@ export default function SuperAdminPage() {
   const [creatingUser, setCreatingUser] = useState(false);
   const [newUser, setNewUser] = useState({ email: "", password: "", role: "user", firstName: "", lastName: "" });
   const [actingUser, setActingUser] = useState<string | number | null>(null);
+  const [deleteAnnouncementId, setDeleteAnnouncementId] = useState("");
+  const [deleteRaffleId, setDeleteRaffleId] = useState("");
+  const [deletingAnnouncement, setDeletingAnnouncement] = useState(false);
+  const [deletingRaffle, setDeletingRaffle] = useState(false);
   const [toast, setToast] = useState<{ message: string; variant: "success" | "error" } | null>(null);
 
   useEffect(() => {
@@ -144,6 +154,19 @@ export default function SuperAdminPage() {
     }
   }, []);
 
+  const loadAnnouncements = useCallback(async () => {
+    setAnnouncementsLoading(true);
+    setAnnouncementsError(null);
+    try {
+      const data = await fetchAnnouncements();
+      setAnnouncements(data || []);
+    } catch (err) {
+      setAnnouncementsError(err instanceof Error ? err.message : "No se pudieron cargar anuncios");
+    } finally {
+      setAnnouncementsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (denied) return;
     loadModules();
@@ -152,9 +175,10 @@ export default function SuperAdminPage() {
     loadSettings();
     loadLogs();
     loadAudit();
+    loadAnnouncements();
     const interval = setInterval(loadRaffles, 15000);
     return () => clearInterval(interval);
-  }, [denied, loadModules, loadRaffles, loadUsers, loadSettings, loadLogs, loadAudit]);
+  }, [denied, loadModules, loadRaffles, loadUsers, loadSettings, loadLogs, loadAudit, loadAnnouncements]);
 
   const totals = useMemo(() => {
     const totalRaffles = raffles.length;
@@ -163,6 +187,17 @@ export default function SuperAdminPage() {
     const active = raffles.filter((r) => r.status === "activa").length;
     return { totalRaffles, totalTickets, soldTickets, active };
   }, [raffles]);
+
+  const quickActions = [
+    { label: "Usuarios", target: "section-users", color: "#22d3ee" },
+    { label: "Módulos", target: "section-modules", color: "#4ade80" },
+    { label: "Branding", target: "section-settings", color: "#c084fc" },
+    { label: "SMTP", target: "section-settings", color: "#facc15" },
+    { label: "Soporte", target: "section-settings", color: "#38bdf8" },
+    { label: "Logs de correo", target: "section-modules", color: "#f472b6" },
+    { label: "Auditoría", target: "section-audit", color: "#fbbf24" },
+    { label: "Acciones críticas", target: "section-critical", color: "#ef4444" },
+  ];
 
   const statusClass = (status: string) => {
     if (status === "activo" || status === "active") return "bg-emerald-500/15 text-emerald-100 border-emerald-200/30";
@@ -173,6 +208,12 @@ export default function SuperAdminPage() {
   const notify = (message: string, variant: "success" | "error") => {
     setToast({ message, variant });
     setTimeout(() => setToast(null), 3500);
+  };
+
+  const scrollToSection = (id: string) => {
+    if (typeof document === "undefined") return;
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const toggleModule = async (scope: "admin" | "superadmin", key: string) => {
@@ -251,6 +292,38 @@ export default function SuperAdminPage() {
     }
   };
 
+  const handleDeleteAnnouncement = async (idOverride?: string | number) => {
+    const targetId = idOverride ?? deleteAnnouncementId;
+    if (!targetId) return notify("Ingresa el ID del anuncio", "error");
+    setDeletingAnnouncement(true);
+    try {
+      await deleteAnnouncement(targetId);
+      notify("Anuncio eliminado", "success");
+      setDeleteAnnouncementId("");
+      loadAnnouncements();
+    } catch (err) {
+      notify(err instanceof Error ? err.message : "No se pudo eliminar el anuncio", "error");
+    } finally {
+      setDeletingAnnouncement(false);
+    }
+  };
+
+  const handleDeleteRaffle = async (idOverride?: string | number) => {
+    const targetId = idOverride ?? deleteRaffleId;
+    if (!targetId) return notify("Ingresa el ID de la rifa", "error");
+    setDeletingRaffle(true);
+    try {
+      await deleteRaffle(targetId);
+      notify("Rifa eliminada", "success");
+      setDeleteRaffleId("");
+      loadRaffles();
+    } catch (err) {
+      notify(err instanceof Error ? err.message : "No se pudo eliminar la rifa", "error");
+    } finally {
+      setDeletingRaffle(false);
+    }
+  };
+
   if (denied) {
     return (
       <main className="mx-auto max-w-4xl px-4 pb-20 pt-10 bg-night-sky text-white">
@@ -321,6 +394,27 @@ export default function SuperAdminPage() {
         </section>
 
         <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
+          <p className="text-xs uppercase tracking-[0.25em] text-white/70">Menú principal</p>
+          <h2 className="mt-2 text-2xl font-semibold text-white">Accesos rápidos</h2>
+          <p className="text-sm text-white/75">Mismo layout que la app: toca para ir directo a cada bloque.</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {quickActions.map((qa) => (
+              <button
+                key={qa.label}
+                onClick={() => scrollToSection(qa.target)}
+                className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left text-white transition hover:-translate-y-[1px] hover:border-white/30"
+              >
+                <div>
+                  <p className="text-xs text-white/60">Superadmin</p>
+                  <p className="text-sm font-semibold text-white">{qa.label}</p>
+                </div>
+                <span className="h-8 w-8 shrink-0 rounded-full" style={{ backgroundColor: qa.color, opacity: 0.3 }} />
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section id="section-raffles" className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-[0.25em] text-white/70">Rifas creadas por admin</p>
@@ -396,7 +490,7 @@ export default function SuperAdminPage() {
           </div>
         </section>
 
-        <section className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20 lg:grid-cols-2">
+        <section id="section-settings" className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20 lg:grid-cols-2">
           <div className="space-y-3">
             <p className="text-xs uppercase tracking-[0.25em] text-white/70">Configuración crítica</p>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -450,7 +544,7 @@ export default function SuperAdminPage() {
           </div>
         </section>
 
-        <section className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20 lg:grid-cols-[1.2fr_0.8fr]">
+        <section id="section-modules" className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20 lg:grid-cols-[1.2fr_0.8fr]">
           <div>
             <div className="flex items-center justify-between">
               <div>
@@ -499,7 +593,7 @@ export default function SuperAdminPage() {
           </div>
         </section>
 
-        <section className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20 lg:grid-cols-2">
+        <section id="section-audit" className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20 lg:grid-cols-2">
           <div>
             <div className="flex items-center justify-between">
               <p className="text-xs uppercase tracking-[0.25em] text-white/70">Auditoría usuarios</p>
@@ -533,7 +627,104 @@ export default function SuperAdminPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
+        <section id="section-critical" className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.25em] text-white/70">Acciones críticas</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Borrar rifas y anuncios</h2>
+              <p className="text-sm text-white/80">Mismo set de acciones duras del superadmin móvil. Ejecuta contra backend real.</p>
+            </div>
+            <button
+              onClick={() => {
+                loadAnnouncements();
+                loadRaffles();
+              }}
+              className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60"
+            >
+              Refrescar datos
+            </button>
+          </div>
+
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <p className="text-sm font-semibold text-white">Eliminar rifa</p>
+              <p className="text-xs text-white/60">ID de rifa exacto (se elimina definitivamente).</p>
+              <input
+                className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white"
+                placeholder="ID de la rifa"
+                value={deleteRaffleId}
+                onChange={(e) => setDeleteRaffleId(e.target.value)}
+              />
+              <button
+                onClick={handleDeleteRaffle}
+                disabled={deletingRaffle}
+                className="mt-3 w-full rounded-lg bg-rose-500 px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-black/30 transition hover:-translate-y-[1px] disabled:opacity-70"
+              >
+                {deletingRaffle ? "Eliminando..." : "Eliminar rifa"}
+              </button>
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <p className="text-sm font-semibold text-white">Eliminar anuncio</p>
+              <p className="text-xs text-white/60">ID de anuncio (sección novedades).</p>
+              <input
+                className="mt-2 w-full rounded-lg border border-white/15 bg-night-sky px-3 py-2 text-sm text-white"
+                placeholder="ID del anuncio"
+                value={deleteAnnouncementId}
+                onChange={(e) => setDeleteAnnouncementId(e.target.value)}
+              />
+              <button
+                onClick={handleDeleteAnnouncement}
+                disabled={deletingAnnouncement}
+                className="mt-3 w-full rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-night shadow-sm shadow-black/30 transition hover:-translate-y-[1px] disabled:opacity-70"
+              >
+                {deletingAnnouncement ? "Eliminando..." : "Eliminar anuncio"}
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-xl border border-white/10 bg-white/5 p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-white">Listado de anuncios</p>
+              {announcementsLoading && <span className="text-xs text-white/60">Cargando…</span>}
+              {announcementsError && <span className="text-xs text-red-200">{announcementsError}</span>}
+            </div>
+            <div className="mt-3 max-h-64 overflow-auto rounded-lg border border-white/10">
+              <table className="w-full text-left text-sm text-white/80">
+                <thead className="bg-white/10 text-xs uppercase text-white/70">
+                  <tr>
+                    <th className="px-3 py-2">ID</th>
+                    <th className="px-3 py-2">Título</th>
+                    <th className="px-3 py-2">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {announcements.map((a, idx) => (
+                    <tr key={String((a as any)?.id ?? idx)} className="border-t border-white/10">
+                      <td className="px-3 py-2 font-semibold text-white">{(a as any)?.id ?? idx}</td>
+                      <td className="px-3 py-2">{(a as any)?.title || "(sin título)"}</td>
+                      <td className="px-3 py-2 text-xs">
+                        <button
+                          onClick={() => handleDeleteAnnouncement((a as any)?.id)}
+                          className="rounded-md border border-white/20 px-2 py-1 text-rose-100 transition hover:border-rose-200/60"
+                        >
+                          Borrar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {!announcements.length && !announcementsLoading && (
+                    <tr className="border-t border-white/10">
+                      <td colSpan={3} className="px-3 py-4 text-center text-white/60">Sin anuncios cargados.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="section-users" className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-[0.25em] text-white/70">Usuarios (superadmin)</p>
