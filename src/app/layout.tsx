@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
-import AuthNav from "@/components/AuthNav";
+import { BackButton } from "@/components/BackButton";
 
 const display = Space_Grotesk({
   variable: "--font-display",
@@ -35,6 +34,7 @@ export default function RootLayout({
             </div>
           </div>
           {children}
+          <BackButton />
         </div>
       </body>
     </html>
