@@ -189,14 +189,17 @@ export default function SuperAdminPage() {
   }, [raffles]);
 
   const quickActions = [
-    { label: "Usuarios", target: "section-users", color: "#22d3ee" },
-    { label: "Módulos", target: "section-modules", color: "#4ade80" },
-    { label: "Branding", target: "section-settings", color: "#c084fc" },
-    { label: "SMTP", target: "section-settings", color: "#facc15" },
-    { label: "Soporte", target: "section-settings", color: "#38bdf8" },
-    { label: "Logs de correo", target: "section-modules", color: "#f472b6" },
-    { label: "Auditoría", target: "section-audit", color: "#fbbf24" },
-    { label: "Acciones críticas", target: "section-critical", color: "#ef4444" },
+    { label: "Rifas", href: "#section-raffles", color: "#22d3ee" },
+    { label: "Métricas", href: "/admin/reports", color: "#22c55e" },
+    { label: "Usuarios", href: "#section-users", color: "#38bdf8" },
+    { label: "Módulos", href: "#section-modules", color: "#4ade80" },
+    { label: "Branding", href: "#section-settings", color: "#c084fc" },
+    { label: "SMTP", href: "#section-settings", color: "#facc15" },
+    { label: "Soporte", href: "#section-settings", color: "#38bdf8" },
+    { label: "Logs de correo", href: "#section-modules", color: "#f472b6" },
+    { label: "Auditoría", href: "#section-audit", color: "#fbbf24" },
+    { label: "Acciones críticas", href: "#section-critical", color: "#ef4444" },
+    { label: "Anuncios", href: "#section-critical", color: "#fb7185" },
   ];
 
   const statusClass = (status: string) => {
@@ -208,12 +211,6 @@ export default function SuperAdminPage() {
   const notify = (message: string, variant: "success" | "error") => {
     setToast({ message, variant });
     setTimeout(() => setToast(null), 3500);
-  };
-
-  const scrollToSection = (id: string) => {
-    if (typeof document === "undefined") return;
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const toggleModule = async (scope: "admin" | "superadmin", key: string) => {
@@ -399,9 +396,11 @@ export default function SuperAdminPage() {
           <p className="text-sm text-white/75">Mismo layout que la app: toca para ir directo a cada bloque.</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {quickActions.map((qa) => (
-              <button
+              <Link
                 key={qa.label}
-                onClick={() => scrollToSection(qa.target)}
+                href={qa.href}
+                target="_blank"
+                rel="noreferrer"
                 className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left text-white transition hover:-translate-y-[1px] hover:border-white/30"
               >
                 <div>
@@ -409,7 +408,7 @@ export default function SuperAdminPage() {
                   <p className="text-sm font-semibold text-white">{qa.label}</p>
                 </div>
                 <span className="h-8 w-8 shrink-0 rounded-full" style={{ backgroundColor: qa.color, opacity: 0.3 }} />
-              </button>
+              </Link>
             ))}
           </div>
         </section>
