@@ -66,6 +66,7 @@ export default function SuperAdminPage() {
   const [deletingRaffle, setDeletingRaffle] = useState(false);
   const [toast, setToast] = useState<{ message: string; variant: "success" | "error" } | null>(null);
   const [activePanel, setActivePanel] = useState<string | null>(null);
+  const [activeAction, setActiveAction] = useState<string | null>(null);
 
   useEffect(() => {
     const token = getAuthToken();
@@ -855,8 +856,12 @@ export default function SuperAdminPage() {
               return (
                 <button
                   key={qa.label}
-                  onClick={() => setActivePanel(qa.panel || null)}
-                  className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-white transition hover:-translate-y-[1px] ${activePanel === qa.panel ? "border-[#22d3ee]/70 bg-[#22d3ee]/15" : "border-white/10 bg-white/5 hover:border-white/30"}`}
+                  type="button"
+                  onClick={() => {
+                    setActiveAction(qa.label);
+                    setActivePanel(qa.panel || null);
+                  }}
+                  className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-white transition hover:-translate-y-[1px] ${activeAction === qa.label ? "border-[#22d3ee]/70 bg-[#22d3ee]/15" : "border-white/10 bg-white/5 hover:border-white/30"}`}
                 >
                   <div>
                     <p className="text-xs text-white/60">Superadmin</p>
