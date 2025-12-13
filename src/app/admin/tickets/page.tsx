@@ -106,7 +106,7 @@ export default function AdminTicketsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-4 pb-16 pt-10 text-white bg-night-sky">
+    <main className="min-h-screen bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] px-4 pb-16 pt-10 text-white">
       <h1 className="text-3xl font-bold">Validar boletos</h1>
       <p className="mt-2 text-white/80">Escanea o ingresa el código del boleto y valida contra la API.</p>
       {loadingModules && <p className="mt-2 text-xs text-white/60">Cargando módulos…</p>}

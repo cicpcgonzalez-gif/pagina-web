@@ -98,10 +98,10 @@ export default function AdminReportsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-4 pb-16 pt-10 text-white bg-night-sky">
+    <main className="min-h-screen bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] px-4 pb-16 pt-10 text-white">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold">Reportes</h1>
-        <p className="text-white/80">Métricas en vivo desde el backend.</p>
+        <h1 className="text-3xl font-bold">Métricas</h1>
+        <p className="text-white/80">Métricas en vivo desde el backend admin (ventas, tickets, compradores, rifas).</p>
         {loadingModules && <span className="text-xs text-white/60">Cargando módulos…</span>}
         {modulesError && <span className="text-xs text-red-200">{modulesError}</span>}
         {loadingReports && <span className="text-xs text-white/60">Cargando reportes…</span>}

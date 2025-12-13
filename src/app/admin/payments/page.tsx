@@ -146,7 +146,7 @@ export default function AdminPaymentsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-4 pb-16 pt-10 text-white bg-night-sky">
+    <main className="min-h-screen bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] px-4 pb-16 pt-10 text-white">
       {actionMessage && (
         <div className="fixed right-4 top-4 z-20 flex max-w-md items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm shadow-lg shadow-black/40 backdrop-blur">
           <div

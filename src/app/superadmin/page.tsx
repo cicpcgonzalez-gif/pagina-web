@@ -714,22 +714,22 @@ export default function SuperAdminPage() {
           <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.25em] text-white/70">Rifas creadas por admin</p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">Datos en vivo</h2>
-                <p className="text-sm text-white/80">Cada tarjeta refleja el estado real de la rifa.</p>
+                <p className="text-xs uppercase tracking-[0.25em] text-white/70">Progreso de rifas</p>
+                <h2 className="mt-2 text-2xl font-semibold text-white">Estado en vivo</h2>
+                <p className="text-sm text-white/80">Ventas, progreso y accesos a cada rifa.</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Link
                   href="/admin/raffles"
                   className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60"
                 >
-                  Panel admin
+                  Abrir panel admin
                 </Link>
                 <Link
                   href="/rifas"
                   className="rounded-lg border border-[#22d3ee]/50 bg-[#22d3ee]/15 px-4 py-2 text-sm font-semibold text-[#dff7ff] transition hover:-translate-y-[1px] hover:border-[#22d3ee]/80"
                 >
-                  Ver público
+                  Ver mural público
                 </Link>
               </div>
             </div>
