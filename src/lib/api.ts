@@ -222,7 +222,7 @@ export async function purchaseTickets(raffleId: number, quantity: number) {
   }
   lastPurchaseAt = now;
   const clientRequestId = uuid();
-  const result = await safeFetch(`/raffles/${raffleId}/purchase`, {
+  const result = await safeFetch<Record<string, unknown>>(`/raffles/${raffleId}/purchase`, {
     method: "POST",
     body: JSON.stringify({ quantity, clientRequestId }),
   });
@@ -234,18 +234,18 @@ export async function initiatePayment(payload: {
   raffleId: number;
   quantity: number;
   provider?: string;
-}): Promise<{ paymentUrl?: string; status?: string }> {
+}): Promise<{ paymentUrl?: string; status?: string; clientRequestId?: string }> {
   const now = Date.now();
   if (lastPaymentAt && now - lastPaymentAt < 1000) {
     throw new Error("Demasiadas solicitudes de pago seguidas. Intenta de nuevo.");
   }
   lastPaymentAt = now;
   const clientRequestId = uuid();
-  const result = await safeFetch(`/payments/initiate`, {
+  const result = await safeFetch<{ paymentUrl?: string; status?: string }>(`/payments/initiate`, {
     method: "POST",
     body: JSON.stringify({ ...payload, clientRequestId }),
   });
-  return typeof result === "object" && result !== null ? { ...result, clientRequestId } : result;
+  return { ...result, clientRequestId };
 }
 
 async function tryRefreshToken() {

@@ -1,32 +1,11 @@
-import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { NextResponse } from "next/server";
 
-const prisma = new PrismaClient();
+// Node runtime required (no Edge) because we may expand server-only logic later
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const { name, description, price, drawDate, status } = body;
-
-    if (!name || !description || !price || !drawDate) {
-      return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 });
-    }
-
-    const newRaffle = await prisma.raffle.create({
-      data: {
-        name,
-        description,
-        price: parseFloat(price),
-        drawDate: new Date(drawDate),
-        status: status || 'ACTIVE',
-        // TODO: El adminId debería obtenerse de la sesión del usuario autenticado
-        adminId: 1, 
-      },
-    });
-
-    return NextResponse.json(newRaffle, { status: 201 });
-  } catch (error) {
-    console.error('Error al crear la rifa:', error);
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
-  }
+// Placeholder route: backend real logic lives in src/app/api/admin/raffles
+// This avoids Prisma initialization during Next.js build in the legacy app/ folder.
+export async function POST() {
+  return NextResponse.json({ message: "Admin raffles route disabled in this build." }, { status: 200 });
 }
