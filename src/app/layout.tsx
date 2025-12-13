@@ -14,8 +14,13 @@ const sans = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Rifas Web",
-  description: "Version web de respaldo para ventas y sorteos",
+  title: "MEGARIFAS",
+  description: "Plataforma de rifas, pagos y sorteos en línea.",
+  icons: {
+    icon: "/megarifas-icon.svg",
+    shortcut: "/megarifas-icon.svg",
+    apple: "/megarifas-icon.svg",
+  },
 };
 
 export default function RootLayout({
