@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { Pencil, Ticket } from "lucide-react";
+import { CreateRaffleModal } from "@/components/admin/CreateRaffleModal";
 
 export default function AdminRafflesPage() {
   const raffles = useMemo(
@@ -16,9 +17,12 @@ export default function AdminRafflesPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-16 pt-10 text-white bg-night-sky">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold">Rifas</h1>
-        <p className="text-white/80">Listado y gestión (mock). Conecta aquí tu endpoint `/api/admin/raffles`.</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold">Rifas</h1>
+          <p className="text-white/80">Crear, editar, subir flyer y galería.</p>
+        </div>
+        <CreateRaffleModal />
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">

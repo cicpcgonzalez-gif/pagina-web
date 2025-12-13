@@ -2,10 +2,8 @@ import { mockRaffles, mockStatus } from "./mock";
 import type { ModuleConfig, Raffle, SystemStatus, UserProfile, UserTicket } from "./types";
 import { getAuthToken, getRefreshToken, setAuthToken, setRefreshToken } from "./session";
 
-// Fallback to backend URL on the server so SSR pages do not crash if the env var is missing in production.
-const API_BASE = typeof window !== "undefined"
-  ? "/api"
-  : process.env.NEXT_PUBLIC_API_BASE_URL || "https://pagina-web-j7di.onrender.com";
+// Usar siempre la URL del backend si está configurada; si falta, usar la API pública en Render.
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://backednnuevo.onrender.com";
 
 const uuid = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -31,10 +29,12 @@ async function doFetch<T>(path: string, init?: RequestInit): Promise<{ ok: boole
   }
 
   const token = getAuthToken();
+  const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
+
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...clientHeaders(),
       ...(init?.headers || {}),
@@ -193,8 +193,61 @@ export async function fetchSystemStatus(): Promise<SystemStatus[]> {
   }
 }
 
+const defaultModules: ModuleConfig = {
+  user: {
+    registration: true,
+    manualPayments: true,
+    wallet: true,
+    raffles: true,
+    referrals: true,
+    winners: true,
+  },
+  admin: {
+    payments: true,
+    manualPayments: true,
+    winners: true,
+    raffles: true,
+    tickets: true,
+    users: true,
+    wallet: true,
+    reports: true,
+    sync: true,
+  },
+  superadmin: {
+    audit: true,
+    branding: true,
+    modules: true,
+    company: true,
+    security: true,
+    payments: true,
+    fraud: true,
+    smtp: true,
+    techSupport: true,
+    wallet: true,
+    users: true,
+    raffles: true,
+    tickets: true,
+    mailLogs: true,
+    criticalActions: true,
+  },
+};
+
 export async function fetchModules(): Promise<ModuleConfig> {
-  return safeFetch<ModuleConfig>("/modules");
+  // Intentar endpoint principal
+  try {
+    return await safeFetch<ModuleConfig>("/modules");
+  } catch (err) {
+    // Si devuelve HTML/404, probamos settings de superadmin
+  }
+
+  try {
+    const settings = await safeFetch<{ modules?: ModuleConfig }>("/superadmin/settings");
+    if (settings?.modules) return settings.modules;
+  } catch {
+    // ignore y devolvemos defaults
+  }
+
+  return defaultModules;
 }
 
 export async function refreshSession() {
@@ -328,7 +381,31 @@ export async function adminCreateRaffle(payload: {
   price?: number;
   status?: string;
   drawDate?: string;
+  totalTickets?: number;
+  flyer?: File | null;
+  images?: File[] | FileList | null;
 }) {
+  const hasFiles = !!payload.flyer || (!!payload.images && (payload.images as FileList | File[]).length > 0);
+
+  if (hasFiles) {
+    const form = new FormData();
+    form.append("title", payload.title);
+    if (payload.description) form.append("description", payload.description);
+    if (payload.price !== undefined) form.append("price", String(payload.price));
+    if (payload.status) form.append("status", payload.status);
+    if (payload.drawDate) form.append("drawDate", payload.drawDate);
+    if (payload.totalTickets !== undefined) form.append("totalTickets", String(payload.totalTickets));
+    if (payload.flyer) form.append("flyer", payload.flyer);
+    if (payload.images) {
+      const imgs = Array.from(payload.images as FileList | File[]);
+      imgs.forEach((file) => form.append("images", file));
+    }
+    return safeFetch("/raffles", {
+      method: "POST",
+      body: form,
+    });
+  }
+
   return safeFetch("/raffles", {
     method: "POST",
     body: JSON.stringify(payload),

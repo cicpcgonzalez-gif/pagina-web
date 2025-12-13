@@ -3,17 +3,20 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ProfileLinkButton } from "@/components/ProfileLinkButton";
 import { fetchRaffles, initiatePayment, purchaseTickets } from "@/lib/api";
 import { getUserRole, isAuthenticated } from "@/lib/session";
 
 export default function RifasPage() {
+  const router = useRouter();
   const [raffles, setRaffles] = useState<Awaited<ReturnType<typeof fetchRaffles>>>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [quantity, setQuantity] = useState<Record<string, number>>({});
   const [role, setRole] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "closing" | "cheap">("all");
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   const normalizedRole = role?.toLowerCase() || "";
   const isAdminOnly = normalizedRole === "admin";
@@ -35,8 +38,7 @@ export default function RifasPage() {
     let mounted = true;
     const authed = isAuthenticated();
     if (!authed) {
-      setMessage("Inicia sesión para ver rifas.");
-      setLoading(false);
+      router.replace("/login?redirect=/rifas");
       return () => {
         mounted = false;
       };
@@ -54,11 +56,14 @@ export default function RifasPage() {
       })
       .finally(() => {
         if (mounted) setLoading(false);
+        if (mounted) setCheckingAuth(false);
       });
     return () => {
       mounted = false;
     };
   }, []);
+
+  if (checkingAuth) return null;
 
   const handlePurchase = async (raffleId: string | number) => {
     setMessage(null);

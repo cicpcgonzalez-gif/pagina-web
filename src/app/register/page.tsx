@@ -158,16 +158,14 @@ export default function RegisterPage() {
         <div className="flex flex-col gap-5">
           <p className="text-xs uppercase tracking-[0.25em] text-white/70">Registro</p>
           <h1 className="font-[var(--font-display)] text-3xl text-white sm:text-4xl">
-            Crea tu cuenta con los mismos datos que usas en la app.
+            Abre tu acceso web con tus mismos datos.
           </h1>
           <p className="text-base text-white/80">
-            Capturamos estado (Venezuela), cédula, fecha de nacimiento y aceptación de términos para que el flujo quede completo.
+            Pedimos los mismos campos que ya usas: nombre y apellido, correo, teléfono, estado de Venezuela, cédula, dirección y fecha de nacimiento. Así mantenemos tu perfil sincronizado con la app.
           </p>
-          <ul className="space-y-2 text-sm text-white/75">
-            <li>• Endpoint: POST /register con campos extendidos (nombre, apellido, teléfono, estado, cédula, dirección, fecha de nacimiento).</li>
-            <li>• Se muestra la lista completa de estados de Venezuela y el check de Términos y Condiciones.</li>
-            <li>• Si el backend responde con token, iniciamos sesión y guardamos rol.</li>
-          </ul>
+          <p className="text-sm text-white/75">
+            Acepta Términos y Condiciones para continuar. Si todo va bien te dejamos adentro al instante; si falta validar tu correo, te mostraremos el aviso para completar ese paso.
+          </p>
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/40 backdrop-blur">

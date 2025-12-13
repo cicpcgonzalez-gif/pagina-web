@@ -6,6 +6,24 @@ import { getAuthToken, getUserRole } from "@/lib/session";
 import { fetchModules } from "@/lib/api";
 import type { ModuleConfig } from "@/lib/types";
 
+const baseActions = [
+  { key: "account", title: "Mi Cuenta", detail: "Datos del admin y sesión.", href: "/perfil" },
+  { key: "support", title: "Mi Soporte", detail: "WhatsApp/IG visibles en rifas.", href: "/admin/notifs" },
+  { key: "push", title: "Notificaciones", detail: "Mensajes push a compradores.", href: "/admin/notifs" },
+  { key: "company", title: "Empresa", detail: "RIF, dirección y contacto público.", href: "/admin/config" },
+  { key: "bank", title: "Datos Bancarios", detail: "Cuentas y medios de cobro.", href: "/admin/config" },
+  { key: "security", title: "Cód. Seguridad", detail: "Control de fraude y código.", href: "/admin/fraud" },
+  { key: "lottery", title: "Sorteo en Vivo", detail: "Validar número ganador.", href: "/admin/tickets" },
+  { key: "raffles", title: "Crear/Editar rifas", detail: "Activas, próximas y finalizadas.", href: "/admin/raffles" },
+  { key: "dashboard", title: "Dashboard", detail: "Métricas en vivo por rifa y estado.", href: "/admin/reports" },
+  { key: "progress", title: "Progreso", detail: "Curva de ventas y cierre de rifas.", href: "/admin/reports" },
+  { key: "payments", title: "Pagos", detail: "Sincroniza pagos y verifica comprobantes.", href: "/admin/payments" },
+  { key: "winners", title: "Ganadores", detail: "Publica resultados y evidencia.", href: "/admin/ganadores" },
+  { key: "tickets", title: "Tickets", detail: "Validar o redimir boletos.", href: "/admin/tickets" },
+  { key: "style", title: "Estilo", detail: "Galería, banner y acentos por rifa.", href: "/admin/raffles" },
+  { key: "news", title: "Novedades", detail: "Avisos y anuncios para el mural.", href: "/admin/notifs" },
+];
+
 export default function SuperAdminPage() {
   const [role, setRole] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
@@ -41,17 +59,32 @@ export default function SuperAdminPage() {
     };
   }, []);
 
-  const superActions = useMemo(
-    () => [
-      { key: "users", title: "Usuarios", detail: "Altas/bajas, bloqueo y KYC.", href: "/admin/users" },
-      { key: "tech", title: "Soporte técnico", detail: "Contactos y escalamiento.", href: "/admin/notifs" },
-      { key: "smtp", title: "Correo SMTP", detail: "Remitentes y credenciales.", href: "/admin/notifs" },
+  const superActions = useMemo(() => {
+    const moduleKey = (key: string) => {
+      if (key === "sa_users" || key === "users") return "users";
+      if (key === "sa_tech_support" || key === "tech") return "techSupport";
+      if (key === "sa_smtp" || key === "smtp") return "smtp";
+      if (key === "sa_mail" || key === "mail") return "mailLogs";
+      if (key === "sa_actions" || key === "critical") return "criticalActions";
+      return key;
+    };
+
+    const list = [
+      { key: "sa_users", title: "Usuarios", detail: "Altas/bajas, bloqueo y KYC.", href: "/admin/users" },
+      { key: "sa_tech_support", title: "Soporte Técnico", detail: "Contactos y escalamiento.", href: "/admin/notifs" },
+      { key: "sa_smtp", title: "Correo SMTP", detail: "Remitentes y credenciales.", href: "/admin/notifs" },
       { key: "audit", title: "Auditoría", detail: "Logs de seguridad y acciones críticas.", href: "/admin/audit" },
       { key: "branding", title: "Branding", detail: "Colores, logo, banner y políticas.", href: "/admin/config" },
       { key: "modules", title: "Módulos", detail: "Activar/desactivar features.", href: "/admin/config" },
-      { key: "mail", title: "Logs de correo", detail: "Monitoreo de envíos.", href: "/admin/notifs" },
-      { key: "critical", title: "Acciones críticas", detail: "Eliminar rifa, cierre forzado.", href: "/admin/fraud" },
-    ].filter((a) => modulesConfig?.superadmin?.[a.key] !== false),
+      { key: "sa_mail", title: "Logs de Correo", detail: "Monitoreo de envíos.", href: "/admin/notifs" },
+      { key: "sa_actions", title: "Acciones Críticas", detail: "Eliminar rifa, cierre forzado.", href: "/admin/fraud" },
+    ];
+
+    return list.filter((a) => modulesConfig?.superadmin?.[moduleKey(a.key)] !== false);
+  }, [modulesConfig]);
+
+  const adminActions = useMemo(
+    () => baseActions.filter((a) => modulesConfig?.admin?.[a.key] !== false),
     [modulesConfig],
   );
 
@@ -140,6 +173,30 @@ export default function SuperAdminPage() {
               </div>
             ))}
           </div>
+        </section>
+
+        <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {adminActions.map((action) => (
+            <div
+              key={action.key}
+              className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm shadow-black/20"
+            >
+              <h3 className="text-lg font-semibold text-white">{action.title}</h3>
+              <p className="text-sm text-white/75">{action.detail}</p>
+              {action.href ? (
+                <Link
+                  href={action.href}
+                  className="inline-flex items-center justify-center rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60"
+                >
+                  Ir
+                </Link>
+              ) : (
+                <button className="rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60">
+                  Configurar
+                </button>
+              )}
+            </div>
+          ))}
         </section>
       </div>
     </main>

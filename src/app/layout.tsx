@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
-import LogoutButton from "@/components/LogoutButton";
+import AuthNav from "@/components/AuthNav";
 
 const display = Space_Grotesk({
   variable: "--font-display",
@@ -28,25 +28,12 @@ export default function RootLayout({
     <html lang="es">
       <body className={`${display.variable} ${sans.variable} antialiased bg-gray-50 text-gray-800`}>
         <div className="min-h-screen">
-          <header className="bg-white shadow-sm">
-            <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-              <Link href="/" className="text-xl font-bold tracking-tight text-gray-900">
-                Portal de Rifas
-              </Link>
-              <nav className="flex items-center gap-4 text-sm font-medium text-gray-600">
-                <Link className="rounded-md px-3 py-2 hover:bg-gray-100" href="/rifas">
-                  Rifas
-                </Link>
-                <Link className="rounded-md px-3 py-2 hover:bg-gray-100" href="/login">
-                  Login
-                </Link>
-                <Link className="rounded-md px-3 py-2 hover:bg-gray-100" href="/register">
-                  Registro
-                </Link>
-                <LogoutButton />
-              </nav>
+          <div className="bg-amber-100 border-b border-amber-300 text-amber-900">
+            <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+              <span className="rounded bg-amber-200 px-2 py-1 text-xs font-semibold uppercase tracking-wide">Aviso</span>
+              <p className="text-sm font-semibold sm:text-base">VERSION DE PRUEBA DEMO, NO COMERCIAL</p>
             </div>
-          </header>
+          </div>
           {children}
         </div>
       </body>

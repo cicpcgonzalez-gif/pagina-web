@@ -64,19 +64,30 @@ export default function AdminPage() {
     [modulesConfig],
   );
 
-  const superActions = useMemo(
-    () => [
-      { key: "users", title: "Usuarios", detail: "Altas/bajas, bloqueo y KYC.", href: "/admin/users" },
-      { key: "tech", title: "Soporte técnico", detail: "Contactos y escalamiento.", href: "/admin/notifs" },
-      { key: "smtp", title: "Correo SMTP", detail: "Remitentes y credenciales.", href: "/admin/notifs" },
+  const superActions = useMemo(() => {
+    // Normaliza claves como en la app móvil para respetar módulos, pero mostrando todo si no están definidos.
+    const moduleKey = (key: string) => {
+      if (key === "sa_users" || key === "users") return "users";
+      if (key === "sa_tech_support" || key === "tech") return "techSupport";
+      if (key === "sa_smtp" || key === "smtp") return "smtp";
+      if (key === "sa_mail" || key === "mail") return "mailLogs";
+      if (key === "sa_actions" || key === "critical") return "criticalActions";
+      return key;
+    };
+
+    const list = [
+      { key: "sa_users", title: "Usuarios", detail: "Altas/bajas, bloqueo y KYC.", href: "/admin/users" },
+      { key: "sa_tech_support", title: "Soporte Técnico", detail: "Contactos y escalamiento.", href: "/admin/notifs" },
+      { key: "sa_smtp", title: "Correo SMTP", detail: "Remitentes y credenciales.", href: "/admin/notifs" },
       { key: "audit", title: "Auditoría", detail: "Logs de seguridad y acciones críticas.", href: "/admin/audit" },
       { key: "branding", title: "Branding", detail: "Colores, logo, banner y políticas.", href: "/admin/config" },
       { key: "modules", title: "Módulos", detail: "Activar/desactivar features.", href: "/admin/config" },
-      { key: "mail", title: "Logs de correo", detail: "Monitoreo de envíos.", href: "/admin/notifs" },
-      { key: "critical", title: "Acciones críticas", detail: "Eliminar rifa, cierre forzado.", href: "/admin/fraud" },
-    ].filter((a) => modulesConfig?.superadmin?.[a.key] !== false),
-    [modulesConfig],
-  );
+      { key: "sa_mail", title: "Logs de Correo", detail: "Monitoreo de envíos.", href: "/admin/notifs" },
+      { key: "sa_actions", title: "Acciones Críticas", detail: "Eliminar rifa, cierre forzado.", href: "/admin/fraud" },
+    ];
+
+    return list.filter((a) => modulesConfig?.superadmin?.[moduleKey(a.key)] !== false);
+  }, [modulesConfig]);
 
   const metrics = useMemo(
     () => [

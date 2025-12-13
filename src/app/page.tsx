@@ -244,17 +244,6 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/30">
-          <div className="flex flex-col gap-3">
-            <h2 className="font-[var(--font-display)] text-2xl text-white">Próximos pasos</h2>
-            <ol className="list-decimal space-y-2 pl-5 text-white/80">
-              <li>Apunta `NEXT_PUBLIC_API_BASE_URL` al dominio productivo.</li>
-              <li>Conecta imágenes reales de rifas y rifieros en tus endpoints.</li>
-              <li>Prueba login, compra y pago con tu pasarela.</li>
-              <li>Activa métricas y validación de boletos en vivo.</li>
-            </ol>
-          </div>
-        </section>
       </div>
     </main>
   );
