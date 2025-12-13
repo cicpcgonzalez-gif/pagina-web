@@ -179,7 +179,7 @@ export default async function Home() {
                   </div>
                   <div className="flex gap-2 text-sm">
                     <Link
-                      href="/rifas"
+                      href={`/rifas/${raffle.id}`}
                       className="flex-1 rounded-lg bg-gradient-to-r from-[#3b82f6] to-[#22d3ee] px-3 py-2 text-center font-semibold text-white shadow-md shadow-black/30 transition hover:-translate-y-[1px]"
                     >
                       Comprar
@@ -192,7 +192,7 @@ export default async function Home() {
               );
             })}
             {activeRaffles.length === 0 && (
-              <p className="text-sm text-white/75">No hay rifas activas. Conecta tu API o usa los mocks.</p>
+              <p className="text-sm text-white/75">No hay rifas activas disponibles en la API.</p>
             )}
           </div>
         </section>

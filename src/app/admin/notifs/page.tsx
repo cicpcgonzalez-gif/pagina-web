@@ -1,24 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { fetchModules } from "@/lib/api";
+import { fetchModules, fetchNotificationTemplates, sendNotificationTest, toggleNotificationTemplate } from "@/lib/api";
 import { getUserRole } from "@/lib/session";
 import type { ModuleConfig } from "@/lib/types";
 
 type Template = { id: string; name: string; channel: "email" | "push"; active: boolean; subject?: string };
 
 export default function AdminNotifsPage() {
-  const [templates, setTemplates] = useState<Template[]>(
-    () => [
-      { id: "NT-01", name: "Pago recibido", channel: "email", active: true, subject: "Confirmación de pago" },
-      { id: "NT-02", name: "Ticket validado", channel: "push", active: true },
-      { id: "NT-03", name: "Recordatorio de sorteo", channel: "email", active: false, subject: "Tu sorteo es mañana" },
-    ],
-  );
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [testStatus, setTestStatus] = useState<string | null>(null);
   const [modulesConfig, setModulesConfig] = useState<ModuleConfig | null>(null);
   const [modulesError, setModulesError] = useState<string | null>(null);
   const [loadingModules, setLoadingModules] = useState(true);
+  const [loadingTemplates, setLoadingTemplates] = useState(true);
+  const [templatesError, setTemplatesError] = useState<string | null>(null);
+  const [actingId, setActingId] = useState<string | null>(null);
 
   const role = getUserRole()?.toLowerCase();
   const isSuper = role === "superadmin";
@@ -37,6 +34,31 @@ export default function AdminNotifsPage() {
       .finally(() => {
         if (mounted) setLoadingModules(false);
       });
+
+    const loadTemplates = async () => {
+      setLoadingTemplates(true);
+      setTemplatesError(null);
+      try {
+        const data = await fetchNotificationTemplates();
+        if (mounted && Array.isArray(data)) {
+          setTemplates(
+            data.map((t, idx) => ({
+              id: String((t as any)?.id ?? `tpl-${idx}`),
+              name: (t as any)?.name ?? (t as any)?.title ?? `Plantilla ${idx + 1}`,
+              channel: ((t as any)?.channel ?? (t as any)?.type ?? "email") as Template["channel"],
+              active: Boolean((t as any)?.active ?? (t as any)?.enabled ?? true),
+              subject: (t as any)?.subject,
+            })),
+          );
+        }
+      } catch (err) {
+        if (mounted) setTemplatesError(err instanceof Error ? err.message : "No se pudieron cargar plantillas");
+      } finally {
+        if (mounted) setLoadingTemplates(false);
+      }
+    };
+
+    loadTemplates();
     return () => {
       mounted = false;
     };
@@ -47,13 +69,34 @@ export default function AdminNotifsPage() {
     return isSuper ? modulesConfig.superadmin?.smtp !== false : modulesConfig.admin?.support !== false;
   }, [modulesConfig, isSuper]);
 
-  const sendTest = (tpl: Template) => {
+  const sendTest = async (tpl: Template) => {
+    setActingId(tpl.id);
+    setTestStatus(null);
+    setTemplatesError(null);
     const channel = tpl.channel === "email" ? "correo" : "push";
-    setTestStatus(`Test enviado (${channel}) con plantilla "${tpl.name}" (mock).`);
+    try {
+      await sendNotificationTest(tpl.id);
+      setTestStatus(`Test enviado (${channel}) con plantilla "${tpl.name}".`);
+    } catch (err) {
+      setTemplatesError(err instanceof Error ? err.message : "No se pudo enviar el test");
+    } finally {
+      setActingId(null);
+    }
   };
 
-  const toggle = (id: string) => {
-    setTemplates((prev) => prev.map((t) => (t.id === id ? { ...t, active: !t.active } : t)));
+  const toggle = async (id: string) => {
+    const tpl = templates.find((t) => t.id === id);
+    if (!tpl) return;
+    setActingId(id);
+    setTemplatesError(null);
+    try {
+      await toggleNotificationTemplate(id, !tpl.active);
+      setTemplates((prev) => prev.map((t) => (t.id === id ? { ...t, active: !t.active } : t)));
+    } catch (err) {
+      setTemplatesError(err instanceof Error ? err.message : "No se pudo actualizar la plantilla");
+    } finally {
+      setActingId(null);
+    }
   };
 
   if (!loadingModules && !smtpEnabled) {
@@ -71,9 +114,11 @@ export default function AdminNotifsPage() {
   return (
     <main className="mx-auto max-w-4xl px-4 pb-16 pt-10 text-white bg-night-sky">
       <h1 className="text-3xl font-bold">Notificaciones</h1>
-      <p className="mt-2 text-white/80">Activa plantillas y envía test (mock).</p>
+      <p className="mt-2 text-white/80">Activa plantillas y envía test contra la API.</p>
       {loadingModules && <p className="mt-2 text-xs text-white/60">Cargando módulos…</p>}
       {modulesError && <p className="mt-2 text-xs text-red-200">{modulesError}</p>}
+      {loadingTemplates && <p className="mt-2 text-xs text-white/60">Cargando plantillas…</p>}
+      {templatesError && <p className="mt-2 text-xs text-red-200">{templatesError}</p>}
 
       <div className="mt-6 grid gap-3">
         {templates.map((tpl) => (
@@ -92,17 +137,18 @@ export default function AdminNotifsPage() {
             </div>
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
               <button onClick={() => toggle(tpl.id)} className="rounded-md border border-white/20 px-3 py-2 text-white transition hover:border-white/40">
-                {tpl.active ? "Desactivar" : "Activar"}
+                {actingId === tpl.id ? "Guardando…" : tpl.active ? "Desactivar" : "Activar"}
               </button>
               <button
                 onClick={() => sendTest(tpl)}
                 className="rounded-md bg-[#3b82f6] px-3 py-2 font-semibold text-white shadow-sm shadow-black/30 transition hover:-translate-y-[1px]"
               >
-                Enviar test
+                {actingId === tpl.id ? "Enviando…" : "Enviar test"}
               </button>
             </div>
           </div>
         ))}
+        {!templates.length && !loadingTemplates && <p className="text-xs text-white/70">No hay plantillas configuradas.</p>}
       </div>
 
       {testStatus && <p className="mt-4 text-sm text-white/85">{testStatus}</p>}

@@ -1,28 +1,23 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { fetchModules } from "@/lib/api";
+import { fetchAdminUsers, fetchModules, updateAdminUser } from "@/lib/api";
 import { getUserRole } from "@/lib/session";
 import type { ModuleConfig } from "@/lib/types";
 
 type UserRow = { name: string; email: string; role: "user" | "admin" | "superadmin"; scopes: string[]; locked: boolean };
 
 export default function AdminRolesPage() {
-  const initial = useMemo<UserRow[]>(
-    () => [
-      { name: "Mariana R.", email: "mariana@example.com", role: "admin", scopes: ["raffles", "payments", "tickets"], locked: false },
-      { name: "Carlos D.", email: "carlos@example.com", role: "superadmin", scopes: ["all"], locked: false },
-      { name: "Lucia M.", email: "lucia@example.com", role: "user", scopes: ["buy"], locked: false },
-      { name: "Andres P.", email: "andres@example.com", role: "user", scopes: ["buy"], locked: true },
-    ],
-    [],
-  );
-
-  const [rows, setRows] = useState(initial);
+  const [rows, setRows] = useState<UserRow[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [usersError, setUsersError] = useState<string | null>(null);
   const [selected, setSelected] = useState<UserRow | null>(null);
   const [modulesConfig, setModulesConfig] = useState<ModuleConfig | null>(null);
   const [modulesError, setModulesError] = useState<string | null>(null);
   const [loadingModules, setLoadingModules] = useState(true);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [actionVariant, setActionVariant] = useState<"success" | "error" | null>(null);
+  const [actingEmail, setActingEmail] = useState<string | null>(null);
 
   const role = getUserRole()?.toLowerCase();
   const isSuper = role === "superadmin";
@@ -41,6 +36,31 @@ export default function AdminRolesPage() {
       .finally(() => {
         if (mounted) setLoadingModules(false);
       });
+
+    const loadUsers = async () => {
+      setLoadingUsers(true);
+      setUsersError(null);
+      try {
+        const data = await fetchAdminUsers();
+        if (mounted) {
+          setRows(
+            (data || []).map((u) => ({
+              name: u.name || u.email || "Sin nombre",
+              email: u.email || String(u.id || Math.random()),
+              role: (u.role as UserRow["role"]) || "user",
+              scopes: ["all"],
+              locked: (u.status || "").toLowerCase() === "bloqueado" || (u as any)?.locked === true,
+            })),
+          );
+        }
+      } catch (err) {
+        if (mounted) setUsersError(err instanceof Error ? err.message : "No se pudieron cargar usuarios");
+      } finally {
+        if (mounted) setLoadingUsers(false);
+      }
+    };
+
+    loadUsers();
     return () => {
       mounted = false;
     };
@@ -51,30 +71,49 @@ export default function AdminRolesPage() {
     return isSuper && modulesConfig.superadmin?.users !== false;
   }, [modulesConfig, isSuper]);
 
-  const toggleLock = (email: string) => {
-    setRows((prev) => prev.map((r) => (r.email === email ? { ...r, locked: !r.locked } : r)));
+  const notify = (message: string, variant: "success" | "error") => {
+    setActionMessage(message);
+    setActionVariant(variant);
+    setTimeout(() => {
+      setActionMessage(null);
+      setActionVariant(null);
+    }, 3000);
   };
 
+  const mutateUser = async (email: string, payload: Partial<UserRow>) => {
+    const target = rows.find((r) => r.email === email);
+    if (!target) return;
+    const userId = (target as any)?.id || email;
+    setActingEmail(email);
+    try {
+      await updateAdminUser(userId, {
+        role: payload.role,
+        status: payload.locked === undefined ? undefined : payload.locked ? "bloqueado" : "activo",
+        locked: payload.locked,
+      });
+      setRows((prev) => prev.map((r) => (r.email === email ? { ...r, ...payload } : r)));
+      notify("Cambios guardados", "success");
+    } catch (err) {
+      notify(err instanceof Error ? err.message : "No se pudo actualizar el usuario", "error");
+    } finally {
+      setActingEmail(null);
+    }
+  };
+
+  const toggleLock = (email: string) => mutateUser(email, { locked: !rows.find((r) => r.email === email)?.locked });
+
   const promote = (email: string) => {
-    setRows((prev) =>
-      prev.map((r) => {
-        if (r.email !== email) return r;
-        if (r.role === "user") return { ...r, role: "admin", scopes: ["raffles", "payments", "tickets"] };
-        if (r.role === "admin") return { ...r, role: "superadmin", scopes: ["all"] };
-        return r;
-      }),
-    );
+    const target = rows.find((r) => r.email === email);
+    if (!target) return;
+    if (target.role === "user") return mutateUser(email, { role: "admin" });
+    if (target.role === "admin") return mutateUser(email, { role: "superadmin" });
   };
 
   const demote = (email: string) => {
-    setRows((prev) =>
-      prev.map((r) => {
-        if (r.email !== email) return r;
-        if (r.role === "superadmin") return { ...r, role: "admin", scopes: ["raffles", "payments", "tickets"] };
-        if (r.role === "admin") return { ...r, role: "user", scopes: ["buy"] };
-        return r;
-      }),
-    );
+    const target = rows.find((r) => r.email === email);
+    if (!target) return;
+    if (target.role === "superadmin") return mutateUser(email, { role: "admin" });
+    if (target.role === "admin") return mutateUser(email, { role: "user" });
   };
 
   const scopesText = (scopes: string[]) => (scopes.includes("all") ? "Todo" : scopes.join(", "));
@@ -105,9 +144,14 @@ export default function AdminRolesPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 pb-16 pt-10 text-white bg-night-sky">
       <h1 className="text-3xl font-bold">Roles y permisos</h1>
-      <p className="mt-2 text-white/80">Promueve, reduce y bloquea accesos (mock local).</p>
+      <p className="mt-2 text-white/80">Promueve, reduce y bloquea accesos contra la API.</p>
       {loadingModules && <p className="mt-2 text-xs text-white/60">Cargando módulos…</p>}
       {modulesError && <p className="mt-2 text-xs text-red-200">{modulesError}</p>}
+      {loadingUsers && <p className="mt-2 text-xs text-white/60">Cargando usuarios…</p>}
+      {usersError && <p className="mt-2 text-xs text-red-200">{usersError}</p>}
+      {actionMessage && (
+        <p className={`mt-2 text-xs ${actionVariant === "success" ? "text-emerald-200" : "text-red-200"}`}>{actionMessage}</p>
+      )}
 
       <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg shadow-black/30">
         <table className="w-full text-left text-sm text-white/80">
@@ -140,18 +184,23 @@ export default function AdminRolesPage() {
                   <div className="flex flex-wrap gap-2">
                     <button onClick={() => setSelected(u)} className="rounded-md border border-white/20 px-2 py-1 text-white transition hover:border-white/40">Ver</button>
                     <button onClick={() => promote(u.email)} className="rounded-md bg-[#3b82f6] px-2 py-1 font-semibold text-white shadow-sm shadow-black/30 transition hover:-translate-y-[1px]">
-                      Promover
+                      {actingEmail === u.email ? "Guardando…" : "Promover"}
                     </button>
                     <button onClick={() => demote(u.email)} className="rounded-md border border-white/20 px-2 py-1 text-white transition hover:border-white/40">
-                      Reducir
+                      {actingEmail === u.email ? "Guardando…" : "Reducir"}
                     </button>
                     <button onClick={() => toggleLock(u.email)} className="rounded-md border border-amber-300/50 px-2 py-1 text-amber-100 transition hover:border-amber-200/70">
-                      {u.locked ? "Desbloquear" : "Bloquear"}
+                      {actingEmail === u.email ? "Guardando…" : u.locked ? "Desbloquear" : "Bloquear"}
                     </button>
                   </div>
                 </td>
               </tr>
             ))}
+            {!loadingUsers && rows.length === 0 && (
+              <tr className="border-t border-white/10">
+                <td colSpan={5} className="px-4 py-6 text-center text-white/70">No hay usuarios cargados desde la API.</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

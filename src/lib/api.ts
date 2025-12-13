@@ -1,4 +1,4 @@
-import { mockRaffles, mockStatus } from "./mock";
+import { mockStatus } from "./mock";
 import type { AdminUser, ModuleConfig, Raffle, SystemStatus, UserProfile, UserTicket } from "./types";
 import { getAuthToken, getRefreshToken, setAuthToken, setRefreshToken } from "./session";
 
@@ -111,8 +111,9 @@ export async function fetchRaffles(): Promise<Raffle[]> {
   try {
     const raw = await safeFetch<RemoteRaffle[]>("/raffles");
     return mapRemoteRaffles(raw);
-  } catch {
-    return mockRaffles;
+  } catch (err) {
+    console.error("raffles error", err);
+    return [];
   }
 }
 
@@ -362,6 +363,147 @@ export async function fetchMyPayments() {
 
 export async function fetchAdminUsers(): Promise<AdminUser[]> {
   return safeFetch<AdminUser[]>("/admin/users");
+}
+
+export async function updateAdminUser(userId: string | number, payload: Partial<AdminUser> & { role?: string; status?: string; locked?: boolean }) {
+  return safeFetch<AdminUser>(`/admin/users/${userId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchAdminAudit() {
+  const candidates = ["/superadmin/audit", "/admin/audit", "/admin/logs/audit"];
+  let lastError: unknown;
+  for (const path of candidates) {
+    try {
+      return await safeFetch<Array<Record<string, unknown>>>(path);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("No se pudo cargar auditoría");
+}
+
+export async function fetchAdminReports() {
+  const candidates = ["/admin/reports", "/admin/dashboard", "/admin/metrics"];
+  let lastError: unknown;
+  for (const path of candidates) {
+    try {
+      return await safeFetch<Record<string, unknown>>(path);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("No se pudo cargar reportes");
+}
+
+export async function fetchFraudAlerts() {
+  const candidates = ["/admin/fraud", "/admin/security/alerts", "/superadmin/fraud"];
+  let lastError: unknown;
+  for (const path of candidates) {
+    try {
+      return await safeFetch<Array<Record<string, unknown>>>(path);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("No se pudieron cargar alertas de fraude");
+}
+
+export async function validateTicket(code: string) {
+  const payload = { code };
+  const candidates = ["/admin/tickets/validate", "/tickets/validate", "/admin/tickets/check"];
+  let lastError: unknown;
+  for (const path of candidates) {
+    try {
+      return await safeFetch<{ status?: string; message?: string; valid?: boolean; raffle?: unknown; ticket?: unknown }>(path, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("No se pudo validar el ticket");
+}
+
+export async function fetchRecentValidations() {
+  const candidates = ["/admin/tickets/recent", "/admin/tickets/history", "/tickets/recent"];
+  for (const path of candidates) {
+    try {
+      return await safeFetch<Array<Record<string, unknown>>>(path);
+    } catch {
+      // try next
+    }
+  }
+  return [];
+}
+
+export async function toggleNotificationTemplate(templateId: string, active: boolean) {
+  const candidates = ["/admin/notifications/templates", "/superadmin/mail/templates"];
+  let lastError: unknown;
+  for (const path of candidates) {
+    try {
+      return await safeFetch(`${path}/${templateId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ active }),
+      });
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("No se pudo actualizar la plantilla");
+}
+
+export async function sendNotificationTest(templateId: string) {
+  const candidates = ["/admin/notifications/test", "/superadmin/mail/test"];
+  let lastError: unknown;
+  for (const path of candidates) {
+    try {
+      return await safeFetch(path, {
+        method: "POST",
+        body: JSON.stringify({ templateId }),
+      });
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("No se pudo enviar el test");
+}
+
+export async function fetchNotificationTemplates() {
+  const candidates = ["/admin/notifications/templates", "/superadmin/mail/templates"];
+  let lastError: unknown;
+  for (const path of candidates) {
+    try {
+      return await safeFetch<Array<Record<string, unknown>>>(path);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("No se pudieron cargar plantillas");
+}
+
+export async function requestExport(type: string) {
+  const candidates = [
+    { path: "/admin/reports/export", method: "POST" },
+    { path: `/admin/export?type=${encodeURIComponent(type)}`, method: "GET" },
+  ];
+  let lastError: unknown;
+  for (const candidate of candidates) {
+    try {
+      return await safeFetch<Record<string, unknown>>(
+        candidate.path,
+        candidate.method === "POST"
+          ? { method: "POST", body: JSON.stringify({ type }) }
+          : { method: candidate.method },
+      );
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("No se pudo generar el export");
 }
 
 export async function fetchWinners() {

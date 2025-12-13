@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { fetchModules } from "@/lib/api";
+import { fetchAdminReports, fetchModules } from "@/lib/api";
 import { getUserRole } from "@/lib/session";
 import type { ModuleConfig } from "@/lib/types";
 
@@ -9,6 +9,9 @@ export default function AdminReportsPage() {
   const [modulesConfig, setModulesConfig] = useState<ModuleConfig | null>(null);
   const [modulesError, setModulesError] = useState<string | null>(null);
   const [loadingModules, setLoadingModules] = useState(true);
+  const [reports, setReports] = useState<Record<string, unknown> | null>(null);
+  const [loadingReports, setLoadingReports] = useState(true);
+  const [reportsError, setReportsError] = useState<string | null>(null);
 
   const role = getUserRole()?.toLowerCase();
 
@@ -26,6 +29,21 @@ export default function AdminReportsPage() {
       .finally(() => {
         if (mounted) setLoadingModules(false);
       });
+
+    const loadReports = async () => {
+      setLoadingReports(true);
+      setReportsError(null);
+      try {
+        const data = await fetchAdminReports();
+        if (mounted) setReports(data || {});
+      } catch (err) {
+        if (mounted) setReportsError(err instanceof Error ? err.message : "No se pudieron cargar reportes");
+      } finally {
+        if (mounted) setLoadingReports(false);
+      }
+    };
+
+    loadReports();
     return () => {
         mounted = false;
     };
@@ -37,70 +55,29 @@ export default function AdminReportsPage() {
     return modulesConfig.admin?.reports !== false;
   }, [modulesConfig, role]);
 
-  const summary = useMemo(
-    () => [
-      { label: "Ventas hoy", value: "$1,240" },
-      { label: "Ventas 7d", value: "$8,930" },
-      { label: "Boletos validados", value: "1,180" },
-      { label: "Pendientes de pago", value: "74" },
-    ],
-    [],
-  );
+  const summary = useMemo(() => {
+    const data = reports as any;
+    const money = (value: unknown) => {
+      const n = Number(value ?? 0);
+      return Number.isFinite(n) ? `$${n.toLocaleString()}` : "—";
+    };
+    return [
+      { label: "Ventas hoy", value: money(data?.salesToday ?? data?.today ?? data?.ventasHoy) },
+      { label: "Ventas 7d", value: money(data?.sales7d ?? data?.week ?? data?.ventasSemana) },
+      { label: "Boletos validados", value: (data?.ticketsValidated ?? data?.validated ?? data?.tickets) ?? "—" },
+      { label: "Pendientes de pago", value: (data?.pendingPayments ?? data?.pending ?? data?.pendientes) ?? "—" },
+    ];
+  }, [reports]);
 
-  const hourly = useMemo(
-    () => [
-      { label: "08h", sales: 120 },
-      { label: "10h", sales: 220 },
-      { label: "12h", sales: 340 },
-      { label: "14h", sales: 290 },
-      { label: "16h", sales: 410 },
-      { label: "18h", sales: 380 },
-      { label: "20h", sales: 450 },
-    ],
-    [],
-  );
+  const hourly = useMemo(() => (Array.isArray((reports as any)?.hourly) ? (reports as any)?.hourly : []), [reports]);
 
-  const daily = useMemo(
-    () => [
-      { date: "Lun", sales: 820 },
-      { date: "Mar", sales: 910 },
-      { date: "Mié", sales: 880 },
-      { date: "Jue", sales: 1020 },
-      { date: "Vie", sales: 1140 },
-      { date: "Sáb", sales: 1350 },
-      { date: "Dom", sales: 970 },
-    ],
-    [],
-  );
+  const daily = useMemo(() => (Array.isArray((reports as any)?.daily) ? (reports as any)?.daily : []), [reports]);
 
-  const byState = useMemo(
-    () => [
-      { state: "Pagado", count: 3120 },
-      { state: "Pendiente", count: 740 },
-      { state: "Rechazado", count: 45 },
-      { state: "Reembolsado", count: 18 },
-    ],
-    [],
-  );
+  const byState = useMemo(() => (Array.isArray((reports as any)?.byState) ? (reports as any)?.byState : []), [reports]);
 
-  const topBuyers = useMemo(
-    () => [
-      { name: "Mariana R.", amount: 420, tickets: 42 },
-      { name: "Carlos D.", amount: 360, tickets: 36 },
-      { name: "Lucía M.", amount: 280, tickets: 28 },
-      { name: "Andrés P.", amount: 190, tickets: 19 },
-    ],
-    [],
-  );
+  const topBuyers = useMemo(() => (Array.isArray((reports as any)?.topBuyers) ? (reports as any)?.topBuyers : []), [reports]);
 
-  const topRaffles = useMemo(
-    () => [
-      { name: "Camioneta 4x4", sold: 3120, total: 5000, revenue: 31200 },
-      { name: "iPhone 16 Pro", sold: 2980, total: 3000, revenue: 23840 },
-      { name: "Moto 150cc", sold: 640, total: 2000, revenue: 3200 },
-    ],
-    [],
-  );
+  const topRaffles = useMemo(() => (Array.isArray((reports as any)?.topRaffles) ? (reports as any)?.topRaffles : []), [reports]);
 
   if (!loadingModules && !reportsEnabled) {
     return (
@@ -118,9 +95,11 @@ export default function AdminReportsPage() {
     <main className="mx-auto max-w-5xl px-4 pb-16 pt-10 text-white bg-night-sky">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold">Reportes</h1>
-        <p className="text-white/80">Métricas mock. Conecta aquí GET `/api/admin/reports`.</p>
+        <p className="text-white/80">Métricas en vivo desde el backend.</p>
         {loadingModules && <span className="text-xs text-white/60">Cargando módulos…</span>}
         {modulesError && <span className="text-xs text-red-200">{modulesError}</span>}
+        {loadingReports && <span className="text-xs text-white/60">Cargando reportes…</span>}
+        {reportsError && <span className="text-xs text-red-200">{reportsError}</span>}
       </div>
 
       <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -139,12 +118,13 @@ export default function AdminReportsPage() {
           </div>
           <div className="p-4 space-y-3">
             {hourly.map((h) => {
-              const pct = Math.min(100, Math.round((h.sales / 500) * 100));
+              const sales = Number((h as any)?.sales ?? 0);
+              const pct = Math.min(100, Math.max(0, Math.round((sales / 500) * 100)));
               return (
-                <div key={h.label}>
+                <div key={(h as any)?.label || Math.random()}>
                   <div className="flex justify-between text-xs text-white/70">
-                    <span>{h.label}</span>
-                    <span>${h.sales}</span>
+                    <span>{(h as any)?.label || ""}</span>
+                    <span>${sales}</span>
                   </div>
                   <div className="mt-1 h-2 rounded-full bg-white/10">
                     <div className="h-2 rounded-full bg-gradient-to-r from-[#3b82f6] to-[#22d3ee]" style={{ width: `${pct}%` }} />
@@ -152,6 +132,7 @@ export default function AdminReportsPage() {
                 </div>
               );
             })}
+            {!hourly.length && <p className="text-xs text-white/70">Sin datos horarios.</p>}
           </div>
         </div>
 
@@ -161,14 +142,15 @@ export default function AdminReportsPage() {
           </div>
           <div className="p-4 space-y-2">
             {daily.map((d) => (
-              <div key={d.date} className="flex items-center gap-3">
-                <span className="w-10 text-xs text-white/70">{d.date}</span>
+              <div key={(d as any)?.date || Math.random()} className="flex items-center gap-3">
+                <span className="w-10 text-xs text-white/70">{(d as any)?.date}</span>
                 <div className="flex-1 rounded-full bg-white/10 h-2">
-                  <div className="h-2 rounded-full bg-[#22d3ee]" style={{ width: `${Math.min(100, Math.round((d.sales / 1400) * 100))}%` }} />
+                  <div className="h-2 rounded-full bg-[#22d3ee]" style={{ width: `${Math.min(100, Math.round((Number((d as any)?.sales ?? 0) / 1400) * 100))}%` }} />
                 </div>
-                <span className="w-14 text-xs text-white/70 text-right">${d.sales}</span>
+                <span className="w-14 text-xs text-white/70 text-right">${Number((d as any)?.sales ?? 0)}</span>
               </div>
             ))}
+            {!daily.length && <p className="text-xs text-white/70">Sin datos diarios.</p>}
           </div>
         </div>
       </section>
@@ -180,12 +162,14 @@ export default function AdminReportsPage() {
           </div>
           <div className="p-4 space-y-3">
             {byState.map((item) => {
-              const pct = Math.min(100, Math.round((item.count / 3200) * 100));
+              const count = Number((item as any)?.count ?? 0);
+              const state = (item as any)?.state || "Estado";
+              const pct = Math.min(100, Math.max(0, Math.round((count / 3200) * 100)));
               return (
-                <div key={item.state} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div key={state} className="rounded-xl border border-white/10 bg-white/5 p-3">
                   <div className="flex justify-between text-xs text-white/70">
-                    <span>{item.state}</span>
-                    <span>{item.count}</span>
+                    <span>{state}</span>
+                    <span>{count}</span>
                   </div>
                   <div className="mt-2 h-2 rounded-full bg-white/10">
                     <div className="h-2 rounded-full bg-gradient-to-r from-[#22d3ee] to-[#3b82f6]" style={{ width: `${pct}%` }} />
@@ -193,6 +177,7 @@ export default function AdminReportsPage() {
                 </div>
               );
             })}
+            {!byState.length && <p className="text-xs text-white/70">Sin datos de pagos.</p>}
           </div>
         </div>
 
@@ -202,14 +187,15 @@ export default function AdminReportsPage() {
           </div>
           <div className="p-4 space-y-3">
             {topBuyers.map((buyer) => (
-              <div key={buyer.name} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-3 text-sm">
+              <div key={(buyer as any)?.name || Math.random()} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-3 text-sm">
                 <div>
-                  <p className="font-semibold text-white">{buyer.name}</p>
-                  <p className="text-xs text-white/65">{buyer.tickets} boletos</p>
+                  <p className="font-semibold text-white">{(buyer as any)?.name}</p>
+                  <p className="text-xs text-white/65">{(buyer as any)?.tickets ?? 0} boletos</p>
                 </div>
-                <span className="text-white/85 font-semibold">${buyer.amount}</span>
+                <span className="text-white/85 font-semibold">${Number((buyer as any)?.amount ?? 0)}</span>
               </div>
             ))}
+            {!topBuyers.length && <p className="text-xs text-white/70">Sin compradores destacados.</p>}
           </div>
         </div>
       </section>
@@ -231,13 +217,16 @@ export default function AdminReportsPage() {
           </thead>
           <tbody>
             {topRaffles.map((r) => {
-              const progress = Math.min(100, Math.round((r.sold / r.total) * 100));
+              const sold = Number((r as any)?.sold ?? (r as any)?.sales ?? 0);
+              const total = Number((r as any)?.total ?? (r as any)?.tickets ?? 1);
+              const revenue = Number((r as any)?.revenue ?? 0);
+              const progress = total ? Math.min(100, Math.max(0, Math.round((sold / total) * 100))) : 0;
               return (
-                <tr key={r.name} className="border-t border-white/10">
-                  <td className="px-4 py-3 font-semibold text-white">{r.name}</td>
-                  <td className="px-4 py-3">{r.sold}</td>
-                  <td className="px-4 py-3">{r.total}</td>
-                  <td className="px-4 py-3">${r.revenue.toLocaleString()}</td>
+                <tr key={(r as any)?.name || Math.random()} className="border-t border-white/10">
+                  <td className="px-4 py-3 font-semibold text-white">{(r as any)?.name}</td>
+                  <td className="px-4 py-3">{sold}</td>
+                  <td className="px-4 py-3">{total}</td>
+                  <td className="px-4 py-3">${revenue.toLocaleString()}</td>
                   <td className="px-4 py-3">
                     <div className="h-2 rounded-full bg-white/15">
                       <div className="h-2 rounded-full bg-gradient-to-r from-[#3b82f6] to-[#22d3ee]" style={{ width: `${progress}%` }} />
@@ -247,6 +236,11 @@ export default function AdminReportsPage() {
                 </tr>
               );
             })}
+            {!topRaffles.length && (
+              <tr className="border-t border-white/10">
+                <td colSpan={5} className="px-4 py-6 text-center text-white/70">Sin rifas con métricas.</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </section>
