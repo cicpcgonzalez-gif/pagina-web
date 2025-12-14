@@ -362,14 +362,35 @@ export async function fetchMyPayments() {
 }
 
 export async function fetchAdminUsers(): Promise<AdminUser[]> {
-  return safeFetch<AdminUser[]>("/admin/users");
+  const candidates = ["/admin/users", "/superadmin/users", "/users"];
+  let lastError: unknown;
+  for (const path of candidates) {
+    try {
+      return await safeFetch<AdminUser[]>(path);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("No se pudieron cargar usuarios");
 }
 
 export async function updateAdminUser(userId: string | number, payload: Partial<AdminUser> & { role?: string; status?: string; locked?: boolean }) {
-  return safeFetch<AdminUser>(`/admin/users/${userId}`, {
-    method: "PATCH",
-    body: JSON.stringify(payload),
-  });
+  const candidates = [
+    `/admin/users/${userId}`,
+    `/superadmin/users/${userId}`,
+  ];
+  let lastError: unknown;
+  for (const path of candidates) {
+    try {
+      return await safeFetch<AdminUser>(path, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("No se pudo actualizar usuario");
 }
 
 export async function fetchAdminAudit() {
