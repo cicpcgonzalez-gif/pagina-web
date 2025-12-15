@@ -20,11 +20,10 @@ export function MainNav() {
       { href: "/perfil", label: "Perfil", icon: User },
     ];
 
-    if (role === "admin" || role === "superadmin") {
-      base.push({ href: "/admin", label: "Admin", icon: Shield });
-    }
     if (role === "superadmin") {
       base.push({ href: "/superadmin", label: "Superadmin", icon: Crown });
+    } else if (role === "admin") {
+      base.push({ href: "/admin", label: "Admin", icon: Shield });
     }
     return base;
   }, [role]);

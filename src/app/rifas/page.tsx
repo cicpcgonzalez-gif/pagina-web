@@ -111,56 +111,17 @@ export default function RifasPage() {
 
   if (checkingAuth) return null;
 
-  const navButtons = [
-    { href: "/rifas", label: "Rifas" },
-    { href: "/mis-rifas", label: "Mis rifas" },
-    { href: "/wallet", label: "Wallet" },
-    { href: "/ganadores", label: "Ganadores" },
-    { href: "/perfil", label: "Perfil" },
-  ];
-
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] text-white">
-      <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pb-20 pt-12">
-        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 shadow-lg shadow-black/30">
-          <div className="flex flex-wrap gap-2">
-            {navButtons.map((btn) => (
-              <Link
-                key={btn.href}
-                href={btn.href}
-                className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#93c5fd] hover:bg-white/15"
-              >
-                {btn.label}
-              </Link>
-            ))}
-            {isAdminOnly && (
-              <Link
-                href="/admin"
-                className="rounded-full border border-[#60a5fa]/50 bg-[#1e3a8a]/60 px-4 py-2 text-sm font-semibold text-[#bfdbfe] shadow-md shadow-[#1e3a8a]/40 transition hover:-translate-y-[1px] hover:border-[#93c5fd]"
-              >
-                Admin
-              </Link>
-            )}
-            {isSuperAdmin && (
-              <Link
-                href="/superadmin"
-                className="rounded-full border border-[#22d3ee]/60 bg-[#0f172a]/70 px-4 py-2 text-sm font-semibold text-[#7dd3fc] shadow-md shadow-[#0ea5e9]/30 transition hover:-translate-y-[1px] hover:border-[#7dd3fc]"
-              >
-                Superadmin
-              </Link>
-            )}
-          </div>
-          <span className="ml-auto text-[11px] uppercase tracking-[0.25em] text-white/60">Navegación rápida</span>
-        </div>
-
-        <section className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+      <div className="mx-auto flex w-full max-w-[480px] flex-col gap-8 px-4 pb-24 pt-12">
+        <section className="grid gap-6">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white shadow-sm shadow-black/30">
               <span className="h-2 w-2 rounded-full bg-[#fbbf24]" />
               Sorteos activos
             </div>
-            <h1 className="font-[var(--font-display)] text-4xl leading-tight sm:text-5xl">Tu oportunidad de ganar hoy.</h1>
-            <p className="max-w-2xl text-white/80">
+            <h1 className="font-[var(--font-display)] text-3xl leading-tight sm:text-4xl">Tu oportunidad de ganar hoy.</h1>
+            <p className="max-w-2xl text-white/80 text-base">
               El mural principal de rifas, con disponibilidad en vivo, galería y acceso rápido a tu perfil o al panel admin.
             </p>
             <div className="flex flex-wrap gap-2 text-sm">
@@ -239,7 +200,7 @@ export default function RifasPage() {
 
       {loading && <p className="text-sm text-white/80">Cargando rifas...</p>}
 
-      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <section className="grid gap-4">
         {filteredRaffles.map((raffle, idx) => {
           const sold = raffle.ticketsTotal - raffle.ticketsAvailable;
           const progress = raffle.ticketsTotal
