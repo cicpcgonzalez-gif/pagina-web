@@ -22,6 +22,7 @@ import {
   updateSuperadminModules,
   updateSuperadminSMTP,
   updateSuperadminTechSupport,
+  adminCreateRaffle,
 } from "@/lib/api";
 import type { AdminUser, ModuleConfig, Raffle } from "@/lib/types";
 
@@ -29,6 +30,7 @@ const defaultBranding = { title: "", tagline: "", primaryColor: "#22d3ee", secon
 const defaultCompany = { name: "", address: "", rif: "", phone: "", email: "" };
 const defaultSMTP = { host: "", port: "587", user: "", pass: "", secure: false, fromName: "", fromEmail: "" };
 const defaultTech = { phone: "", email: "" };
+const defaultRaffleForm = { title: "", description: "", price: 0, totalTickets: 0, drawDate: "", status: "activa" };
 
 export default function SuperAdminPage() {
   const [role, setRole] = useState<string | null>(null);
@@ -67,6 +69,13 @@ export default function SuperAdminPage() {
   const [toast, setToast] = useState<{ message: string; variant: "success" | "error" } | null>(null);
   const [activePanel, setActivePanel] = useState<string | null>(null);
   const [activeAction, setActiveAction] = useState<string | null>(null);
+  const [raffleTab, setRaffleTab] = useState<"list" | "create">("list");
+  const [raffleForm, setRaffleForm] = useState(defaultRaffleForm);
+  const [raffleFlyer, setRaffleFlyer] = useState<File | null>(null);
+  const [raffleImages, setRaffleImages] = useState<File[]>([]);
+  const [rafflePreviews, setRafflePreviews] = useState<Array<{ url: string; name: string; sizeKb: number; width?: number; height?: number }>>([]);
+  const [raffleError, setRaffleError] = useState<string | null>(null);
+  const [raffleSubmitting, setRaffleSubmitting] = useState(false);
 
   useEffect(() => {
     const token = getAuthToken();
@@ -158,6 +167,89 @@ export default function SuperAdminPage() {
     }
   }, []);
 
+  const revokePreviews = useCallback(() => {
+    rafflePreviews.forEach((p) => URL.revokeObjectURL(p.url));
+  }, [rafflePreviews]);
+
+  const handleImagesSelect = useCallback(
+    async (files: FileList | null) => {
+      if (!files) return;
+      setRaffleError(null);
+      revokePreviews();
+      const arr = Array.from(files).slice(0, 3).filter((file) => file.size <= 2 * 1024 * 1024);
+      const previews = await Promise.all(
+        arr.map(
+          (file) =>
+            new Promise<{ url: string; name: string; sizeKb: number; width?: number; height?: number }>((resolve) => {
+              const url = URL.createObjectURL(file);
+              const img = new Image();
+              img.onload = () => {
+                resolve({ url, name: file.name, sizeKb: Math.round(file.size / 1024), width: img.width, height: img.height });
+              };
+              img.onerror = () => resolve({ url, name: file.name, sizeKb: Math.round(file.size / 1024) });
+              img.src = url;
+            })
+        )
+      );
+      setRaffleImages(arr);
+      setRafflePreviews(previews);
+      if (files.length > 3) {
+        setRaffleError("Máximo 3 fotos. Se tomaron las primeras 3.");
+      }
+      const rejected = Array.from(files).filter((file) => file.size > 2 * 1024 * 1024);
+      if (rejected.length) {
+        setRaffleError("Algunas imágenes superan 2MB y se omitieron.");
+      }
+    },
+    [revokePreviews]
+  );
+
+  const resetRaffleForm = useCallback(() => {
+    revokePreviews();
+    setRaffleForm(defaultRaffleForm);
+    setRaffleFlyer(null);
+    setRaffleImages([]);
+    setRafflePreviews([]);
+    setRaffleError(null);
+  }, [revokePreviews]);
+
+  const submitRaffle = useCallback(async () => {
+    setRaffleError(null);
+    if (!raffleForm.title.trim()) {
+      setRaffleError("Título es obligatorio.");
+      return;
+    }
+    if (!raffleForm.price || raffleForm.price <= 0) {
+      setRaffleError("Precio debe ser mayor a 0.");
+      return;
+    }
+    if (!raffleForm.totalTickets || raffleForm.totalTickets <= 0) {
+      setRaffleError("Total de tickets debe ser mayor a 0.");
+      return;
+    }
+    setRaffleSubmitting(true);
+    try {
+      await adminCreateRaffle({
+        title: raffleForm.title,
+        description: raffleForm.description,
+        price: raffleForm.price,
+        totalTickets: raffleForm.totalTickets,
+        drawDate: raffleForm.drawDate,
+        status: raffleForm.status,
+        flyer: raffleFlyer,
+        images: raffleImages,
+      });
+      notify("Rifa creada", "success");
+      resetRaffleForm();
+      setRaffleTab("list");
+      loadRaffles();
+    } catch (err) {
+      setRaffleError(err instanceof Error ? err.message : "No se pudo crear la rifa");
+    } finally {
+      setRaffleSubmitting(false);
+    }
+  }, [raffleForm, raffleFlyer, raffleImages, resetRaffleForm, loadRaffles]);
+
   const loadAnnouncements = useCallback(async () => {
     setAnnouncementsLoading(true);
     setAnnouncementsError(null);
@@ -196,6 +288,46 @@ export default function SuperAdminPage() {
     return { totalRaffles, totalTickets, soldTickets, active };
   }, [raffles]);
 
+  const activeRaffles = useMemo(() => raffles.filter((r) => r.status === "activa"), [raffles]);
+
+  const activeStats = useMemo(() => {
+    const totalTickets = activeRaffles.reduce((acc, r) => acc + (r.ticketsTotal ?? 0), 0);
+    const soldTickets = activeRaffles.reduce((acc, r) => acc + ((r.ticketsTotal ?? 0) - (r.ticketsAvailable ?? 0)), 0);
+    const percent = totalTickets ? Math.round((soldTickets / totalTickets) * 100) : 0;
+    const upcomingCount = activeRaffles.filter((r) => {
+      if (!r.drawDate) return false;
+      const draw = new Date(r.drawDate).getTime();
+      const now = Date.now();
+      const threeDays = 3 * 24 * 60 * 60 * 1000;
+      return draw - now <= threeDays && draw - now > 0;
+    }).length;
+    return { count: activeRaffles.length, totalTickets, soldTickets, percent, upcomingCount };
+  }, [activeRaffles]);
+
+  const exportActiveCSV = useCallback(() => {
+    if (!activeRaffles.length) {
+      notify("No hay rifas activas para exportar", "error");
+      return;
+    }
+    const headers = ["id", "titulo", "status", "precio", "ticketsTotales", "ticketsDisponibles", "ticketsVendidos", "porcentaje", "fechaSorteo"];
+    const rows = activeRaffles.map((r) => {
+      const total = r.ticketsTotal ?? 0;
+      const avail = r.ticketsAvailable ?? 0;
+      const sold = total - avail;
+      const percent = total ? Math.round((sold / total) * 100) : 0;
+      return [r.id, r.title, r.status, r.price ?? 0, total, avail, sold, `${percent}%`, r.drawDate ?? ""].join(",");
+    });
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "rifas_activas.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    notify("CSV exportado", "success");
+  }, [activeRaffles]);
+
   const quickActions: Array<{ label: string; color: string; panel?: string }> = useMemo(() => {
     const base = [
       { label: "Dashboard", panel: "dashboard", color: "#22c55e" },
@@ -214,6 +346,7 @@ export default function SuperAdminPage() {
         { label: "Soporte", panel: "soporte", color: "#38bdf8" },
         { label: "Logs de correo", panel: "logs", color: "#f472b6" },
         { label: "Auditoría", panel: "auditoria", color: "#fbbf24" },
+        { label: "Auditoría rifas", panel: "auditoriaRifas", color: "#22d3ee" },
         { label: "Acciones críticas", panel: "criticas", color: "#ef4444" },
         { label: "Anuncios", panel: "novedades", color: "#fb7185" }
       );
@@ -259,6 +392,113 @@ export default function SuperAdminPage() {
               ))}
             </div>
             {lastUpdated && <p className="mt-3 text-[11px] text-white/60">Última actualización: {lastUpdated.toLocaleTimeString()}</p>}
+          </section>
+        );
+
+      case "auditoriaRifas":
+        if (!isSuperadmin) return null;
+        const sortedActive = [...activeRaffles].sort((a, b) => {
+          const atotal = a.ticketsTotal ?? 0;
+          const btotal = b.ticketsTotal ?? 0;
+          const asold = atotal - (a.ticketsAvailable ?? 0);
+          const bsold = btotal - (b.ticketsAvailable ?? 0);
+          const aperc = atotal ? asold / atotal : 0;
+          const bperc = btotal ? bsold / btotal : 0;
+          return bperc - aperc;
+        });
+        return (
+          <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.25em] text-white/70">Auditoría de rifas</p>
+                <h2 className="mt-2 text-2xl font-semibold text-white">Control absoluto (solo superadmin)</h2>
+                <p className="text-sm text-white/80">Métricas globales y lista detallada de rifas activas.</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={exportActiveCSV}
+                  className="rounded-lg border border-[#22d3ee]/50 bg-[#22d3ee]/20 px-4 py-2 text-sm font-semibold text-[#dff7ff] transition hover:-translate-y-[1px] hover:border-[#22d3ee]/80"
+                >
+                  Exportar CSV
+                </button>
+                <button
+                  onClick={loadRaffles}
+                  className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-white/40"
+                >
+                  Refrescar
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[{ label: "Rifas activas", value: activeStats.count }, { label: "Tickets vendidos", value: activeStats.soldTickets.toLocaleString() }, { label: "% vendido global", value: `${activeStats.percent}%` }, { label: "Sorteos <3 días", value: activeStats.upcomingCount }].map((card) => (
+                <div key={card.label} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs text-white/60">{card.label}</p>
+                  <p className="text-2xl font-semibold text-white">{card.value}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 space-y-3">
+              {activeRaffles.length === 0 && <p className="text-sm text-white/70">No hay rifas activas.</p>}
+              {sortedActive.map((raffle) => {
+                const total = raffle.ticketsTotal ?? 0;
+                const avail = raffle.ticketsAvailable ?? 0;
+                const sold = total - avail;
+                const progress = total ? Math.min(100, Math.round((sold / total) * 100)) : 0;
+                const drawTime = raffle.drawDate ? new Date(raffle.drawDate).getTime() : null;
+                const daysLeft = drawTime ? Math.ceil((drawTime - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+                const risk = (() => {
+                  if (daysLeft !== null && daysLeft <= 3 && progress < 20) return "alto";
+                  if (daysLeft !== null && daysLeft <= 7 && progress < 50) return "medio";
+                  return "bajo";
+                })();
+                const gallery = ((raffle as any)?.style?.gallery as string[]) || [];
+                const banner = (raffle as any)?.style?.bannerImage;
+                const visuals = gallery.length ? gallery.slice(0, 3) : banner ? [banner] : [];
+                return (
+                  <div key={raffle.id} className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm shadow-black/20">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">{raffle.title}</h3>
+                        <p className="text-xs text-white/60">ID: {raffle.id}</p>
+                        <p className="text-xs text-white/60">Sorteo: {raffle.drawDate || "Sin fecha"}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-semibold text-emerald-200">Activa</span>
+                        <span className={`rounded-full px-3 py-1 text-[11px] font-semibold ${risk === "alto" ? "bg-red-500/20 text-red-100" : risk === "medio" ? "bg-amber-500/20 text-amber-100" : "bg-white/15 text-white/80"}`}>
+                          Riesgo {risk}
+                        </span>
+                      </div>
+                    </div>
+
+                    {visuals.length > 0 && (
+                      <div className="mt-3 flex gap-2 overflow-x-auto pb-2 text-[0] snap-x snap-mandatory">
+                        {visuals.map((src) => (
+                          <div key={src} className="min-w-[180px] snap-center overflow-hidden rounded-xl border border-white/10 bg-white/5">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={src} alt={raffle.title} className="h-28 w-full object-cover" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="mt-3 grid gap-2 text-sm text-white/80 sm:grid-cols-2 lg:grid-cols-4">
+                      <p><span className="text-white/60">Precio:</span> ${raffle.price?.toLocaleString()}</p>
+                      <p><span className="text-white/60">Tickets:</span> {sold.toLocaleString()} vendidos / {total.toLocaleString()}</p>
+                      <p><span className="text-white/60">Disponibles:</span> {avail.toLocaleString()}</p>
+                      <p><span className="text-white/60">% vendido:</span> {progress}%</p>
+                    </div>
+
+                    {daysLeft !== null && <p className="mt-1 text-xs text-white/60">Días restantes: {daysLeft}</p>}
+
+                    <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/10">
+                      <div className="h-full bg-[#22d3ee]" style={{ width: `${progress}%` }} aria-label={`Progreso ${progress}%`} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </section>
         );
 
@@ -739,72 +979,219 @@ export default function SuperAdminPage() {
                 <h2 className="mt-2 text-2xl font-semibold text-white">Estado en vivo</h2>
                 <p className="text-sm text-white/80">Ventas, progreso y accesos a cada rifa.</p>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <Link
-                  href="/admin/raffles"
-                  className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60"
-                >
-                  Abrir panel admin
-                </Link>
-                <Link
-                  href="/rifas"
-                  className="rounded-lg border border-[#22d3ee]/50 bg-[#22d3ee]/15 px-4 py-2 text-sm font-semibold text-[#dff7ff] transition hover:-translate-y-[1px] hover:border-[#22d3ee]/80"
-                >
-                  Ver mural público
-                </Link>
+              <div className="flex gap-2 text-sm">
+                {[{ id: "list", label: "Rifas activas" }, { id: "create", label: "Crear rifa" }].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setRaffleTab(tab.id as typeof raffleTab)}
+                    className={`rounded-lg border px-4 py-2 font-semibold transition ${
+                      raffleTab === tab.id ? "border-[#22d3ee]/70 bg-[#22d3ee]/15 text-white" : "border-white/15 bg-white/5 text-white/80 hover:border-white/30"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
               </div>
             </div>
 
-            <div className="mt-6 space-y-4">
-              {rafflesLoading && <p className="text-sm text-white/70">Cargando rifas en vivo...</p>}
-              {rafflesError && <p className="text-sm text-red-200">{rafflesError}. Conecta el backend y vuelve a intentar.</p>}
-              {!rafflesLoading && !rafflesError && raffles.length === 0 && <p className="text-sm text-white/70">No hay rifas creadas por admin aún.</p>}
+            {raffleTab === "list" && (
+              <div className="mt-6 space-y-4">
+                {rafflesLoading && <p className="text-sm text-white/70">Cargando rifas en vivo...</p>}
+                {rafflesError && <p className="text-sm text-red-200">{rafflesError}. Conecta el backend y vuelve a intentar.</p>}
+                {!rafflesLoading && !rafflesError && raffles.length === 0 && <p className="text-sm text-white/70">No hay rifas creadas por admin aún.</p>}
 
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {raffles.map((raffle) => {
-                  const sold = (raffle.ticketsTotal ?? 0) - (raffle.ticketsAvailable ?? 0);
-                  const progress = raffle.ticketsTotal ? Math.min(100, Math.round((sold / raffle.ticketsTotal) * 100)) : 0;
-                  return (
-                    <div key={raffle.id} className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm shadow-black/20">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h3 className="text-lg font-semibold text-white">{raffle.title}</h3>
-                          <p className="text-xs text-white/60">ID: {raffle.id}</p>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {raffles.map((raffle) => {
+                    const sold = (raffle.ticketsTotal ?? 0) - (raffle.ticketsAvailable ?? 0);
+                    const progress = raffle.ticketsTotal ? Math.min(100, Math.round((sold / raffle.ticketsTotal) * 100)) : 0;
+                    const gallery = ((raffle as any)?.style?.gallery as string[]) || [];
+                    const banner = (raffle as any)?.style?.bannerImage;
+                    const visuals = gallery.length ? gallery.slice(0, 3) : banner ? [banner] : [];
+
+                    return (
+                      <div key={raffle.id} className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm shadow-black/20">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <h3 className="text-lg font-semibold text-white">{raffle.title}</h3>
+                            <p className="text-xs text-white/60">ID: {raffle.id}</p>
+                          </div>
+                          <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${raffle.status === "activa" ? "bg-emerald-500/15 text-emerald-200" : "bg-white/15 text-white/80"}`}>
+                            {raffle.status}
+                          </span>
                         </div>
-                        <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${raffle.status === "activa" ? "bg-emerald-500/15 text-emerald-200" : "bg-white/15 text-white/80"}`}>
-                          {raffle.status}
-                        </span>
-                      </div>
-                      <div className="space-y-1 text-sm text-white/80">
-                        <p>Precio ticket: ${raffle.price?.toLocaleString()}</p>
-                        <p>Venta: {sold.toLocaleString()} / {raffle.ticketsTotal?.toLocaleString()} tickets</p>
-                        <p>Disponible: {raffle.ticketsAvailable?.toLocaleString()}</p>
-                        <p>Sorteo: {raffle.drawDate}</p>
-                      </div>
 
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
-                        <div className="h-full bg-[#22d3ee]" style={{ width: `${progress}%` }} aria-label={`Progreso ${progress}%`} />
-                      </div>
+                        {visuals.length > 0 && (
+                          <div className="flex gap-2 overflow-x-auto pb-2 text-[0] snap-x snap-mandatory">
+                            {visuals.map((src) => (
+                              <div key={src} className="min-w-[180px] snap-center overflow-hidden rounded-xl border border-white/10 bg-white/5">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={src} alt={raffle.title} className="h-28 w-full object-cover" />
+                              </div>
+                            ))}
+                          </div>
+                        )}
 
-                      <div className="flex flex-wrap gap-2 text-sm">
-                        <Link
-                          href={`/rifas/${raffle.id}`}
-                          className="rounded-lg border border-white/20 px-3 py-2 font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60"
-                        >
-                          Ver rifa
-                        </Link>
-                        <Link
-                          href="/admin/raffles"
-                          className="rounded-lg border border-[#22d3ee]/40 bg-[#22d3ee]/10 px-3 py-2 font-semibold text-[#dff7ff] transition hover:-translate-y-[1px] hover:border-[#22d3ee]/80"
-                        >
-                          Editar en admin
-                        </Link>
+                        <div className="space-y-1 text-sm text-white/80">
+                          <p>Precio ticket: ${raffle.price?.toLocaleString()}</p>
+                          <p>Venta: {sold.toLocaleString()} / {raffle.ticketsTotal?.toLocaleString()} tickets</p>
+                          <p>Disponible: {raffle.ticketsAvailable?.toLocaleString()}</p>
+                          <p>Sorteo: {raffle.drawDate}</p>
+                        </div>
+
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                          <div className="h-full bg-[#22d3ee]" style={{ width: `${progress}%` }} aria-label={`Progreso ${progress}%`} />
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 text-sm">
+                          <Link
+                            href={`/rifas/${raffle.id}`}
+                            className="rounded-lg border border-white/20 px-3 py-2 font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#22d3ee]/60"
+                          >
+                            Ver rifa
+                          </Link>
+                          <Link
+                            href="/admin/raffles"
+                            className="rounded-lg border border-[#22d3ee]/40 bg-[#22d3ee]/10 px-3 py-2 font-semibold text-[#dff7ff] transition hover:-translate-y-[1px] hover:border-[#22d3ee]/80"
+                          >
+                            Editar en admin
+                          </Link>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
+
+            {raffleTab === "create" && (
+              <div className="mt-6 space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-3">
+                    <label className="space-y-1 text-sm text-white/80">
+                      <span className="block text-xs uppercase tracking-[0.2em] text-white/60">Título *</span>
+                      <input
+                        value={raffleForm.title}
+                        onChange={(e) => setRaffleForm((s) => ({ ...s, title: e.target.value }))}
+                        className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none"
+                        placeholder="Rifa especial"
+                      />
+                    </label>
+                    <label className="space-y-1 text-sm text-white/80">
+                      <span className="block text-xs uppercase tracking-[0.2em] text-white/60">Descripción</span>
+                      <textarea
+                        value={raffleForm.description}
+                        onChange={(e) => setRaffleForm((s) => ({ ...s, description: e.target.value }))}
+                        className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none"
+                        rows={4}
+                        placeholder="Detalles, premios, condiciones"
+                      />
+                    </label>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="space-y-1 text-sm text-white/80">
+                        <span className="block text-xs uppercase tracking-[0.2em] text-white/60">Precio *</span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={raffleForm.price}
+                          onChange={(e) => setRaffleForm((s) => ({ ...s, price: Number(e.target.value) }))}
+                          className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none"
+                        />
+                      </label>
+                      <label className="space-y-1 text-sm text-white/80">
+                        <span className="block text-xs uppercase tracking-[0.2em] text-white/60">Tickets *</span>
+                        <input
+                          type="number"
+                          min={1}
+                          value={raffleForm.totalTickets}
+                          onChange={(e) => setRaffleForm((s) => ({ ...s, totalTickets: Number(e.target.value) }))}
+                          className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none"
+                        />
+                      </label>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="space-y-1 text-sm text-white/80">
+                        <span className="block text-xs uppercase tracking-[0.2em] text-white/60">Fecha sorteo</span>
+                        <input
+                          type="datetime-local"
+                          value={raffleForm.drawDate}
+                          onChange={(e) => setRaffleForm((s) => ({ ...s, drawDate: e.target.value }))}
+                          className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none"
+                        />
+                      </label>
+                      <label className="space-y-1 text-sm text-white/80">
+                        <span className="block text-xs uppercase tracking-[0.2em] text-white/60">Estado</span>
+                        <select
+                          value={raffleForm.status}
+                          onChange={(e) => setRaffleForm((s) => ({ ...s, status: e.target.value }))}
+                          className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none bg-transparent"
+                        >
+                          <option value="activa" className="bg-[#0b1224]">Activa</option>
+                          <option value="borrador" className="bg-[#0b1224]">Borrador</option>
+                          <option value="pausada" className="bg-[#0b1224]">Pausada</option>
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="space-y-1 text-sm text-white/80">
+                      <span className="block text-xs uppercase tracking-[0.2em] text-white/60">Flyer (recomendado 1200x800, máx 2MB)</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setRaffleFlyer(e.target.files?.[0] || null)}
+                        className="w-full text-xs text-white/70"
+                      />
+                    </label>
+
+                    <label className="space-y-1 text-sm text-white/80">
+                      <span className="block text-xs uppercase tracking-[0.2em] text-white/60">Galería (máximo 3 fotos, 2MB c/u)</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => handleImagesSelect(e.target.files)}
+                        className="w-full text-xs text-white/70"
+                      />
+                    </label>
+
+                    {rafflePreviews.length > 0 && (
+                      <div className="flex gap-2 overflow-x-auto pb-2 text-[0] snap-x snap-mandatory">
+                        {rafflePreviews.map((img) => (
+                          <div key={img.url} className="min-w-[140px] snap-center overflow-hidden rounded-xl border border-white/10 bg-white/5 p-2 text-left text-xs text-white/70">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={img.url} alt={img.name} className="h-24 w-full rounded-lg object-cover" />
+                            <p className="mt-1 truncate">{img.name}</p>
+                            <p>{img.sizeKb} KB {img.width && img.height ? `(${img.width}x${img.height})` : ""}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {raffleError && <p className="text-sm text-red-200">{raffleError}</p>}
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={submitRaffle}
+                    disabled={raffleSubmitting}
+                    className="rounded-lg border border-[#22d3ee]/50 bg-[#22d3ee]/20 px-4 py-2 text-sm font-semibold text-[#dff7ff] transition hover:-translate-y-[1px] hover:border-[#22d3ee]/80 disabled:opacity-50"
+                  >
+                    {raffleSubmitting ? "Creando..." : "Crear rifa"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetRaffleForm}
+                    className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-white/40"
+                  >
+                    Limpiar
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
         );
 
