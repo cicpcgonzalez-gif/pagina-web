@@ -1,18 +1,34 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 import { usePathname } from "next/navigation";
-
-const links = [
-  { href: "/rifas", label: "Rifas" },
-  { href: "/mis-rifas", label: "Mis rifas" },
-  { href: "/wallet", label: "Wallet" },
-  { href: "/ganadores", label: "Ganadores" },
-  { href: "/perfil", label: "Perfil" },
-];
+import { getAuthToken, getUserRole } from "@/lib/session";
 
 export function MainNav() {
   const pathname = usePathname();
+  const token = getAuthToken();
+  const role = getUserRole()?.toLowerCase();
+
+  const links = useMemo(() => {
+    const base = [
+      { href: "/rifas", label: "Rifas" },
+      { href: "/mis-rifas", label: "Mis rifas" },
+      { href: "/wallet", label: "Wallet" },
+      { href: "/ganadores", label: "Ganadores" },
+      { href: "/perfil", label: "Perfil" },
+    ];
+
+    if (role === "admin" || role === "superadmin") {
+      base.push({ href: "/admin", label: "Admin" });
+    }
+    if (role === "superadmin") {
+      base.push({ href: "/superadmin", label: "Superadmin" });
+    }
+    return base;
+  }, [role]);
+
+  if (!token) return null;
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#0b1224]/95 px-3 py-2 shadow-[0_-10px_30px_rgba(0,0,0,0.35)] backdrop-blur supports-[backdrop-filter]:bg-[#0b1224]/80">

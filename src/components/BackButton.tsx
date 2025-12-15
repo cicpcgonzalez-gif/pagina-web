@@ -2,10 +2,19 @@
 
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export function BackButton({ label = "Volver" }: { label?: string }) {
   const router = useRouter();
+  const [canGoBack, setCanGoBack] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const update = () => setCanGoBack(window.history.length > 1);
+    update();
+    window.addEventListener("popstate", update);
+    return () => window.removeEventListener("popstate", update);
+  }, []);
 
   const handleBack = useCallback(() => {
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -14,6 +23,8 @@ export function BackButton({ label = "Volver" }: { label?: string }) {
     }
     router.push("/");
   }, [router]);
+
+  if (!canGoBack) return null;
 
   return (
     <button
