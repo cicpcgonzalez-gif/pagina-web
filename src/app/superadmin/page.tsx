@@ -1005,56 +1005,65 @@ export default function SuperAdminPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
-          <p className="text-xs uppercase tracking-[0.25em] text-white/70">Menú principal</p>
-          <h2 className="mt-2 text-2xl font-semibold text-white">Accesos rápidos</h2>
-          <p className="text-sm text-white/75">Toca un botón para abrir su vista; no se muestran secciones abajo hasta que elijas.</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {quickActions.map((qa) => {
-              if (qa.href) {
+        <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20 lg:sticky lg:top-6">
+            <p className="text-xs uppercase tracking-[0.25em] text-white/70">Menú principal</p>
+            <h2 className="mt-2 text-2xl font-semibold text-white">Accesos rápidos</h2>
+            <p className="text-sm text-white/75">Elige un módulo; el contenido se muestra a la derecha sin bajar al final.</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {quickActions.map((qa) => {
+                if (qa.href) {
+                  return (
+                    <Link
+                      key={qa.label}
+                      href={qa.href}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left text-white transition hover:-translate-y-[1px] hover:border-white/30"
+                    >
+                      <div>
+                        <p className="text-xs text-white/60">Superadmin</p>
+                        <p className="text-sm font-semibold text-white">{qa.label}</p>
+                      </div>
+                      <span className="h-8 w-8 shrink-0 rounded-full" style={{ backgroundColor: qa.color, opacity: 0.3 }} />
+                    </Link>
+                  );
+                }
+
+                const labelRole = isSuperadmin ? "Superadmin" : "Admin";
+                const disabled = !!qa.panel && !allowedPanels.has(qa.panel);
+
                 return (
-                  <Link
+                  <button
                     key={qa.label}
-                    href={qa.href}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left text-white transition hover:-translate-y-[1px] hover:border-white/30"
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => {
+                      if (qa.panel && allowedPanels.has(qa.panel)) {
+                        setActiveAction(qa.label);
+                        setActivePanel(qa.panel || null);
+                      }
+                    }}
+                    className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-white transition hover:-translate-y-[1px] ${activeAction === qa.label ? "border-[#22d3ee]/70 bg-[#22d3ee]/15" : "border-white/10 bg-white/5 hover:border-white/30"} ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     <div>
-                      <p className="text-xs text-white/60">Superadmin</p>
+                      <p className="text-xs text-white/60">{labelRole}</p>
                       <p className="text-sm font-semibold text-white">{qa.label}</p>
                     </div>
                     <span className="h-8 w-8 shrink-0 rounded-full" style={{ backgroundColor: qa.color, opacity: 0.3 }} />
-                  </Link>
+                  </button>
                 );
-              }
+              })}
+            </div>
+          </div>
 
-              const labelRole = isSuperadmin ? "Superadmin" : "Admin";
-              const disabled = !!qa.panel && !allowedPanels.has(qa.panel);
-
-              return (
-                <button
-                  key={qa.label}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => {
-                    if (qa.panel && allowedPanels.has(qa.panel)) {
-                      setActiveAction(qa.label);
-                      setActivePanel(qa.panel || null);
-                    }
-                  }}
-                  className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-white transition hover:-translate-y-[1px] ${activeAction === qa.label ? "border-[#22d3ee]/70 bg-[#22d3ee]/15" : "border-white/10 bg-white/5 hover:border-white/30"} ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-                >
-                  <div>
-                    <p className="text-xs text-white/60">{labelRole}</p>
-                    <p className="text-sm font-semibold text-white">{qa.label}</p>
-                  </div>
-                  <span className="h-8 w-8 shrink-0 rounded-full" style={{ backgroundColor: qa.color, opacity: 0.3 }} />
-                </button>
-              );
-            })}
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-md shadow-black/20">
+            {renderPanel() || (
+              <div className="text-sm text-white/75">
+                <p className="font-semibold text-white">Selecciona un módulo del panel izquierdo.</p>
+                <p className="mt-1 text-white/60">Aquí se mostrarán las opciones sin tener que desplazarte al final.</p>
+              </div>
+            )}
           </div>
         </section>
-
-        {renderPanel()}
       </div>
     </main>
   );
