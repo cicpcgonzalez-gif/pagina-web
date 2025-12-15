@@ -363,7 +363,7 @@ export default function SuperAdminPage() {
   const quickActions: Array<{ label: string; color: string; panel?: string }> = useMemo(() => {
     const base = [
       { label: "Dashboard", panel: "dashboard", color: "#22c55e" },
-      { label: "Progreso", panel: "rifas", color: "#2dd4bf" },
+      { label: "Progreso", panel: "auditoriaRifas", color: "#2dd4bf" },
       { label: "Estilo", panel: "branding", color: "#c084fc" },
       { label: "Novedades", panel: "novedades", color: "#fb7185" },
       { label: "Rifas", panel: "rifas", color: "#22d3ee" },
@@ -373,7 +373,6 @@ export default function SuperAdminPage() {
       base.push(
         { label: "Usuarios", panel: "usuarios", color: "#38bdf8" },
         { label: "Módulos", panel: "modulos", color: "#4ade80" },
-        { label: "Branding", panel: "branding", color: "#c084fc" },
         { label: "SMTP", panel: "smtp", color: "#facc15" },
         { label: "Soporte", panel: "soporte", color: "#38bdf8" },
         { label: "Logs de correo", panel: "logs", color: "#f472b6" },
