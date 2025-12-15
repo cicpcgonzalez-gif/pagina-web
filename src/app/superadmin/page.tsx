@@ -175,9 +175,8 @@ export default function SuperAdminPage() {
     return new Promise<File>((resolve) => {
       const img = new Image();
       img.onload = () => {
-        const maxW = 1280;
-        const maxH = 1280;
-        const ratio = Math.min(1, maxW / img.width, maxH / img.height);
+        const maxDim = 1080; // Instagram-like bounds
+        const ratio = Math.min(1, maxDim / img.width, maxDim / img.height);
         const w = Math.max(1, Math.round(img.width * ratio));
         const h = Math.max(1, Math.round(img.height * ratio));
         const canvas = document.createElement("canvas");
@@ -186,17 +185,25 @@ export default function SuperAdminPage() {
         const ctx = canvas.getContext("2d");
         if (!ctx) return resolve(file);
         ctx.drawImage(img, 0, 0, w, h);
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              resolve(new File([blob], file.name, { type: file.type || "image/jpeg" }));
-            } else {
-              resolve(file);
-            }
-          },
-          file.type || "image/jpeg",
-          0.72
-        );
+
+        const encode = (quality: number, cb: (f: File) => void) => {
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) return cb(file);
+              const jpegFile = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" });
+              if (jpegFile.size > 450 * 1024 && quality > 0.45) {
+                // Re-encode smaller
+                encode(Math.max(0.45, quality - 0.1), cb);
+              } else {
+                cb(jpegFile);
+              }
+            },
+            "image/jpeg",
+            quality
+          );
+        };
+
+        encode(0.72, resolve);
       };
       img.onerror = () => resolve(file);
       const reader = new FileReader();
