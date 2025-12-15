@@ -33,8 +33,8 @@ export default async function Home() {
 
   return (
     <main className="relative min-h-screen bg-night-sky text-white">
-      <div className="mx-auto flex w-full max-w-[480px] flex-col gap-10 px-4 pb-24 pt-12 sm:pt-16">
-        <section className="grid gap-8">
+      <div className="mx-auto flex w-full max-w-[480px] flex-col gap-10 px-4 pb-24 pt-12 sm:pt-16 md:max-w-6xl md:gap-14">
+        <section className="grid gap-8 md:grid-cols-[1.05fr_0.95fr] md:items-center">
           <div className="flex flex-col gap-6">
             <div className="inline-flex w-fit items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white shadow-sm shadow-black/20">
               <span className="h-2 w-2 rounded-full bg-[#facc15]" />
@@ -108,7 +108,7 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-5 shadow-lg shadow-black/30 sm:grid-cols-2">
+        <section className="grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-5 shadow-lg shadow-black/30 sm:grid-cols-2 lg:grid-cols-4">
           {[{
             title: "Landing + publicidad",
             desc: "Destaca campañas y sponsors en un hero editorial.",
@@ -145,7 +145,7 @@ export default async function Home() {
               Ver todas
             </Link>
           </div>
-          <div className="grid gap-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {activeRaffles.slice(0, 6).map((raffle, idx) => {
               const sold = raffle.ticketsTotal - raffle.ticketsAvailable;
               const progress = raffle.ticketsTotal
