@@ -112,7 +112,7 @@ export default function RifasPage() {
   if (checkingAuth) return null;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] text-white">
+    <main className="min-h-screen bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] text-white overflow-x-hidden">
       <div className="mx-auto flex w-full max-w-[480px] flex-col gap-8 px-4 pb-24 pt-12 md:max-w-5xl lg:max-w-6xl md:gap-10">
         <section className="grid gap-6 md:grid-cols-[1.05fr_0.95fr] md:items-center">
           <div className="space-y-4">
@@ -124,27 +124,6 @@ export default function RifasPage() {
             <p className="max-w-2xl text-white/80 text-base">
               El mural principal de rifas, con disponibilidad en vivo, galería y acceso rápido a tu perfil o al panel admin.
             </p>
-            <div className="flex flex-wrap gap-2 text-sm">
-              <ProfileLinkButton className="rounded-full border border-white/20 bg-white/10 px-4 py-2 font-semibold text-white transition hover:-translate-y-[1px] hover:border-white/40">
-                Ir al perfil
-              </ProfileLinkButton>
-              {isAdminOnly && (
-                <Link
-                  href="/admin"
-                  className="rounded-full border border-[#60a5fa]/50 bg-[#1e3a8a]/40 px-4 py-2 font-semibold text-[#bfdbfe] transition hover:-translate-y-[1px] hover:border-[#93c5fd]"
-                >
-                  Panel admin
-                </Link>
-              )}
-              {isSuperAdmin && (
-                <Link
-                  href="/superadmin"
-                  className="rounded-full border border-[#22d3ee]/50 bg-[#0f172a]/60 px-4 py-2 font-semibold text-[#7dd3fc] transition hover:-translate-y-[1px] hover:border-[#7dd3fc]"
-                >
-                  Panel superadmin
-                </Link>
-              )}
-            </div>
           </div>
 
           <div className="space-y-3 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl shadow-black/30">
