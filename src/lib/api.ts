@@ -695,8 +695,12 @@ export async function adminCreateRaffle(payload: {
   if (hasFiles) {
     const form = new FormData();
     form.append("title", payload.title);
+    form.append("name", payload.title); // algunos backends esperan "name"
     if (payload.description) form.append("description", payload.description);
-    if (payload.price !== undefined) form.append("price", String(payload.price));
+    if (payload.price !== undefined) {
+      form.append("price", String(payload.price));
+      form.append("ticketPrice", String(payload.price)); // compatibilidad
+    }
     if (payload.status) form.append("status", payload.status);
     if (payload.drawDate) form.append("drawDate", payload.drawDate);
     if (payload.endDate) form.append("endDate", payload.endDate);
@@ -714,7 +718,11 @@ export async function adminCreateRaffle(payload: {
 
   return safeFetch("/raffles", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      ...payload,
+      name: payload.title,
+      ticketPrice: payload.price,
+    }),
   });
 }
 
