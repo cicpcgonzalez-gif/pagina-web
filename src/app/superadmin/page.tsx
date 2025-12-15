@@ -30,7 +30,7 @@ const defaultBranding = { title: "", tagline: "", primaryColor: "#22d3ee", secon
 const defaultCompany = { name: "", address: "", rif: "", phone: "", email: "" };
 const defaultSMTP = { host: "", port: "587", user: "", pass: "", secure: false, fromName: "", fromEmail: "" };
 const defaultTech = { phone: "", email: "" };
-const defaultRaffleForm = { title: "", description: "", price: 0, totalTickets: 0, drawDate: "", endDate: "", status: "activa" };
+const defaultRaffleForm = { title: "", description: "", price: "" as number | "", totalTickets: "" as number | "", drawDate: "", endDate: "", status: "activa" };
 
 export default function SuperAdminPage() {
   const [role, setRole] = useState<string | null>(null);
@@ -247,15 +247,22 @@ export default function SuperAdminPage() {
 
   const submitRaffle = useCallback(async () => {
     setRaffleError(null);
+    const token = getAuthToken();
+    if (!token) {
+      setRaffleError("Sesión expirada. Inicia sesión de admin/superadmin.");
+      return;
+    }
     if (!raffleForm.title.trim()) {
       setRaffleError("Título es obligatorio.");
       return;
     }
-    if (!raffleForm.price || raffleForm.price <= 0) {
+    const price = Number(raffleForm.price);
+    if (!Number.isFinite(price) || price <= 0) {
       setRaffleError("Precio debe ser mayor a 0.");
       return;
     }
-    if (!raffleForm.totalTickets || raffleForm.totalTickets <= 0) {
+    const totalTickets = Number(raffleForm.totalTickets);
+    if (!Number.isFinite(totalTickets) || totalTickets <= 0) {
       setRaffleError("Total de tickets debe ser mayor a 0.");
       return;
     }
@@ -264,8 +271,8 @@ export default function SuperAdminPage() {
       await adminCreateRaffle({
         title: raffleForm.title,
         description: raffleForm.description,
-        price: raffleForm.price,
-        totalTickets: raffleForm.totalTickets,
+        price,
+        totalTickets,
         drawDate: raffleForm.drawDate,
         endDate: raffleForm.endDate,
         status: raffleForm.status,
@@ -488,6 +495,8 @@ export default function SuperAdminPage() {
                 const gallery = ((raffle as any)?.style?.gallery as string[]) || [];
                 const banner = (raffle as any)?.style?.bannerImage;
                 const visuals = gallery.length ? gallery.slice(0, 3) : banner ? [banner] : [];
+                const isExpired = raffle.endDate ? new Date(raffle.endDate).getTime() < Date.now() : false;
+                const statusLabel = isExpired ? "cerrada" : raffle.status;
                 return (
                   <div key={raffle.id} className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm shadow-black/20">
                     <div className="flex flex-wrap items-start justify-between gap-2">
@@ -497,7 +506,7 @@ export default function SuperAdminPage() {
                         <p className="text-xs text-white/60">Sorteo: {raffle.drawDate || "Sin fecha"}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-semibold text-emerald-200">Activa</span>
+                        <span className={`rounded-full px-3 py-1 text-[11px] font-semibold ${statusLabel === "activa" ? "bg-emerald-500/15 text-emerald-200" : "bg-white/15 text-white/80"}`}>{statusLabel}</span>
                         <span className={`rounded-full px-3 py-1 text-[11px] font-semibold ${risk === "alto" ? "bg-red-500/20 text-red-100" : risk === "medio" ? "bg-amber-500/20 text-amber-100" : "bg-white/15 text-white/80"}`}>
                           Riesgo {risk}
                         </span>
@@ -1040,6 +1049,8 @@ export default function SuperAdminPage() {
                     const gallery = ((raffle as any)?.style?.gallery as string[]) || [];
                     const banner = (raffle as any)?.style?.bannerImage;
                     const visuals = gallery.length ? gallery.slice(0, 3) : banner ? [banner] : [];
+                    const isExpired = raffle.endDate ? new Date(raffle.endDate).getTime() < Date.now() : false;
+                    const statusLabel = isExpired ? "cerrada" : raffle.status;
 
                     return (
                       <div key={raffle.id} className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm shadow-black/20">
@@ -1048,8 +1059,8 @@ export default function SuperAdminPage() {
                             <h3 className="text-lg font-semibold text-white">{raffle.title}</h3>
                             <p className="text-xs text-white/60">ID: {raffle.id}</p>
                           </div>
-                          <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${raffle.status === "activa" ? "bg-emerald-500/15 text-emerald-200" : "bg-white/15 text-white/80"}`}>
-                            {raffle.status}
+                          <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${statusLabel === "activa" ? "bg-emerald-500/15 text-emerald-200" : "bg-white/15 text-white/80"}`}>
+                            {statusLabel}
                           </span>
                         </div>
 
@@ -1068,7 +1079,8 @@ export default function SuperAdminPage() {
                           <p>Precio ticket: ${raffle.price?.toLocaleString()}</p>
                           <p>Venta: {sold.toLocaleString()} / {raffle.ticketsTotal?.toLocaleString()} tickets</p>
                           <p>Disponible: {raffle.ticketsAvailable?.toLocaleString()}</p>
-                          <p>Sorteo: {raffle.drawDate}</p>
+                          <p>Inicio: {raffle.drawDate || ""}</p>
+                          <p>Fin: {raffle.endDate || ""}</p>
                         </div>
 
                         <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
@@ -1125,8 +1137,11 @@ export default function SuperAdminPage() {
                         <input
                           type="number"
                           min={0}
-                          value={raffleForm.price}
-                          onChange={(e) => setRaffleForm((s) => ({ ...s, price: Number(e.target.value) }))}
+                          value={raffleForm.price === "" ? "" : raffleForm.price}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setRaffleForm((s) => ({ ...s, price: val === "" ? "" : Number(val) }));
+                          }}
                           className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none"
                         />
                       </label>
@@ -1135,8 +1150,11 @@ export default function SuperAdminPage() {
                         <input
                           type="number"
                           min={1}
-                          value={raffleForm.totalTickets}
-                          onChange={(e) => setRaffleForm((s) => ({ ...s, totalTickets: Number(e.target.value) }))}
+                          value={raffleForm.totalTickets === "" ? "" : raffleForm.totalTickets}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setRaffleForm((s) => ({ ...s, totalTickets: val === "" ? "" : Number(val) }));
+                          }}
                           className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none"
                         />
                       </label>

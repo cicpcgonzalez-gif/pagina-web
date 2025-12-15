@@ -29,13 +29,14 @@ export function BackButton({ label = "Volver" }: { label?: string }) {
     router.push("/");
   }, [router]);
 
-  if (!canGoBack || pathname === "/") return null;
+  const hideOnMain = pathname === "/" || pathname === "/rifas" || pathname.startsWith("/rifas/");
+  if (!canGoBack || hideOnMain) return null;
 
   return (
     <button
       type="button"
       onClick={handleBack}
-      className="fixed left-4 bottom-24 z-50 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-black/40 backdrop-blur transition hover:-translate-y-[1px] hover:bg-white/15"
+      className="fixed left-4 bottom-24 z-50 hidden items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-black/40 backdrop-blur transition hover:-translate-y-[1px] hover:bg-white/15 md:inline-flex"
       aria-label={label}
     >
       <ArrowLeft className="h-4 w-4" />

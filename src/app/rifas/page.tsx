@@ -70,8 +70,8 @@ export default function RifasPage() {
     }
     if (filter === "closing") {
       return arr.sort((a, b) => {
-        const ta = new Date(a.drawDate).getTime();
-        const tb = new Date(b.drawDate).getTime();
+        const ta = new Date(a.endDate || a.drawDate).getTime();
+        const tb = new Date(b.endDate || b.drawDate).getTime();
         const safeA = Number.isFinite(ta) ? ta : Number.MAX_SAFE_INTEGER;
         const safeB = Number.isFinite(tb) ? tb : Number.MAX_SAFE_INTEGER;
         return safeA - safeB;
@@ -190,6 +190,8 @@ export default function RifasPage() {
             : 0;
           const lowStock = remainingPct <= 10;
           const banner = fallbackImages[idx % fallbackImages.length];
+          const isExpired = raffle.endDate ? new Date(raffle.endDate).getTime() < Date.now() : false;
+          const statusLabel = isExpired ? "cerrada" : raffle.status;
 
           return (
             <article
@@ -203,12 +205,12 @@ export default function RifasPage() {
                 </div>
                 <span
                   className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
-                    raffle.status === "activa"
+                    statusLabel === "activa"
                       ? "bg-emerald-500/20 text-emerald-200"
                       : "bg-white/10 text-white/70"
                   }`}
                 >
-                  {raffle.status}
+                  {statusLabel}
                 </span>
               </div>
 
@@ -225,7 +227,8 @@ export default function RifasPage() {
                     <p className="text-sm font-semibold text-[#0f172a]">{raffle.title}</p>
                     <span className="rounded-full bg-[#fbbf24]/20 px-3 py-1 text-xs font-semibold text-[#92400e]">${raffle.price.toFixed(2)}</span>
                   </div>
-                  <p className="mt-1 text-xs text-[#0f172a]/80">Sorteo {raffle.drawDate}</p>
+                  <p className="mt-1 text-xs text-[#0f172a]/80">Inicio {raffle.drawDate}</p>
+                  {raffle.endDate && <p className="text-[11px] text-[#0f172a]/70">Fin {raffle.endDate}</p>}
                 </div>
               </div>
 
@@ -267,14 +270,14 @@ export default function RifasPage() {
                   <button
                     className="flex-1 rounded-lg bg-gradient-to-r from-[#3b82f6] to-[#22d3ee] px-4 py-2 font-semibold text-white transition hover:-translate-y-[1px] hover:shadow-lg hover:shadow-[#22d3ee]/30"
                     onClick={() => handlePurchase(raffle.id)}
-                    disabled={loading}
+                    disabled={loading || isExpired}
                   >
-                    Comprar
+                    {isExpired ? "Cerrada" : "Comprar"}
                   </button>
                   <button
                     className="rounded-lg border border-white/20 px-4 py-2 text-white transition hover:-translate-y-[1px] hover:border-white/40"
                     onClick={() => handlePayment(raffle.id)}
-                    disabled={loading}
+                    disabled={loading || isExpired}
                   >
                     Pagar
                   </button>

@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { adminCreateRaffle, fetchRafflesLive } from "@/lib/api";
+import { getAuthToken } from "@/lib/session";
 import type { Raffle } from "@/lib/types";
 
-const defaultRaffleForm = { title: "", description: "", price: 0, totalTickets: 0, drawDate: "", endDate: "", status: "activa" };
+const defaultRaffleForm = { title: "", description: "", price: "" as number | "", totalTickets: "" as number | "", drawDate: "", endDate: "", status: "activa" };
 
 export default function AdminRafflesPage() {
   const [raffles, setRaffles] = useState<Raffle[]>([]);
@@ -127,16 +128,20 @@ export default function AdminRafflesPage() {
 
   const submitRaffle = useCallback(async () => {
     setRaffleError(null);
+    const token = getAuthToken();
+    if (!token) return setRaffleError("Sesión expirada. Inicia sesión de admin.");
     if (!raffleForm.title.trim()) return setRaffleError("Título es obligatorio.");
-    if (!raffleForm.price || raffleForm.price <= 0) return setRaffleError("Precio debe ser mayor a 0.");
-    if (!raffleForm.totalTickets || raffleForm.totalTickets <= 0) return setRaffleError("Total de tickets debe ser mayor a 0.");
+    const price = Number(raffleForm.price);
+    if (!Number.isFinite(price) || price <= 0) return setRaffleError("Precio debe ser mayor a 0.");
+    const totalTickets = Number(raffleForm.totalTickets);
+    if (!Number.isFinite(totalTickets) || totalTickets <= 0) return setRaffleError("Total de tickets debe ser mayor a 0.");
     setRaffleSubmitting(true);
     try {
       await adminCreateRaffle({
         title: raffleForm.title,
         description: raffleForm.description,
-        price: raffleForm.price,
-        totalTickets: raffleForm.totalTickets,
+        price,
+        totalTickets,
         drawDate: raffleForm.drawDate,
         endDate: raffleForm.endDate,
         status: raffleForm.status,
@@ -199,6 +204,8 @@ export default function AdminRafflesPage() {
               const gallery = ((raffle as any)?.style?.gallery as string[]) || [];
               const banner = (raffle as any)?.style?.bannerImage;
               const visuals = gallery.length ? gallery.slice(0, 3) : banner ? [banner] : [];
+              const isExpired = raffle.endDate ? new Date(raffle.endDate).getTime() < Date.now() : false;
+              const statusLabel = isExpired ? "cerrada" : raffle.status;
 
               return (
                 <div key={raffle.id} className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm shadow-black/20">
@@ -207,8 +214,8 @@ export default function AdminRafflesPage() {
                       <h3 className="text-lg font-semibold text-white">{raffle.title}</h3>
                       <p className="text-xs text-white/60">ID: {raffle.id}</p>
                     </div>
-                    <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${raffle.status === "activa" ? "bg-emerald-500/15 text-emerald-200" : "bg-white/15 text-white/80"}`}>
-                      {raffle.status}
+                    <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${statusLabel === "activa" ? "bg-emerald-500/15 text-emerald-200" : "bg-white/15 text-white/80"}`}>
+                      {statusLabel}
                     </span>
                   </div>
 
@@ -227,7 +234,8 @@ export default function AdminRafflesPage() {
                     <p>Precio ticket: ${raffle.price?.toLocaleString()}</p>
                     <p>Venta: {sold.toLocaleString()} / {raffle.ticketsTotal?.toLocaleString()} tickets</p>
                     <p>Disponible: {raffle.ticketsAvailable?.toLocaleString()}</p>
-                    <p>Sorteo: {raffle.drawDate}</p>
+                    <p>Inicio: {raffle.drawDate}</p>
+                    <p>Fin: {raffle.endDate || ""}</p>
                   </div>
 
                   <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
@@ -284,8 +292,11 @@ export default function AdminRafflesPage() {
                   <input
                     type="number"
                     min={0}
-                    value={raffleForm.price}
-                    onChange={(e) => setRaffleForm((s) => ({ ...s, price: Number(e.target.value) }))}
+                    value={raffleForm.price === "" ? "" : raffleForm.price}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setRaffleForm((s) => ({ ...s, price: val === "" ? "" : Number(val) }));
+                    }}
                     className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none"
                   />
                 </label>
@@ -294,8 +305,11 @@ export default function AdminRafflesPage() {
                   <input
                     type="number"
                     min={1}
-                    value={raffleForm.totalTickets}
-                    onChange={(e) => setRaffleForm((s) => ({ ...s, totalTickets: Number(e.target.value) }))}
+                    value={raffleForm.totalTickets === "" ? "" : raffleForm.totalTickets}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setRaffleForm((s) => ({ ...s, totalTickets: val === "" ? "" : Number(val) }));
+                    }}
                     className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none"
                   />
                 </label>

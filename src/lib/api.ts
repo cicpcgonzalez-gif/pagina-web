@@ -93,14 +93,17 @@ const mapRemoteRaffles = (raw: RemoteRaffle[]) => {
   return raw.map((item, index) => {
     const total = item.totalTickets ?? item.ticketsTotal ?? 0;
     const sold = item.soldTickets ?? item._count?.tickets ?? 0;
+    const endDate = item.endDate ?? item.drawDate;
+    const isExpired = endDate ? new Date(endDate).getTime() < Date.now() : false;
     return {
       id: String(item.id ?? `raffle-${index}`),
       title: item.name ?? item.title ?? "Rifa",
       price: Number(item.ticketPrice ?? item.price ?? 0),
       ticketsAvailable: Math.max(0, total - sold),
       ticketsTotal: total || 1,
-      drawDate: item.endDate ?? item.drawDate ?? "Por definir",
-      status: (item.status ?? "activa").toLowerCase() === "activa"
+      drawDate: item.drawDate ?? "Por definir",
+      endDate: endDate ?? "",
+      status: isExpired ? "cerrada" : (item.status ?? "activa").toLowerCase() === "activa"
         ? "activa"
         : "cerrada",
     } satisfies Raffle;
@@ -128,6 +131,8 @@ export async function fetchRaffle(id: string | number) {
   const total = data.totalTickets ?? data.ticketsTotal ?? data.stats?.total ?? 0;
   const sold = data.soldTickets ?? data._count?.tickets ?? data.stats?.sold ?? 0;
   const remaining = data.stats?.remaining ?? (total ? Math.max(total - sold, 0) : 0);
+  const endDate = data.endDate ?? data.drawDate;
+  const isExpired = endDate ? new Date(endDate).getTime() < Date.now() : false;
 
   return {
     id: String(data.id ?? id),
@@ -135,8 +140,9 @@ export async function fetchRaffle(id: string | number) {
     price: Number(data.ticketPrice ?? data.price ?? 0),
     ticketsAvailable: remaining,
     ticketsTotal: total || 1,
-    drawDate: data.endDate ?? data.drawDate ?? "Por definir",
-    status: (data.status ?? "activa").toLowerCase() === "activa" ? "activa" : "cerrada",
+    drawDate: data.drawDate ?? "Por definir",
+    endDate: endDate ?? "",
+    status: isExpired ? "cerrada" : (data.status ?? "activa").toLowerCase() === "activa" ? "activa" : "cerrada",
     description: data.description,
     stats: data.stats,
     style: data.style,

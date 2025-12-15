@@ -31,7 +31,7 @@ export function MainNav() {
   if (!token) return null;
 
   return (
-    <nav className="fixed right-4 bottom-28 z-40 flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-[#0b1224]/90 px-2 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur supports-[backdrop-filter]:bg-[#0b1224]/80">
+    <nav className="fixed right-4 bottom-28 z-40 hidden flex-col items-center gap-2 rounded-2xl border border-white/10 bg-[#0b1224]/90 px-2 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur supports-[backdrop-filter]:bg-[#0b1224]/80 md:flex">
       {links.map((link) => {
         const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
         const Icon = link.icon;

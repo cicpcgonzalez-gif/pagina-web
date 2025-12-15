@@ -5,6 +5,7 @@ export type Raffle = {
   ticketsAvailable: number;
   ticketsTotal: number;
   drawDate: string;
+  endDate?: string;
   status: "activa" | "cerrada" | "pausada";
   description?: string;
   stats?: { total?: number; sold?: number; remaining?: number };
