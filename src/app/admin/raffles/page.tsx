@@ -51,14 +51,52 @@ export default function AdminRafflesPage() {
     rafflePreviews.forEach((p) => URL.revokeObjectURL(p.url));
   }, [rafflePreviews]);
 
+  const resizeImageFile = useCallback((file: File) => {
+    return new Promise<File>((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 1400;
+        const maxH = 1400;
+        const ratio = Math.min(1, maxW / img.width, maxH / img.height);
+        const w = Math.max(1, Math.round(img.width * ratio));
+        const h = Math.max(1, Math.round(img.height * ratio));
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(file);
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(new File([blob], file.name, { type: file.type || "image/jpeg" }));
+            } else {
+              resolve(file);
+            }
+          },
+          file.type || "image/jpeg",
+          0.8
+        );
+      };
+      img.onerror = () => resolve(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        img.src = reader.result as string;
+      };
+      reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
+    });
+  }, []);
+
   const handleImagesSelect = useCallback(
     async (files: FileList | null) => {
       if (!files) return;
       setRaffleError(null);
       revokePreviews();
-      const arr = Array.from(files).slice(0, 3).filter((file) => file.size <= 2 * 1024 * 1024);
+      const raw = Array.from(files).slice(0, 3);
+      const resized = await Promise.all(raw.map((f) => resizeImageFile(f)));
       const previews = await Promise.all(
-        arr.map(
+        resized.map(
           (file) =>
             new Promise<{ url: string; name: string; sizeKb: number; width?: number; height?: number }>((resolve) => {
               const url = URL.createObjectURL(file);
@@ -71,13 +109,11 @@ export default function AdminRafflesPage() {
             })
         )
       );
-      setRaffleImages(arr);
+      setRaffleImages(resized);
       setRafflePreviews(previews);
       if (files.length > 3) setRaffleError("Máximo 3 fotos. Se tomaron las primeras 3.");
-      const rejected = Array.from(files).filter((file) => file.size > 2 * 1024 * 1024);
-      if (rejected.length) setRaffleError("Algunas imágenes superan 2MB y se omitieron.");
     },
-    [revokePreviews]
+    [revokePreviews, resizeImageFile]
   );
 
   const resetRaffleForm = useCallback(() => {
@@ -294,7 +330,15 @@ export default function AdminRafflesPage() {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setRaffleFlyer(e.target.files?.[0] || null)}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0] || null;
+                    if (!file) {
+                      setRaffleFlyer(null);
+                      return;
+                    }
+                    const resized = await resizeImageFile(file);
+                    setRaffleFlyer(resized);
+                  }}
                   className="w-full text-xs text-white/70"
                 />
               </label>
