@@ -10,6 +10,7 @@ export default function WalletPage() {
   const [payments, setPayments] = useState<PaymentReceipt[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [flash, setFlash] = useState<string | null>(null);
 
   const totals = useMemo(() => {
     const ingresos = movements
@@ -58,6 +59,34 @@ export default function WalletPage() {
     };
   }, []);
 
+  const addMovement = (amount: number, type: "deposit" | "purchase", reference: string) => {
+    const movement: WalletMovement = {
+      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+      amount,
+      type,
+      reference,
+      status: "aprobado",
+      createdAt: new Date().toISOString(),
+    };
+    setMovements((prev) => [movement, ...prev]);
+  };
+
+  const handleRecargaDemo = () => {
+    const amount = 999999; // recarga ficticia grande
+    setBalance((b) => b + amount);
+    addMovement(amount, "deposit", "Recarga demo");
+    setFlash("Recarga demo aplicada");
+    setTimeout(() => setFlash(null), 2500);
+  };
+
+  const handleRetiroDemo = () => {
+    const amount = Math.min(balance || 0, 50000) || 50000;
+    setBalance((b) => Math.max(0, b - amount));
+    addMovement(amount, "purchase", "Retiro demo");
+    setFlash("Retiro demo aplicado");
+    setTimeout(() => setFlash(null), 2500);
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] text-white">
       <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 pb-16 pt-14">
@@ -78,8 +107,27 @@ export default function WalletPage() {
               <p className="text-xs uppercase tracking-[0.2em] text-white/60">Saldo disponible</p>
               <p className="text-3xl font-semibold text-white">VES {balance.toFixed(2)}</p>
             </div>
-            <div className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-[#fbbf24]">Wallet</div>
+            <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center">
+              <div className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-[#fbbf24]">Wallet</div>
+              <div className="flex gap-2 text-sm">
+                <button
+                  type="button"
+                  onClick={handleRecargaDemo}
+                  className="rounded-lg border border-emerald-300/50 bg-emerald-400/20 px-3 py-2 font-semibold text-emerald-50 transition hover:-translate-y-[1px] hover:border-emerald-200/80"
+                >
+                  Recargar demo
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRetiroDemo}
+                  className="rounded-lg border border-amber-300/50 bg-amber-400/20 px-3 py-2 font-semibold text-amber-50 transition hover:-translate-y-[1px] hover:border-amber-200/80"
+                >
+                  Retirar demo
+                </button>
+              </div>
+            </div>
           </div>
+          {flash && <p className="mt-2 text-xs text-emerald-100">{flash}</p>}
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
               <p className="text-[11px] uppercase tracking-[0.2em] text-white/60">Ingresos</p>
