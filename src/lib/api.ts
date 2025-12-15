@@ -690,38 +690,34 @@ export async function adminCreateRaffle(payload: {
   flyer?: File | null;
   images?: File[] | FileList | null;
 }) {
-  const hasFiles = !!payload.flyer || (!!payload.images && (payload.images as FileList | File[]).length > 0);
-
-  if (hasFiles) {
-    const form = new FormData();
-    form.append("title", payload.title);
-    form.append("name", payload.title); // algunos backends esperan "name"
-    if (payload.description) form.append("description", payload.description);
-    if (payload.price !== undefined) {
-      form.append("price", String(payload.price));
-      form.append("ticketPrice", String(payload.price)); // compatibilidad
-    }
-    if (payload.status) form.append("status", payload.status);
-    if (payload.drawDate) form.append("drawDate", payload.drawDate);
-    if (payload.endDate) form.append("endDate", payload.endDate);
-    if (payload.totalTickets !== undefined) form.append("totalTickets", String(payload.totalTickets));
-    if (payload.flyer) form.append("flyer", payload.flyer);
-    if (payload.images) {
-      const imgs = Array.from(payload.images as FileList | File[]);
-      imgs.forEach((file) => form.append("images", file));
-    }
-    return safeFetch("/raffles", {
-      method: "POST",
-      body: form,
+  const fileToBase64 = async (file: File) => {
+    return new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+      reader.onerror = () => resolve("");
+      reader.readAsDataURL(file);
     });
-  }
+  };
+
+  const flyerBase64 = payload.flyer ? await fileToBase64(payload.flyer) : undefined;
+  const imagesBase64 = payload.images
+    ? await Promise.all(Array.from(payload.images as FileList | File[]).map((f) => fileToBase64(f))).then((arr) => arr.filter(Boolean))
+    : undefined;
 
   return safeFetch("/raffles", {
     method: "POST",
     body: JSON.stringify({
-      ...payload,
-      name: payload.title,
+      title: payload.title,
+      name: payload.title, // compatibilidad con backends que esperan "name"
+      description: payload.description,
+      price: payload.price,
       ticketPrice: payload.price,
+      status: payload.status,
+      drawDate: payload.drawDate,
+      endDate: payload.endDate,
+      totalTickets: payload.totalTickets,
+      flyerBase64,
+      imagesBase64,
     }),
   });
 }
