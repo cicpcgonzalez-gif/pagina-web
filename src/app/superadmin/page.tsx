@@ -196,14 +196,10 @@ export default function SuperAdminPage() {
     return { totalRaffles, totalTickets, soldTickets, active };
   }, [raffles]);
 
-  const quickActions: Array<{ label: string; color: string; panel?: string; href?: string }> = useMemo(() => {
+  const quickActions: Array<{ label: string; color: string; panel?: string }> = useMemo(() => {
     const base = [
       { label: "Dashboard", panel: "dashboard", color: "#22c55e" },
       { label: "Progreso", panel: "rifas", color: "#2dd4bf" },
-      { label: "Sorteo en Vivo", href: "/rifas", color: "#38bdf8" },
-      { label: "Pagos", href: "/admin/payments", color: "#f59e0b" },
-      { label: "Tickets", href: "/admin/tickets", color: "#6366f1" },
-      { label: "Métricas", href: "/admin/reports", color: "#22c55e" },
       { label: "Estilo", panel: "branding", color: "#c084fc" },
       { label: "Novedades", panel: "novedades", color: "#fb7185" },
       { label: "Rifas", panel: "rifas", color: "#22d3ee" },
@@ -1012,22 +1008,6 @@ export default function SuperAdminPage() {
             <p className="text-sm text-white/75">Elige un módulo; el contenido se muestra a la derecha sin bajar al final.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {quickActions.map((qa) => {
-                if (qa.href) {
-                  return (
-                    <Link
-                      key={qa.label}
-                      href={qa.href}
-                      className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left text-white transition hover:-translate-y-[1px] hover:border-white/30"
-                    >
-                      <div>
-                        <p className="text-xs text-white/60">Superadmin</p>
-                        <p className="text-sm font-semibold text-white">{qa.label}</p>
-                      </div>
-                      <span className="h-8 w-8 shrink-0 rounded-full" style={{ backgroundColor: qa.color, opacity: 0.3 }} />
-                    </Link>
-                  );
-                }
-
                 const labelRole = isSuperadmin ? "Superadmin" : "Admin";
                 const disabled = !!qa.panel && !allowedPanels.has(qa.panel);
 
