@@ -175,8 +175,8 @@ export default function SuperAdminPage() {
     return new Promise<File>((resolve) => {
       const img = new Image();
       img.onload = () => {
-        const maxW = 1400;
-        const maxH = 1400;
+        const maxW = 1280;
+        const maxH = 1280;
         const ratio = Math.min(1, maxW / img.width, maxH / img.height);
         const w = Math.max(1, Math.round(img.width * ratio));
         const h = Math.max(1, Math.round(img.height * ratio));
@@ -195,7 +195,7 @@ export default function SuperAdminPage() {
             }
           },
           file.type || "image/jpeg",
-          0.8
+          0.72
         );
       };
       img.onerror = () => resolve(file);
@@ -284,7 +284,12 @@ export default function SuperAdminPage() {
       setRaffleTab("list");
       loadRaffles();
     } catch (err) {
-      setRaffleError(err instanceof Error ? err.message : "No se pudo crear la rifa");
+      const msg = err instanceof Error ? err.message : "No se pudo crear la rifa";
+      if (msg.toLowerCase().includes("token")) {
+        setRaffleError("Sesión inválida o expirada. Inicia sesión nuevamente.");
+      } else {
+        setRaffleError(msg);
+      }
     } finally {
       setRaffleSubmitting(false);
     }

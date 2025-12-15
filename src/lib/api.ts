@@ -29,6 +29,17 @@ async function doFetch<T>(path: string, init?: RequestInit): Promise<{ ok: boole
   }
 
   const token = getAuthToken();
+  // Leer token fresco en cada llamada para evitar tokens cacheados inválidos
+  if (!token && typeof window !== "undefined") {
+    try {
+      const liveToken = localStorage.getItem("auth_token");
+      if (liveToken) {
+        setAuthToken(liveToken);
+      }
+    } catch {
+      // ignore
+    }
+  }
   const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
 
   const response = await fetch(`${API_BASE}${path}`, {
