@@ -113,8 +113,8 @@ export default function RifasPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] text-white">
-      <div className="mx-auto flex w-full max-w-[480px] flex-col gap-8 px-4 pb-24 pt-12">
-        <section className="grid gap-6">
+      <div className="mx-auto flex w-full max-w-[480px] flex-col gap-8 px-4 pb-24 pt-12 md:max-w-5xl lg:max-w-6xl md:gap-10">
+        <section className="grid gap-6 md:grid-cols-[1.05fr_0.95fr] md:items-center">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white shadow-sm shadow-black/30">
               <span className="h-2 w-2 rounded-full bg-[#fbbf24]" />
@@ -200,7 +200,7 @@ export default function RifasPage() {
 
       {loading && <p className="text-sm text-white/80">Cargando rifas...</p>}
 
-      <section className="grid gap-4">
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredRaffles.map((raffle, idx) => {
           const sold = raffle.ticketsTotal - raffle.ticketsAvailable;
           const progress = raffle.ticketsTotal

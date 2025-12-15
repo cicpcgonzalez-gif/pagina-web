@@ -157,7 +157,7 @@ export default function RaffleDetailPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] text-white">
-      <div className="mx-auto grid w-full max-w-[480px] gap-8 px-4 pb-20 pt-10">
+      <div className="mx-auto grid w-full max-w-[480px] gap-8 px-4 pb-20 pt-10 md:max-w-5xl md:grid-cols-[1.1fr_0.9fr] md:items-start">
         <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-black/30">
           <div className="relative h-72 w-full overflow-hidden rounded-xl">
             {banner && (

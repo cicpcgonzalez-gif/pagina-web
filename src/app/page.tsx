@@ -48,7 +48,7 @@ export default async function Home() {
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
-                className="rounded-full bg-gradient-to-r from-[#3b82f6] to-[#22d3ee] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-black/40 transition hover:-translate-y-[1px]"
+                className="rounded-full bg-gradient-to-r from-[#3b82f6] to-[#22d3ee] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-black/40 transition hover:-translate-y-[1px] glow-primary"
                 href="/rifas"
               >
                 Ver rifas activas
