@@ -668,6 +668,7 @@ export async function adminCreateRaffle(payload: {
   price?: number;
   status?: string;
   drawDate?: string;
+  endDate?: string;
   totalTickets?: number;
   flyer?: File | null;
   images?: File[] | FileList | null;
@@ -681,6 +682,7 @@ export async function adminCreateRaffle(payload: {
     if (payload.price !== undefined) form.append("price", String(payload.price));
     if (payload.status) form.append("status", payload.status);
     if (payload.drawDate) form.append("drawDate", payload.drawDate);
+    if (payload.endDate) form.append("endDate", payload.endDate);
     if (payload.totalTickets !== undefined) form.append("totalTickets", String(payload.totalTickets));
     if (payload.flyer) form.append("flyer", payload.flyer);
     if (payload.images) {

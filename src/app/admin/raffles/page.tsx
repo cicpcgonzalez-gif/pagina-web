@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { adminCreateRaffle, fetchRafflesLive } from "@/lib/api";
 import type { Raffle } from "@/lib/types";
 
-const defaultRaffleForm = { title: "", description: "", price: 0, totalTickets: 0, drawDate: "", status: "activa" };
+const defaultRaffleForm = { title: "", description: "", price: 0, totalTickets: 0, drawDate: "", endDate: "", status: "activa" };
 
 export default function AdminRafflesPage() {
   const [raffles, setRaffles] = useState<Raffle[]>([]);
@@ -138,6 +138,7 @@ export default function AdminRafflesPage() {
         price: raffleForm.price,
         totalTickets: raffleForm.totalTickets,
         drawDate: raffleForm.drawDate,
+        endDate: raffleForm.endDate,
         status: raffleForm.status,
         flyer: raffleFlyer,
         images: raffleImages,
@@ -299,13 +300,22 @@ export default function AdminRafflesPage() {
                   />
                 </label>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-3">
                 <label className="space-y-1 text-sm text-white/80">
-                  <span className="block text-xs uppercase tracking-[0.2em] text-white/60">Fecha sorteo</span>
+                  <span className="block text-xs uppercase tracking-[0.2em] text-white/60">Fecha inicio</span>
                   <input
                     type="datetime-local"
                     value={raffleForm.drawDate}
                     onChange={(e) => setRaffleForm((s) => ({ ...s, drawDate: e.target.value }))}
+                    className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none"
+                  />
+                </label>
+                <label className="space-y-1 text-sm text-white/80">
+                  <span className="block text-xs uppercase tracking-[0.2em] text-white/60">Fecha fin</span>
+                  <input
+                    type="datetime-local"
+                    value={raffleForm.endDate}
+                    onChange={(e) => setRaffleForm((s) => ({ ...s, endDate: e.target.value }))}
                     className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none"
                   />
                 </label>
