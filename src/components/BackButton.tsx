@@ -1,16 +1,21 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 export function BackButton({ label = "Volver" }: { label?: string }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [canGoBack, setCanGoBack] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const update = () => setCanGoBack(window.history.length > 1);
+    const origin = window.location.origin;
+    const sameOriginReferrer = document.referrer.startsWith(origin);
+    const hasHistory = () => window.history.length > 1 && sameOriginReferrer;
+
+    const update = () => setCanGoBack(hasHistory());
     update();
     window.addEventListener("popstate", update);
     return () => window.removeEventListener("popstate", update);
@@ -24,7 +29,7 @@ export function BackButton({ label = "Volver" }: { label?: string }) {
     router.push("/");
   }, [router]);
 
-  if (!canGoBack) return null;
+  if (!canGoBack || pathname === "/") return null;
 
   return (
     <button

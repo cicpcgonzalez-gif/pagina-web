@@ -33,14 +33,14 @@ export default async function Home() {
 
   return (
     <main className="relative min-h-screen bg-night-sky text-white">
-      <div className="mx-auto flex max-w-6xl flex-col gap-16 px-4 pb-20 pt-16 sm:pt-20">
-        <section className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+      <div className="mx-auto flex w-full max-w-[480px] flex-col gap-10 px-4 pb-24 pt-12 sm:pt-16">
+        <section className="grid gap-8">
           <div className="flex flex-col gap-6">
             <div className="inline-flex w-fit items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white shadow-sm shadow-black/20">
               <span className="h-2 w-2 rounded-full bg-[#facc15]" />
               Somos Megarifas
             </div>
-            <h1 className="font-[var(--font-display)] text-4xl leading-tight text-white sm:text-5xl">
+            <h1 className="font-[var(--font-display)] text-3xl leading-tight text-white sm:text-4xl">
               Un portal vibrante para rifas reales: publicidad, perfil y premios en un solo lugar.
             </h1>
             <p className="max-w-2xl text-lg text-white/80">
@@ -108,7 +108,7 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/30 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-5 shadow-lg shadow-black/30 sm:grid-cols-2">
           {[{
             title: "Landing + publicidad",
             desc: "Destaca campañas y sponsors en un hero editorial.",
@@ -145,7 +145,7 @@ export default async function Home() {
               Ver todas
             </Link>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4">
             {activeRaffles.slice(0, 6).map((raffle, idx) => {
               const sold = raffle.ticketsTotal - raffle.ticketsAvailable;
               const progress = raffle.ticketsTotal
@@ -199,7 +199,7 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="grid gap-6 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/30 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+        <section className="grid gap-6 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/30">
           <div className="space-y-3">
             <p className="text-xs uppercase tracking-[0.25em] text-white/70">Quiénes somos</p>
             <h2 className="font-[var(--font-display)] text-2xl text-white">Megarifas, comunidad de sorteos seguros</h2>

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
 import { BackButton } from "@/components/BackButton";
@@ -22,6 +22,13 @@ export const metadata: Metadata = {
     shortcut: "/megarifas-icon.svg",
     apple: "/megarifas-icon.svg",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
