@@ -10,6 +10,14 @@
 				"$gradle"
 			],
 			"group": "build"
+		},
+		{
+			"label": "Web: dev (Next)",
+			"type": "shell",
+			"command": "npm run dev",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
 		}
 	]
 }
