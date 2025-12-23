@@ -5,7 +5,7 @@ import { getAuthToken, getRefreshToken, setAuthToken, setRefreshToken } from "./
 // Fallback to backend URL on the server so SSR pages do not crash if the env var is missing in production.
 const API_BASE = typeof window !== "undefined"
   ? "/api"
-  : process.env.NEXT_PUBLIC_API_BASE_URL || "https://pagina-web-j7di.onrender.com";
+  : process.env.NEXT_PUBLIC_API_BASE_URL || "https://backednnuevo.onrender.com";
 
 const uuid = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {

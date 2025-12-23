@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 function getBackendBaseUrl() {
   const env = process.env.NEXT_PUBLIC_API_BASE_URL;
   if (env && typeof env === 'string') return env.replace(/\/+$/, '');
-  return 'http://localhost:3000';
+  return 'https://backednnuevo.onrender.com';
 }
 
 function buildTargetUrl(req: Request, params: { path?: string[] }) {
