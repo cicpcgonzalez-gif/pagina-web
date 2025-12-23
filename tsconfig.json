@@ -24,29 +24,11 @@
   },
   "include": [
     "next-env.d.ts",
-    "next.config.ts",
-    "middleware.ts",
-    "app/**/*.ts",
-    "app/**/*.tsx",
-    "src/app/**/*.ts",
-    "src/app/**/*.tsx",
-    "src/components/**/*.ts",
-    "src/components/**/*.tsx",
-    "src/lib/**/*.ts",
-    "src/lib/**/*.tsx",
-    "src/config/**/*.ts",
-    "src/config/**/*.tsx",
+    "**/*.ts",
+    "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
   ],
-  "exclude": [
-    "node_modules",
-    "src/services/**",
-    "src/screens/**",
-    "src/navigation/**",
-    "src/hooks/**",
-    "src/theme/**",
-    "src/components/UI.js",
-    "src/Main.js"
-  ]
+  "exclude": ["node_modules"]
 }

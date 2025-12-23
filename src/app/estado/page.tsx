@@ -1,5 +1,3 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { fetchSystemStatus } from "@/lib/api";
 
 export const revalidate = 0;
@@ -11,11 +9,6 @@ const stateStyle: Record<string, string> = {
 };
 
 export default async function EstadoPage() {
-  const token = (await cookies()).get("auth_token")?.value;
-  if (!token) {
-    redirect("/login?redirect=/estado");
-  }
-
   const statuses = await fetchSystemStatus();
 
   return (

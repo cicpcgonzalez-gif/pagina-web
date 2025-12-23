@@ -5,7 +5,6 @@ export type Raffle = {
   ticketsAvailable: number;
   ticketsTotal: number;
   drawDate: string;
-  endDate?: string;
   status: "activa" | "cerrada" | "pausada";
   description?: string;
   stats?: { total?: number; sold?: number; remaining?: number };
@@ -100,15 +99,6 @@ export type Winner = {
   photoUrl?: string;
   testimonial?: string;
   drawDate?: string;
-};
-
-export type AdminUser = {
-  id?: string | number;
-  name?: string;
-  email?: string;
-  role?: string;
-  status?: string;
-  createdAt?: string;
 };
 
 export type ModuleConfig = {

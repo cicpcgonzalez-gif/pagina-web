@@ -30,6 +30,16 @@ export default function AdminPaymentsPage() {
 
   const role = getUserRole()?.toLowerCase();
 
+  const mockPayments = useMemo(
+    () => [
+      { id: "PM-5001", user: "Mariana R.", amount: 120, method: "Tarjeta", status: "confirmado", createdAt: "2025-12-12 11:20" },
+      { id: "PM-5000", user: "Carlos D.", amount: 40, method: "Transferencia", status: "pendiente", createdAt: "2025-12-12 10:55" },
+      { id: "PM-4999", user: "Lucía M.", amount: 20, method: "Efectivo", status: "conciliar", createdAt: "2025-12-11 19:10" },
+      { id: "PM-4998", user: "Andrés P.", amount: 60, method: "Tarjeta", status: "fallido", createdAt: "2025-12-11 18:45" },
+    ],
+    [],
+  );
+
   useEffect(() => {
     let mounted = true;
     fetchModules()
@@ -54,25 +64,29 @@ export default function AdminPaymentsPage() {
     setPaymentsError(null);
     try {
       const remote = await fetchAdminPayments();
-      setPayments(
-        (remote || []).map((p, index) => ({
-          id: String((p as any)?.id ?? (p as any)?.reference ?? `pm-${index}`),
-          user: (p as any)?.user?.name ?? (p as any)?.userName ?? (p as any)?.buyer ?? (p as any)?.customer ?? "Sin nombre",
-          amount: Number((p as any)?.amount ?? (p as any)?.total ?? (p as any)?.price ?? 0),
-          method: (p as any)?.method ?? (p as any)?.channel ?? (p as any)?.provider ?? "N/D",
-          status: String((p as any)?.status ?? (p as any)?.state ?? "pendiente").toLowerCase(),
-          createdAt: (p as any)?.createdAt ?? (p as any)?.date ?? (p as any)?.updatedAt ?? "",
-          reference: (p as any)?.reference ?? (p as any)?.ref,
-          raffleTitle: (p as any)?.raffleTitle ?? (p as any)?.raffle?.title,
-        })),
-      );
+      if (remote && Array.isArray(remote) && remote.length > 0) {
+        setPayments(
+          remote.map((p, index) => ({
+            id: String((p as any)?.id ?? (p as any)?.reference ?? `pm-${index}`),
+            user: (p as any)?.user?.name ?? (p as any)?.userName ?? (p as any)?.buyer ?? (p as any)?.customer ?? "Sin nombre",
+            amount: Number((p as any)?.amount ?? (p as any)?.total ?? (p as any)?.price ?? 0),
+            method: (p as any)?.method ?? (p as any)?.channel ?? (p as any)?.provider ?? "N/D",
+            status: String((p as any)?.status ?? (p as any)?.state ?? "pendiente").toLowerCase(),
+            createdAt: (p as any)?.createdAt ?? (p as any)?.date ?? (p as any)?.updatedAt ?? "",
+            reference: (p as any)?.reference ?? (p as any)?.ref,
+            raffleTitle: (p as any)?.raffleTitle ?? (p as any)?.raffle?.title,
+          })),
+        );
+      } else {
+        setPayments(mockPayments);
+      }
     } catch (err) {
       setPaymentsError(err instanceof Error ? err.message : "No se pudieron cargar pagos");
-      setPayments([]);
+      setPayments(mockPayments);
     } finally {
       setLoadingPayments(false);
     }
-  }, []);
+  }, [mockPayments]);
 
   useEffect(() => {
     reloadPayments();
@@ -146,7 +160,7 @@ export default function AdminPaymentsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] px-4 pb-16 pt-10 text-white">
+    <main className="mx-auto max-w-5xl px-4 pb-16 pt-10 text-white bg-night-sky">
       {actionMessage && (
         <div className="fixed right-4 top-4 z-20 flex max-w-md items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm shadow-lg shadow-black/40 backdrop-blur">
           <div

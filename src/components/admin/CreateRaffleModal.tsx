@@ -18,17 +18,14 @@ export function CreateRaffleModal() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState(0);
-  const [totalTickets, setTotalTickets] = useState<number | "">("");
   const [status, setStatus] = useState("UPCOMING");
   const [drawDate, setDrawDate] = useState("");
   const [flyer, setFlyer] = useState<File | null>(null);
   const [images, setImages] = useState<FileList | null>(null);
   const [message, setMessage] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
     setMessage("Creando rifa...");
 
     try {
@@ -38,27 +35,14 @@ export function CreateRaffleModal() {
         price,
         status,
         drawDate: drawDate ? new Date(drawDate).toISOString() : undefined,
-        totalTickets: totalTickets === "" ? undefined : Number(totalTickets),
-        flyer,
-        images,
       };
       const result = await adminCreateRaffle(payload);
       const createdName = (result as any)?.title || (result as any)?.name || name;
       const createdId = (result as any)?.id ? ` ID: ${(result as any).id}` : "";
       setMessage(`Rifa "${createdName}" creada con éxito.${createdId}`);
-      setName("");
-      setDescription("");
-      setPrice(0);
-      setTotalTickets("");
-      setStatus("UPCOMING");
-      setDrawDate("");
-      setFlyer(null);
-      setImages(null);
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Error desconocido.";
       setMessage(msg);
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -115,20 +99,6 @@ export function CreateRaffleModal() {
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <label htmlFor="totalTickets" className="text-right">
-              Boletos totales
-            </label>
-            <input
-              id="totalTickets"
-              type="number"
-              value={totalTickets}
-              onChange={(e) => setTotalTickets(e.target.value === "" ? "" : Number(e.target.value))}
-              className="col-span-3 p-2 border rounded-md"
-              min={1}
-              required
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
             <label htmlFor="drawDate" className="text-right">
               Fecha Sorteo
             </label>
@@ -164,26 +134,24 @@ export function CreateRaffleModal() {
             <input
               id="flyer"
               type="file"
-              accept="image/*"
               onChange={(e) => setFlyer(e.target.files ? e.target.files[0] : null)}
               className="col-span-3"
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <label htmlFor="images" className="text-right">
-              Galería
+              Imágenes
             </label>
             <input
               id="images"
               type="file"
-              accept="image/*"
               multiple
               onChange={(e) => setImages(e.target.files)}
               className="col-span-3"
             />
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={submitting}>{submitting ? "Guardando..." : "Guardar Rifa"}</Button>
+            <Button type="submit">Guardar Rifa</Button>
           </DialogFooter>
         </form>
         {message && <p className="text-sm text-center text-gray-600 mt-2">{message}</p>}

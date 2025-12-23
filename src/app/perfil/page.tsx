@@ -202,23 +202,6 @@ export default function PerfilPage() {
   };
 
   const stars = Array.from({ length: 5 });
-  const userLikes = (profile as any)?.likes ?? (profile as any)?.stats?.likes ?? 0;
-  const postLikes = (profile as any)?.stats?.postLikes ?? 0;
-  const rafflesDone = tickets.length;
-  const isFiveStar = role === "superadmin";
-  const computedRating = isFiveStar
-    ? 5
-    : Math.min(4.8, 3 + userLikes * 0.02 + postLikes * 0.02 + Math.min(rafflesDone, 100) * 0.005);
-  const filledStars = isFiveStar ? 5 : Math.min(5, Math.max(1, Math.round(computedRating)));
-  const displayRating = computedRating.toFixed(1);
-
-  const termsBullets = [
-    "MegaRifas es una herramienta de gestión; cada organizador es responsable legal de sus rifas y premios.",
-    "Solo mayores de 18 años pueden participar; mantén tus datos y métodos de pago actualizados.",
-    "Los términos, privacidad y políticas se actualizan cuando se publican; úsalo implica aceptarlos.",
-    "Pagos se procesan por pasarelas seguras; reembolsos solo aplican si la rifa se cancela.",
-    "Contenido, marcas y material son propiedad de MegaRifas o sus licenciantes.",
-  ];
 
   if (!loadingModules && !profileEnabled) {
     return (
@@ -284,16 +267,10 @@ export default function PerfilPage() {
 
                 <div className="flex items-center gap-2 rounded-full bg-amber-500/15 px-3 py-1 text-[11px] font-semibold text-amber-100">
                   {stars.map((_, i) => (
-                    <Star
-                      key={i}
-                      className={i < filledStars ? "h-3 w-3 fill-amber-400 text-amber-400" : "h-3 w-3 text-amber-200/40"}
-                    />
+                    <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />
                   ))}
-                  <span className="ml-1">{isFiveStar ? "5.0" : displayRating} • {isFiveStar ? "Superadmin" : "Reputación en progreso"}</span>
+                  <span className="ml-1">5.0 • Excelencia</span>
                 </div>
-                {!isFiveStar && (
-                  <p className="text-xs text-amber-100/80">Sube con likes en perfil/publicaciones y rifas completadas; solo superadmin es 5.0 directo.</p>
-                )}
 
                 <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-white/70">
                   {badges.map((b) => (
@@ -482,17 +459,10 @@ export default function PerfilPage() {
                   <span className="text-xs text-white/60">Lecturas rápidas</span>
                 </div>
                 <div className="mt-3 space-y-3 text-sm text-white/80">
-                  <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-white">Términos y privacidad</span>
-                      <Mail className="h-4 w-4" />
-                    </div>
-                    <ul className="mt-2 space-y-1 text-xs text-white/70">
-                      {termsBullets.map((t) => (
-                        <li key={t} className="leading-relaxed">• {t}</li>
-                      ))}
-                    </ul>
-                  </div>
+                  <Link href="/estado" className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 transition hover:border-white/40">
+                    <span>Términos y privacidad</span>
+                    <Mail className="h-4 w-4" />
+                  </Link>
                   <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
                     <p className="font-semibold text-white">Seguridad</p>
                     <p className="text-xs text-white/70">Gestiona tus credenciales desde la app móvil o soporte.</p>

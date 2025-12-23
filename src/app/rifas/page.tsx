@@ -3,20 +3,17 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { ProfileLinkButton } from "@/components/ProfileLinkButton";
 import { fetchRaffles, initiatePayment, purchaseTickets } from "@/lib/api";
 import { getUserRole, isAuthenticated } from "@/lib/session";
 
 export default function RifasPage() {
-  const router = useRouter();
   const [raffles, setRaffles] = useState<Awaited<ReturnType<typeof fetchRaffles>>>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [quantity, setQuantity] = useState<Record<string, number>>({});
   const [role, setRole] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "closing" | "cheap">("all");
-  const [checkingAuth, setCheckingAuth] = useState(true);
 
   const normalizedRole = role?.toLowerCase() || "";
   const isAdminOnly = normalizedRole === "admin";
@@ -38,7 +35,8 @@ export default function RifasPage() {
     let mounted = true;
     const authed = isAuthenticated();
     if (!authed) {
-      router.replace("/login?redirect=/rifas");
+      setMessage("Inicia sesión para ver rifas.");
+      setLoading(false);
       return () => {
         mounted = false;
       };
@@ -56,29 +54,11 @@ export default function RifasPage() {
       })
       .finally(() => {
         if (mounted) setLoading(false);
-        if (mounted) setCheckingAuth(false);
       });
     return () => {
       mounted = false;
     };
   }, []);
-
-  const filteredRaffles = useMemo(() => {
-    const arr = raffles.slice();
-    if (filter === "cheap") {
-      return arr.sort((a, b) => a.price - b.price);
-    }
-    if (filter === "closing") {
-      return arr.sort((a, b) => {
-        const ta = new Date(a.endDate || a.drawDate).getTime();
-        const tb = new Date(b.endDate || b.drawDate).getTime();
-        const safeA = Number.isFinite(ta) ? ta : Number.MAX_SAFE_INTEGER;
-        const safeB = Number.isFinite(tb) ? tb : Number.MAX_SAFE_INTEGER;
-        return safeA - safeB;
-      });
-    }
-    return arr;
-  }, [raffles, filter]);
 
   const handlePurchase = async (raffleId: string | number) => {
     setMessage(null);
@@ -109,21 +89,96 @@ export default function RifasPage() {
     }
   };
 
-  if (checkingAuth) return null;
+  const filteredRaffles = useMemo(() => {
+    const arr = raffles.slice();
+    if (filter === "cheap") {
+      return arr.sort((a, b) => a.price - b.price);
+    }
+    if (filter === "closing") {
+      return arr.sort((a, b) => {
+        const ta = new Date(a.drawDate).getTime();
+        const tb = new Date(b.drawDate).getTime();
+        const safeA = Number.isFinite(ta) ? ta : Number.MAX_SAFE_INTEGER;
+        const safeB = Number.isFinite(tb) ? tb : Number.MAX_SAFE_INTEGER;
+        return safeA - safeB;
+      });
+    }
+    return arr;
+  }, [raffles, filter]);
+
+  const navButtons = [
+    { href: "/rifas", label: "Rifas" },
+    { href: "/mis-rifas", label: "Mis rifas" },
+    { href: "/wallet", label: "Wallet" },
+    { href: "/ganadores", label: "Ganadores" },
+    { href: "/perfil", label: "Perfil" },
+  ];
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] text-white overflow-x-hidden">
-      <div className="mx-auto flex w-full max-w-[480px] flex-col gap-8 px-4 pb-24 pt-12 md:max-w-5xl lg:max-w-6xl md:gap-10">
-        <section className="grid gap-6 md:grid-cols-[1.05fr_0.95fr] md:items-center">
+    <main className="min-h-screen bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] text-white">
+      <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pb-20 pt-12">
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 shadow-lg shadow-black/30">
+          <div className="flex flex-wrap gap-2">
+            {navButtons.map((btn) => (
+              <Link
+                key={btn.href}
+                href={btn.href}
+                className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-[#93c5fd] hover:bg-white/15"
+              >
+                {btn.label}
+              </Link>
+            ))}
+            {isAdminOnly && (
+              <Link
+                href="/admin"
+                className="rounded-full border border-[#60a5fa]/50 bg-[#1e3a8a]/60 px-4 py-2 text-sm font-semibold text-[#bfdbfe] shadow-md shadow-[#1e3a8a]/40 transition hover:-translate-y-[1px] hover:border-[#93c5fd]"
+              >
+                Admin
+              </Link>
+            )}
+            {isSuperAdmin && (
+              <Link
+                href="/superadmin"
+                className="rounded-full border border-[#22d3ee]/60 bg-[#0f172a]/70 px-4 py-2 text-sm font-semibold text-[#7dd3fc] shadow-md shadow-[#0ea5e9]/30 transition hover:-translate-y-[1px] hover:border-[#7dd3fc]"
+              >
+                Superadmin
+              </Link>
+            )}
+          </div>
+          <span className="ml-auto text-[11px] uppercase tracking-[0.25em] text-white/60">Navegación rápida</span>
+        </div>
+
+        <section className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white shadow-sm shadow-black/30">
               <span className="h-2 w-2 rounded-full bg-[#fbbf24]" />
               Sorteos activos
             </div>
-            <h1 className="font-[var(--font-display)] text-3xl leading-tight sm:text-4xl">Tu oportunidad de ganar hoy.</h1>
-            <p className="max-w-2xl text-white/80 text-base">
+            <h1 className="font-[var(--font-display)] text-4xl leading-tight sm:text-5xl">Tu oportunidad de ganar hoy.</h1>
+            <p className="max-w-2xl text-white/80">
               El mural principal de rifas, con disponibilidad en vivo, galería y acceso rápido a tu perfil o al panel admin.
             </p>
+            <div className="flex flex-wrap gap-2 text-sm">
+              <ProfileLinkButton className="rounded-full border border-white/20 bg-white/10 px-4 py-2 font-semibold text-white transition hover:-translate-y-[1px] hover:border-white/40">
+                Ir al perfil
+              </ProfileLinkButton>
+              {isAdminOnly && (
+                <Link
+                  href="/admin"
+                  className="rounded-full border border-[#60a5fa]/50 bg-[#1e3a8a]/40 px-4 py-2 font-semibold text-[#bfdbfe] transition hover:-translate-y-[1px] hover:border-[#93c5fd]"
+                >
+                  Panel admin
+                </Link>
+              )}
+              {isSuperAdmin && (
+                <Link
+                  href="/superadmin"
+                  className="rounded-full border border-[#22d3ee]/50 bg-[#0f172a]/60 px-4 py-2 font-semibold text-[#7dd3fc] transition hover:-translate-y-[1px] hover:border-[#7dd3fc]"
+                >
+                  Panel superadmin
+                </Link>
+              )}
+            </div>
           </div>
 
           <div className="space-y-3 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl shadow-black/30">
@@ -190,8 +245,6 @@ export default function RifasPage() {
             : 0;
           const lowStock = remainingPct <= 10;
           const banner = fallbackImages[idx % fallbackImages.length];
-          const isExpired = raffle.endDate ? new Date(raffle.endDate).getTime() < Date.now() : false;
-          const statusLabel = isExpired ? "cerrada" : raffle.status;
 
           return (
             <article
@@ -205,12 +258,12 @@ export default function RifasPage() {
                 </div>
                 <span
                   className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
-                    statusLabel === "activa"
+                    raffle.status === "activa"
                       ? "bg-emerald-500/20 text-emerald-200"
                       : "bg-white/10 text-white/70"
                   }`}
                 >
-                  {statusLabel}
+                  {raffle.status}
                 </span>
               </div>
 
@@ -227,8 +280,7 @@ export default function RifasPage() {
                     <p className="text-sm font-semibold text-[#0f172a]">{raffle.title}</p>
                     <span className="rounded-full bg-[#fbbf24]/20 px-3 py-1 text-xs font-semibold text-[#92400e]">${raffle.price.toFixed(2)}</span>
                   </div>
-                  <p className="mt-1 text-xs text-[#0f172a]/80">Inicio {raffle.drawDate}</p>
-                  {raffle.endDate && <p className="text-[11px] text-[#0f172a]/70">Fin {raffle.endDate}</p>}
+                  <p className="mt-1 text-xs text-[#0f172a]/80">Sorteo {raffle.drawDate}</p>
                 </div>
               </div>
 
@@ -270,14 +322,14 @@ export default function RifasPage() {
                   <button
                     className="flex-1 rounded-lg bg-gradient-to-r from-[#3b82f6] to-[#22d3ee] px-4 py-2 font-semibold text-white transition hover:-translate-y-[1px] hover:shadow-lg hover:shadow-[#22d3ee]/30"
                     onClick={() => handlePurchase(raffle.id)}
-                    disabled={loading || isExpired}
+                    disabled={loading}
                   >
-                    {isExpired ? "Cerrada" : "Comprar"}
+                    Comprar
                   </button>
                   <button
                     className="rounded-lg border border-white/20 px-4 py-2 text-white transition hover:-translate-y-[1px] hover:border-white/40"
                     onClick={() => handlePayment(raffle.id)}
-                    disabled={loading || isExpired}
+                    disabled={loading}
                   >
                     Pagar
                   </button>

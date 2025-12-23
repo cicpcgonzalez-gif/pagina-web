@@ -4,7 +4,7 @@ services:
     env: node
     rootDir: .
     buildCommand: npm install && npm run build
-    startCommand: npm run start
+    startCommand: npm run start -- -p $PORT
     envVars:
       - key: NEXT_PUBLIC_API_BASE_URL
         sync: false

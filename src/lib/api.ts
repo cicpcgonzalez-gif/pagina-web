@@ -1,9 +1,11 @@
-import { mockStatus } from "./mock";
-import type { AdminUser, ModuleConfig, Raffle, SystemStatus, UserProfile, UserTicket } from "./types";
+import { mockRaffles, mockStatus } from "./mock";
+import type { ModuleConfig, Raffle, SystemStatus, UserProfile, UserTicket } from "./types";
 import { getAuthToken, getRefreshToken, setAuthToken, setRefreshToken } from "./session";
 
-// Usar siempre la URL del backend si está configurada; si falta, usar la API pública en Render.
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://backednnuevo.onrender.com";
+// Fallback to backend URL on the server so SSR pages do not crash if the env var is missing in production.
+const API_BASE = typeof window !== "undefined"
+  ? "/api"
+  : process.env.NEXT_PUBLIC_API_BASE_URL || "https://pagina-web-j7di.onrender.com";
 
 const uuid = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -29,23 +31,10 @@ async function doFetch<T>(path: string, init?: RequestInit): Promise<{ ok: boole
   }
 
   const token = getAuthToken();
-  // Leer token fresco en cada llamada para evitar tokens cacheados inválidos
-  if (!token && typeof window !== "undefined") {
-    try {
-      const liveToken = localStorage.getItem("auth_token");
-      if (liveToken) {
-        setAuthToken(liveToken);
-      }
-    } catch {
-      // ignore
-    }
-  }
-  const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
-
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: {
-      ...(isFormData ? {} : { "Content-Type": "application/json" }),
+      "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...clientHeaders(),
       ...(init?.headers || {}),
@@ -100,40 +89,27 @@ type RemoteRaffle = {
   status?: string;
 };
 
-const mapRemoteRaffles = (raw: RemoteRaffle[]) => {
-  return raw.map((item, index) => {
-    const total = item.totalTickets ?? item.ticketsTotal ?? 0;
-    const sold = item.soldTickets ?? item._count?.tickets ?? 0;
-    const endDate = item.endDate ?? item.drawDate;
-    const isExpired = endDate ? new Date(endDate).getTime() < Date.now() : false;
-    return {
-      id: String(item.id ?? `raffle-${index}`),
-      title: item.name ?? item.title ?? "Rifa",
-      price: Number(item.ticketPrice ?? item.price ?? 0),
-      ticketsAvailable: Math.max(0, total - sold),
-      ticketsTotal: total || 1,
-      drawDate: item.drawDate ?? "Por definir",
-      endDate: endDate ?? "",
-      status: isExpired ? "cerrada" : (item.status ?? "activa").toLowerCase() === "activa"
-        ? "activa"
-        : "cerrada",
-    } satisfies Raffle;
-  });
-};
-
 export async function fetchRaffles(): Promise<Raffle[]> {
   try {
     const raw = await safeFetch<RemoteRaffle[]>("/raffles");
-    return mapRemoteRaffles(raw);
-  } catch (err) {
-    console.error("raffles error", err);
-    return [];
+    return raw.map((item, index) => {
+      const total = item.totalTickets ?? item.ticketsTotal ?? 0;
+      const sold = item.soldTickets ?? item._count?.tickets ?? 0;
+      return {
+        id: String(item.id ?? `raffle-${index}`),
+        title: item.name ?? item.title ?? "Rifa",
+        price: Number(item.ticketPrice ?? item.price ?? 0),
+        ticketsAvailable: Math.max(0, total - sold),
+        ticketsTotal: total || 1,
+        drawDate: item.endDate ?? item.drawDate ?? "Por definir",
+        status: (item.status ?? "activa").toLowerCase() === "activa"
+          ? "activa"
+          : "cerrada",
+      } satisfies Raffle;
+    });
+  } catch {
+    return mockRaffles;
   }
-}
-
-export async function fetchRafflesLive(): Promise<Raffle[]> {
-  const raw = await safeFetch<RemoteRaffle[]>("/raffles");
-  return mapRemoteRaffles(raw);
 }
 
 export async function fetchRaffle(id: string | number) {
@@ -142,8 +118,6 @@ export async function fetchRaffle(id: string | number) {
   const total = data.totalTickets ?? data.ticketsTotal ?? data.stats?.total ?? 0;
   const sold = data.soldTickets ?? data._count?.tickets ?? data.stats?.sold ?? 0;
   const remaining = data.stats?.remaining ?? (total ? Math.max(total - sold, 0) : 0);
-  const endDate = data.endDate ?? data.drawDate;
-  const isExpired = endDate ? new Date(endDate).getTime() < Date.now() : false;
 
   return {
     id: String(data.id ?? id),
@@ -151,9 +125,8 @@ export async function fetchRaffle(id: string | number) {
     price: Number(data.ticketPrice ?? data.price ?? 0),
     ticketsAvailable: remaining,
     ticketsTotal: total || 1,
-    drawDate: data.drawDate ?? "Por definir",
-    endDate: endDate ?? "",
-    status: isExpired ? "cerrada" : (data.status ?? "activa").toLowerCase() === "activa" ? "activa" : "cerrada",
+    drawDate: data.endDate ?? data.drawDate ?? "Por definir",
+    status: (data.status ?? "activa").toLowerCase() === "activa" ? "activa" : "cerrada",
     description: data.description,
     stats: data.stats,
     style: data.style,
@@ -220,61 +193,8 @@ export async function fetchSystemStatus(): Promise<SystemStatus[]> {
   }
 }
 
-const defaultModules: ModuleConfig = {
-  user: {
-    registration: true,
-    manualPayments: true,
-    wallet: true,
-    raffles: true,
-    referrals: true,
-    winners: true,
-  },
-  admin: {
-    payments: true,
-    manualPayments: true,
-    winners: true,
-    raffles: true,
-    tickets: true,
-    users: true,
-    wallet: true,
-    reports: true,
-    sync: true,
-  },
-  superadmin: {
-    audit: true,
-    branding: true,
-    modules: true,
-    company: true,
-    security: true,
-    payments: true,
-    fraud: true,
-    smtp: true,
-    techSupport: true,
-    wallet: true,
-    users: true,
-    raffles: true,
-    tickets: true,
-    mailLogs: true,
-    criticalActions: true,
-  },
-};
-
 export async function fetchModules(): Promise<ModuleConfig> {
-  // Intentar endpoint principal
-  try {
-    return await safeFetch<ModuleConfig>("/modules");
-  } catch (err) {
-    // Si devuelve HTML/404, probamos settings de superadmin
-  }
-
-  try {
-    const settings = await safeFetch<{ modules?: ModuleConfig }>("/superadmin/settings");
-    if (settings?.modules) return settings.modules;
-  } catch {
-    // ignore y devolvemos defaults
-  }
-
-  return defaultModules;
+  return safeFetch<ModuleConfig>("/modules");
 }
 
 export async function refreshSession() {
@@ -302,7 +222,7 @@ export async function purchaseTickets(raffleId: number, quantity: number) {
   }
   lastPurchaseAt = now;
   const clientRequestId = uuid();
-  const result = await safeFetch<Record<string, unknown>>(`/raffles/${raffleId}/purchase`, {
+  const result = await safeFetch(`/raffles/${raffleId}/purchase`, {
     method: "POST",
     body: JSON.stringify({ quantity, clientRequestId }),
   });
@@ -314,18 +234,18 @@ export async function initiatePayment(payload: {
   raffleId: number;
   quantity: number;
   provider?: string;
-}): Promise<{ paymentUrl?: string; status?: string; clientRequestId?: string }> {
+}): Promise<{ paymentUrl?: string; status?: string }> {
   const now = Date.now();
   if (lastPaymentAt && now - lastPaymentAt < 1000) {
     throw new Error("Demasiadas solicitudes de pago seguidas. Intenta de nuevo.");
   }
   lastPaymentAt = now;
   const clientRequestId = uuid();
-  const result = await safeFetch<{ paymentUrl?: string; status?: string }>(`/payments/initiate`, {
+  const result = await safeFetch(`/payments/initiate`, {
     method: "POST",
     body: JSON.stringify({ ...payload, clientRequestId }),
   });
-  return { ...result, clientRequestId };
+  return typeof result === "object" && result !== null ? { ...result, clientRequestId } : result;
 }
 
 async function tryRefreshToken() {
@@ -378,283 +298,6 @@ export async function fetchMyPayments() {
   return [];
 }
 
-export async function fetchAdminUsers(): Promise<AdminUser[]> {
-  const candidates = ["/admin/users", "/superadmin/users", "/users"];
-  let lastError: unknown;
-  for (const path of candidates) {
-    try {
-      return await safeFetch<AdminUser[]>(path);
-    } catch (err) {
-      lastError = err;
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error("No se pudieron cargar usuarios");
-}
-
-export async function updateAdminUser(userId: string | number, payload: Partial<AdminUser> & { role?: string; status?: string; locked?: boolean }) {
-  const candidates = [
-    `/admin/users/${userId}`,
-    `/superadmin/users/${userId}`,
-  ];
-  let lastError: unknown;
-  for (const path of candidates) {
-    try {
-      return await safeFetch<AdminUser>(path, {
-        method: "PATCH",
-        body: JSON.stringify(payload),
-      });
-    } catch (err) {
-      lastError = err;
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error("No se pudo actualizar usuario");
-}
-
-export async function fetchAdminAudit() {
-  const candidates = ["/superadmin/audit", "/admin/audit", "/admin/logs/audit"];
-  let lastError: unknown;
-  for (const path of candidates) {
-    try {
-      return await safeFetch<Array<Record<string, unknown>>>(path);
-    } catch (err) {
-      lastError = err;
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error("No se pudo cargar auditoría");
-}
-
-export async function fetchAdminReports() {
-  const candidates = ["/admin/reports", "/admin/dashboard", "/admin/metrics"];
-  let lastError: unknown;
-  for (const path of candidates) {
-    try {
-      return await safeFetch<Record<string, unknown>>(path);
-    } catch (err) {
-      lastError = err;
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error("No se pudo cargar reportes");
-}
-
-export async function fetchFraudAlerts() {
-  const candidates = ["/admin/fraud", "/admin/security/alerts", "/superadmin/fraud"];
-  let lastError: unknown;
-  for (const path of candidates) {
-    try {
-      return await safeFetch<Array<Record<string, unknown>>>(path);
-    } catch (err) {
-      lastError = err;
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error("No se pudieron cargar alertas de fraude");
-}
-
-export async function validateTicket(code: string) {
-  const payload = { code };
-  const candidates = ["/admin/tickets/validate", "/tickets/validate", "/admin/tickets/check"];
-  let lastError: unknown;
-  for (const path of candidates) {
-    try {
-      return await safeFetch<{ status?: string; message?: string; valid?: boolean; raffle?: unknown; ticket?: unknown }>(path, {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-    } catch (err) {
-      lastError = err;
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error("No se pudo validar el ticket");
-}
-
-export async function fetchRecentValidations() {
-  const candidates = ["/admin/tickets/recent", "/admin/tickets/history", "/tickets/recent"];
-  for (const path of candidates) {
-    try {
-      return await safeFetch<Array<Record<string, unknown>>>(path);
-    } catch {
-      // try next
-    }
-  }
-  return [];
-}
-
-export async function toggleNotificationTemplate(templateId: string, active: boolean) {
-  const candidates = ["/admin/notifications/templates", "/superadmin/mail/templates"];
-  let lastError: unknown;
-  for (const path of candidates) {
-    try {
-      return await safeFetch(`${path}/${templateId}`, {
-        method: "PATCH",
-        body: JSON.stringify({ active }),
-      });
-    } catch (err) {
-      lastError = err;
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error("No se pudo actualizar la plantilla");
-}
-
-export async function sendNotificationTest(templateId: string) {
-  const candidates = ["/admin/notifications/test", "/superadmin/mail/test"];
-  let lastError: unknown;
-  for (const path of candidates) {
-    try {
-      return await safeFetch(path, {
-        method: "POST",
-        body: JSON.stringify({ templateId }),
-      });
-    } catch (err) {
-      lastError = err;
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error("No se pudo enviar el test");
-}
-
-export async function fetchNotificationTemplates() {
-  const candidates = ["/admin/notifications/templates", "/superadmin/mail/templates"];
-  let lastError: unknown;
-  for (const path of candidates) {
-    try {
-      return await safeFetch<Array<Record<string, unknown>>>(path);
-    } catch (err) {
-      lastError = err;
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error("No se pudieron cargar plantillas");
-}
-
-export async function requestExport(type: string) {
-  const candidates = [
-    { path: "/admin/reports/export", method: "POST" },
-    { path: `/admin/export?type=${encodeURIComponent(type)}`, method: "GET" },
-  ];
-  let lastError: unknown;
-  for (const candidate of candidates) {
-    try {
-      return await safeFetch<Record<string, unknown>>(
-        candidate.path,
-        candidate.method === "POST"
-          ? { method: "POST", body: JSON.stringify({ type }) }
-          : { method: candidate.method },
-      );
-    } catch (err) {
-      lastError = err;
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error("No se pudo generar el export");
-}
-
-export async function fetchSuperadminSettings() {
-  return safeFetch<Record<string, unknown>>("/superadmin/settings");
-}
-
-export async function updateSuperadminBranding(branding: Record<string, unknown>) {
-  return safeFetch<Record<string, unknown>>("/superadmin/settings/branding", {
-    method: "PATCH",
-    body: JSON.stringify(branding),
-  });
-}
-
-export async function updateSuperadminModules(modules: Record<string, unknown>) {
-  return safeFetch<Record<string, unknown>>("/superadmin/settings/modules", {
-    method: "PATCH",
-    body: JSON.stringify({ modules }),
-  });
-}
-
-export async function updateSuperadminCompany(company: Record<string, unknown>) {
-  return safeFetch<Record<string, unknown>>("/superadmin/settings/company", {
-    method: "PATCH",
-    body: JSON.stringify(company),
-  });
-}
-
-export async function updateSuperadminSMTP(payload: Record<string, unknown>) {
-  return safeFetch<Record<string, unknown>>("/superadmin/settings/smtp", {
-    method: "PATCH",
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function updateSuperadminTechSupport(payload: Record<string, unknown>) {
-  return safeFetch<Record<string, unknown>>("/superadmin/settings/tech-support", {
-    method: "PATCH",
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function fetchSuperadminMailLogs() {
-  const candidates = ["/superadmin/mail/logs", "/admin/mail/logs"];
-  let lastError: unknown;
-  for (const path of candidates) {
-    try {
-      return await safeFetch<Array<Record<string, unknown>>>(path);
-    } catch (err) {
-      lastError = err;
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error("No se pudieron cargar logs de correo");
-}
-
-export async function fetchSuperadminAudit(kind: "users" | "actions" = "users") {
-  const endpoints: Record<string, string[]> = {
-    users: ["/superadmin/audit/users", "/admin/audit/users", "/superadmin/audit"],
-    actions: ["/superadmin/audit/actions", "/admin/audit/actions", "/superadmin/audit"],
-  };
-  const candidates = endpoints[kind] || endpoints.users;
-  let lastError: unknown;
-  for (const path of candidates) {
-    try {
-      return await safeFetch<Array<Record<string, unknown>>>(path);
-    } catch (err) {
-      lastError = err;
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error("No se pudo cargar auditoría");
-}
-
-export async function superadminCreateUser(payload: Record<string, unknown>) {
-  return safeFetch<Record<string, unknown>>("/superadmin/users", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function superadminUpdateUserStatus(userId: string | number, patch: Record<string, unknown>) {
-  return safeFetch<Record<string, unknown>>(`/superadmin/users/${userId}/status`, {
-    method: "PATCH",
-    body: JSON.stringify(patch),
-  });
-}
-
-export async function superadminResetTwoFactor(userId: string | number) {
-  return safeFetch<Record<string, unknown>>(`/superadmin/users/${userId}/reset-2fa`, {
-    method: "POST",
-  });
-}
-
-export async function superadminRevokeSessions(userId: string | number) {
-  return safeFetch<Record<string, unknown>>(`/superadmin/users/${userId}/revoke-sessions`, {
-    method: "POST",
-  });
-}
-
-export async function fetchAnnouncements() {
-  return safeFetch<Array<Record<string, unknown>>>("/announcements");
-}
-
-export async function deleteAnnouncement(id: string | number) {
-  return safeFetch<Record<string, unknown>>(`/admin/announcements/${id}`, {
-    method: "DELETE",
-  });
-}
-
-export async function deleteRaffle(raffleId: string | number) {
-  return safeFetch<Record<string, unknown>>(`/raffles/${raffleId}`, {
-    method: "DELETE",
-  });
-}
-
 export async function fetchWinners() {
   return safeFetch<Array<Record<string, unknown>>>("/winners");
 }
@@ -685,73 +328,11 @@ export async function adminCreateRaffle(payload: {
   price?: number;
   status?: string;
   drawDate?: string;
-  endDate?: string;
-  totalTickets?: number;
-  flyer?: File | null;
-  images?: File[] | FileList | null;
 }) {
-  const fileToBase64 = async (file: File) =>
-    new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
-      reader.onerror = () => resolve("");
-      reader.readAsDataURL(file);
-    });
-
-  const flyerBase64 = payload.flyer ? await fileToBase64(payload.flyer) : undefined;
-  const imagesBase64 = payload.images
-    ? await Promise.all(Array.from(payload.images as FileList | File[]).map((f) => fileToBase64(f))).then((arr) => arr.filter(Boolean))
-    : undefined;
-
-  const buildFormData = () => {
-    const form = new FormData();
-    form.append("title", payload.title);
-    form.append("name", payload.title);
-    if (payload.description) form.append("description", payload.description);
-    if (payload.price !== undefined) {
-      form.append("price", String(payload.price));
-      form.append("ticketPrice", String(payload.price));
-    }
-    if (payload.status) form.append("status", payload.status);
-    if (payload.drawDate) form.append("drawDate", payload.drawDate);
-    if (payload.endDate) form.append("endDate", payload.endDate);
-    if (payload.totalTickets !== undefined) form.append("totalTickets", String(payload.totalTickets));
-    if (payload.flyer) form.append("flyer", payload.flyer);
-    if (payload.images) {
-      Array.from(payload.images as FileList | File[]).forEach((file) => form.append("images", file));
-    }
-    return form;
-  };
-
-  const jsonBody = {
-    title: payload.title,
-    name: payload.title,
-    description: payload.description,
-    price: payload.price,
-    ticketPrice: payload.price,
-    status: payload.status,
-    drawDate: payload.drawDate,
-    endDate: payload.endDate,
-    totalTickets: payload.totalTickets,
-    flyerBase64,
-    imagesBase64,
-  };
-
-  try {
-    return await safeFetch("/raffles", {
-      method: "POST",
-      body: JSON.stringify(jsonBody),
-    });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err || "");
-    const needsForm = msg.toLowerCase().includes("req.body") || msg.toLowerCase().includes("title");
-    if (!needsForm) throw err;
-    const form = buildFormData();
-    return safeFetch("/raffles", {
-      method: "POST",
-      body: form,
-    });
-  }
+  return safeFetch("/raffles", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function requestPasswordReset(payload: { email: string; captchaToken?: string }) {

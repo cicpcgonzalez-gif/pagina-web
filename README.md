@@ -9,9 +9,9 @@ Version web de respaldo para la app de rifas. Incluye landing, login, catálogo 
 ### Variables de entorno
 Crea `.env.local` (o usa `.env.example`) con:
 
-```
+\`\`\`
 NEXT_PUBLIC_API_BASE_URL=https://tu-backend.example.com
-```
+\`\`\`
 
 Si no defines `NEXT_PUBLIC_API_BASE_URL`, la app usa datos mock para probar UI.
 

@@ -64,30 +64,29 @@ export default function AdminPage() {
     [modulesConfig],
   );
 
-  const superActions = useMemo(() => {
-    // Normaliza claves como en la app móvil para respetar módulos, pero mostrando todo si no están definidos.
-    const moduleKey = (key: string) => {
-      if (key === "sa_users" || key === "users") return "users";
-      if (key === "sa_tech_support" || key === "tech") return "techSupport";
-      if (key === "sa_smtp" || key === "smtp") return "smtp";
-      if (key === "sa_mail" || key === "mail") return "mailLogs";
-      if (key === "sa_actions" || key === "critical") return "criticalActions";
-      return key;
-    };
-
-    const list = [
-      { key: "sa_users", title: "Usuarios", detail: "Altas/bajas, bloqueo y KYC.", href: "/admin/users" },
-      { key: "sa_tech_support", title: "Soporte Técnico", detail: "Contactos y escalamiento.", href: "/admin/notifs" },
-      { key: "sa_smtp", title: "Correo SMTP", detail: "Remitentes y credenciales.", href: "/admin/notifs" },
+  const superActions = useMemo(
+    () => [
+      { key: "users", title: "Usuarios", detail: "Altas/bajas, bloqueo y KYC.", href: "/admin/users" },
+      { key: "tech", title: "Soporte técnico", detail: "Contactos y escalamiento.", href: "/admin/notifs" },
+      { key: "smtp", title: "Correo SMTP", detail: "Remitentes y credenciales.", href: "/admin/notifs" },
       { key: "audit", title: "Auditoría", detail: "Logs de seguridad y acciones críticas.", href: "/admin/audit" },
       { key: "branding", title: "Branding", detail: "Colores, logo, banner y políticas.", href: "/admin/config" },
       { key: "modules", title: "Módulos", detail: "Activar/desactivar features.", href: "/admin/config" },
-      { key: "sa_mail", title: "Logs de Correo", detail: "Monitoreo de envíos.", href: "/admin/notifs" },
-      { key: "sa_actions", title: "Acciones Críticas", detail: "Eliminar rifa, cierre forzado.", href: "/admin/fraud" },
-    ];
+      { key: "mail", title: "Logs de correo", detail: "Monitoreo de envíos.", href: "/admin/notifs" },
+      { key: "critical", title: "Acciones críticas", detail: "Eliminar rifa, cierre forzado.", href: "/admin/fraud" },
+    ].filter((a) => modulesConfig?.superadmin?.[a.key] !== false),
+    [modulesConfig],
+  );
 
-    return list.filter((a) => modulesConfig?.superadmin?.[moduleKey(a.key)] !== false);
-  }, [modulesConfig]);
+  const metrics = useMemo(
+    () => [
+      { label: "Rifas activas", value: "12" },
+      { label: "Boletos vendidos", value: "3,215" },
+      { label: "Pendientes de pago", value: "74" },
+      { label: "Reembolsos", value: "3" },
+    ],
+    [],
+  );
 
   if (denied) {
     return (
@@ -123,6 +122,17 @@ export default function AdminPage() {
               >
                 Ver mural de rifas
               </Link>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {metrics.map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-black/30"
+                >
+                  <p className="text-sm text-white/70">{item.label}</p>
+                  <p className="text-2xl font-semibold text-white">{item.value}</p>
+                </div>
+              ))}
             </div>
           </div>
 

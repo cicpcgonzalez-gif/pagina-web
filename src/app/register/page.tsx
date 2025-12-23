@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { register, requestPasswordRecovery, verifyEmailCode, resendVerification } from "@/lib/api";
+import { register, requestPasswordRecovery } from "@/lib/api";
 import { setAuthToken, setUserRole } from "@/lib/session";
 
 const VENEZUELA_STATES = [
@@ -52,11 +52,6 @@ export default function RegisterPage() {
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [recoveryMessage, setRecoveryMessage] = useState<string | null>(null);
   const [recoveryVariant, setRecoveryVariant] = useState<"ok" | "error">("ok");
-  const [verificationPending, setVerificationPending] = useState(false);
-  const [verifyEmail, setVerifyEmail] = useState("");
-  const [verifyCode, setVerifyCode] = useState("");
-  const [verifyMessage, setVerifyMessage] = useState<string | null>(null);
-  const [verifyVariant, setVerifyVariant] = useState<"ok" | "error">("ok");
 
   const fullName = useMemo(() => `${firstName} ${lastName}`.trim(), [firstName, lastName]);
   const legalSections = useMemo(
@@ -124,14 +119,11 @@ export default function RegisterPage() {
         const role = res.user?.role || "sin-rol";
         setUserRole(role);
         setVariant("ok");
-        setMessage("Registro exitoso. Revisa tu correo para el código de verificación.");
+        setMessage("Registro exitoso. Sesión iniciada.");
       } else {
         setVariant("ok");
-        setMessage("Registro exitoso. Verifica tu correo e ingresa el código.");
+        setMessage("Registro exitoso. Verifica tu correo si es requerido.");
       }
-      setVerificationPending(true);
-      setVerifyEmail(email);
-      setVerifyMessage(null);
     } catch (error) {
       const msg = error instanceof Error ? error.message : "No se pudo registrar.";
       setVariant("error");
@@ -160,58 +152,22 @@ export default function RegisterPage() {
     }
   };
 
-  const handleVerify = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setVerifyMessage(null);
-    if (!verifyEmail || !verifyCode) {
-      setVerifyVariant("error");
-      setVerifyMessage("Ingresa el correo y el código de verificación.");
-      return;
-    }
-    try {
-      await verifyEmailCode({ email: verifyEmail, code: verifyCode });
-      setVerifyVariant("ok");
-      setVerifyMessage("Código verificado. Puedes iniciar sesión.");
-      setVerificationPending(false);
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : "Código inválido.";
-      setVerifyVariant("error");
-      setVerifyMessage(msg);
-    }
-  };
-
-  const handleResend = async () => {
-    setVerifyMessage(null);
-    if (!verifyEmail) {
-      setVerifyVariant("error");
-      setVerifyMessage("Ingresa el correo usado en el registro.");
-      return;
-    }
-    try {
-      await resendVerification({ email: verifyEmail });
-      setVerifyVariant("ok");
-      setVerifyMessage("Reenviamos el código a tu correo.");
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : "No se pudo reenviar.";
-      setVerifyVariant("error");
-      setVerifyMessage(msg);
-    }
-  };
-
   return (
     <main className="min-h-screen bg-night-sky text-white">
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pb-20 pt-16 lg:grid lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
         <div className="flex flex-col gap-5">
           <p className="text-xs uppercase tracking-[0.25em] text-white/70">Registro</p>
           <h1 className="font-[var(--font-display)] text-3xl text-white sm:text-4xl">
-            Abre tu acceso web con tus mismos datos.
+            Crea tu cuenta con los mismos datos que usas en la app.
           </h1>
           <p className="text-base text-white/80">
-            Pedimos los mismos campos que ya usas: nombre y apellido, correo, teléfono, estado de Venezuela, cédula, dirección y fecha de nacimiento. Así mantenemos tu perfil sincronizado con la app.
+            Capturamos estado (Venezuela), cédula, fecha de nacimiento y aceptación de términos para que el flujo quede completo.
           </p>
-          <p className="text-sm text-white/75">
-            Acepta Términos y Condiciones para continuar. Si todo va bien te dejamos adentro al instante; si falta validar tu correo, te mostraremos el aviso para completar ese paso.
-          </p>
+          <ul className="space-y-2 text-sm text-white/75">
+            <li>• Endpoint: POST /register con campos extendidos (nombre, apellido, teléfono, estado, cédula, dirección, fecha de nacimiento).</li>
+            <li>• Se muestra la lista completa de estados de Venezuela y el check de Términos y Condiciones.</li>
+            <li>• Si el backend responde con token, iniciamos sesión y guardamos rol.</li>
+          </ul>
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/40 backdrop-blur">
@@ -378,50 +334,6 @@ export default function RegisterPage() {
               }`}
             >
               {message}
-            </div>
-          )}
-
-          {verificationPending && (
-            <div className="mt-4 space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="flex items-center justify-between text-sm text-white/80">
-                <span className="font-semibold text-white">Verifica tu correo</span>
-                <button type="button" onClick={handleResend} className="text-xs text-[#22d3ee] underline">Reenviar código</button>
-              </div>
-              <p className="text-xs text-white/70">Enviamos un código al correo usado en el registro. Ingresa el código para activar tu cuenta.</p>
-              <form className="space-y-2" onSubmit={handleVerify}>
-                <input
-                  type="email"
-                  value={verifyEmail}
-                  onChange={(e) => setVerifyEmail(e.target.value)}
-                  disabled
-                  className="w-full cursor-not-allowed rounded-xl border border-white/10 bg-[#0c1a3a]/60 px-3 py-3 text-sm text-white outline-none placeholder:text-white/60"
-                />
-                <input
-                  type="text"
-                  value={verifyCode}
-                  onChange={(e) => setVerifyCode(e.target.value)}
-                  placeholder="Código de verificación"
-                  className="w-full rounded-xl border border-white/10 bg-[#0c1a3a]/60 px-3 py-3 text-sm text-white outline-none placeholder:text-white/60 focus:border-[#22d3ee]"
-                  required
-                />
-                <button
-                  type="submit"
-                  className="w-full rounded-xl bg-white/10 px-3 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
-                >
-                  Confirmar código
-                </button>
-              </form>
-              {verifyMessage && (
-                <div
-                  className={`rounded-xl border px-3 py-2 text-xs ${
-                    verifyVariant === "ok"
-                      ? "border-white/10 bg-white/10 text-white"
-                      : "border-red-400/40 bg-red-500/10 text-red-100"
-                  }`}
-                >
-                  {verifyMessage}
-                </div>
-              )}
             </div>
           )}
 
