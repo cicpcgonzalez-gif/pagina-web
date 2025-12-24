@@ -5,7 +5,7 @@ import Link from "next/link"
 import RequireRole from "../../_components/RequireRole"
 import { CreateRaffleModal } from "@/components/admin/CreateRaffleModal"
 import { fetchAdminPayments, publishWinner, reconcilePayment, rejectManualPayment } from "@/lib/api"
-import { CheckCircle2, RefreshCw, Shield, XCircle } from "lucide-react"
+import { BarChart3, CheckCircle2, CreditCard, Megaphone, QrCode, RefreshCw, Shield, Ticket, User, Wallet2, XCircle } from "lucide-react"
 
 type AdminPayment = {
   id?: string | number
@@ -114,6 +114,54 @@ export default function AdminPage() {
         </header>
 
         <main className="mx-auto max-w-4xl px-4 py-4 space-y-6 pb-24">
+          <section className="rounded-3xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg shadow-black/30">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Menú (como en la app)</p>
+            <div className="mt-3 grid gap-3 grid-cols-2 sm:grid-cols-3">
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/perfil">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <User className="h-4 w-4 text-purple-200" /> Perfil
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Datos y sesión</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/raffles">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Ticket className="h-4 w-4 text-purple-200" /> Gestión de Rifas
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Crear / revisar</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/payments">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <CreditCard className="h-4 w-4 text-purple-200" /> Validar Pagos
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Aprobar / rechazar</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/tickets">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <QrCode className="h-4 w-4 text-purple-200" /> Verificador
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Validar serial</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/dashboard">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <BarChart3 className="h-4 w-4 text-purple-200" /> Dashboard
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Métricas</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/movements">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Wallet2 className="h-4 w-4 text-purple-200" /> Movimientos
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Historial</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/news">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Megaphone className="h-4 w-4 text-purple-200" /> Novedades
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Avisos</p>
+              </Link>
+            </div>
+          </section>
+
           <section className="rounded-3xl border border-purple-500/30 bg-linear-to-br from-slate-900 to-slate-950 p-5 shadow-xl shadow-purple-900/30">
             <div className="inline-flex items-center gap-2 rounded-full bg-purple-800/60 px-3 py-1 text-sm font-semibold text-purple-100 shadow-inner shadow-purple-900/40">
               <Shield className="h-4 w-4" /> Herramientas
@@ -124,6 +172,9 @@ export default function AdminPage() {
               <CreateRaffleModal />
               <Link className="rounded-full px-5 py-3 bg-white/10 hover:bg-white/15 transition font-semibold" href="/rifas">
                 Ir a Rifas
+              </Link>
+              <Link className="rounded-full px-5 py-3 bg-white/10 hover:bg-white/15 transition font-semibold" href="/admin/payments">
+                Pagos
               </Link>
             </div>
           </section>
