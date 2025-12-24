@@ -4,6 +4,7 @@ import { Urbanist, Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import Link from "next/link"
+import { TopNav } from "./_components/TopNav"
 
 const display = Urbanist({
   variable: "--font-display",
@@ -91,28 +92,7 @@ export default function RootLayout({
                 <span className="text-[10px] uppercase tracking-wider text-cyan-400/80">La Nueva Era</span>
               </div>
             </Link>
-            <div className="flex items-center gap-3">
-              <Link
-                className="hidden sm:block rounded-lg px-4 py-2 text-white transition hover:bg-white/10"
-                style={{
-                  background: "rgba(255, 255, 255, 0.05)",
-                  backdropFilter: "blur(10px)",
-                }}
-                href="/login"
-              >
-                Iniciar Sesión
-              </Link>
-              <Link
-                className="rounded-lg px-4 py-2 font-semibold text-white transition hover:-translate-y-[1px]"
-                style={{
-                  background: "linear-gradient(135deg, #fb923c 0%, #f97316 100%)",
-                  boxShadow: "0 4px 20px rgba(251, 146, 60, 0.4), 0 0 40px rgba(251, 146, 60, 0.2)",
-                }}
-                href="/register"
-              >
-                Registrarse
-              </Link>
-            </div>
+            <TopNav />
           </div>
         </header>
         {children}
