@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import RequireRole from "../../../_components/RequireRole"
-import { fetchRaffles } from "@/lib/api"
+import { fetchAdminRaffles } from "@/lib/api"
 import { CreateRaffleModal } from "@/components/admin/CreateRaffleModal"
 import { RefreshCw, Ticket, ExternalLink } from "lucide-react"
 
@@ -25,7 +25,7 @@ export default function AdminRafflesPage() {
     setLoading(true)
     setError(null)
     try {
-      const list = await fetchRaffles()
+      const list = await fetchAdminRaffles()
       setItems(Array.isArray(list) ? (list as any) : [])
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudieron cargar rifas.")
@@ -60,7 +60,7 @@ export default function AdminRafflesPage() {
             <h2 className="mt-3 text-2xl font-extrabold leading-tight text-white">Crear y revisar.</h2>
             <p className="mt-2 text-slate-200 text-sm">Crea rifas y revisa las existentes.</p>
             <div className="mt-4 flex flex-wrap gap-3">
-              <CreateRaffleModal />
+              <CreateRaffleModal onCreated={load} />
               <button
                 type="button"
                 onClick={load}
@@ -86,7 +86,7 @@ export default function AdminRafflesPage() {
                       <div className="min-w-0">
                         <p className="text-sm font-extrabold text-white truncate">{(r as any)?.title || (r as any)?.name || "Rifa"}</p>
                         <p className="mt-1 text-xs text-slate-300">Estado: {String((r as any)?.status || "—")}</p>
-                        <p className="text-xs text-slate-300">Cierre: {String((r as any)?.drawDate || "—")}</p>
+                        <p className="text-xs text-slate-300">Cierre: {String((r as any)?.endDate || (r as any)?.drawDate || "—")}</p>
                       </div>
                       {r.id ? (
                         <Link

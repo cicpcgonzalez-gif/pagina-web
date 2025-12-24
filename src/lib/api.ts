@@ -355,14 +355,44 @@ export async function deleteAccount() {
 
 export async function adminCreateRaffle(payload: {
   title: string;
-  description?: string;
+  // El backend usa `description` o `prize` como premio/descripcion requerida.
+  description: string;
+  prize?: string;
+  ticketPrice?: number;
   price?: number;
-  status?: string;
-  drawDate?: string;
+  totalTickets?: number;
+  style?: Record<string, unknown>;
+  lottery?: string;
+  terms?: string | null;
+  digits?: number;
+  startDate?: string;
+  endDate?: string;
+  securityCode?: string;
+  instantWins?: number[];
+  minTickets?: number;
+  paymentMethods?: string[];
 }) {
   return safeFetch("/raffles", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchAdminRaffles() {
+  return safeFetch<Array<Record<string, unknown>>>("/admin/raffles");
+}
+
+export async function adminActivateRaffle(raffleId: string | number) {
+  return safeFetch<{ message?: string; raffle?: Record<string, unknown> }>(`/admin/raffles/${raffleId}/activate`, {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}
+
+export async function adminUpdateRaffle(raffleId: string | number, data: Record<string, unknown>) {
+  return safeFetch<Record<string, unknown>>(`/admin/raffles/${raffleId}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
   });
 }
 
