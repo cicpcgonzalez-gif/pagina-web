@@ -30,7 +30,10 @@ export function HomeLoginCard() {
       setAuthToken(token);
       const role = (res as any).user?.role || "sin-rol";
       setUserRole(role);
-      router.push("/rifas");
+      const normalizedRole = String(role || "").toLowerCase();
+      if (normalizedRole === "superadmin") router.push("/superadmin");
+      else if (normalizedRole === "admin") router.push("/admin");
+      else router.push("/rifas");
     } catch (error) {
       const msg = error instanceof Error ? error.message : "No se pudo iniciar sesión.";
       setMessage(msg);
