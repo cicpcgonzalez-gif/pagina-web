@@ -5,7 +5,23 @@ import Link from "next/link"
 import RequireRole from "../../_components/RequireRole"
 import { CreateRaffleModal } from "@/components/admin/CreateRaffleModal"
 import { fetchAdminPayments, publishWinner, reconcilePayment, rejectManualPayment } from "@/lib/api"
-import { BarChart3, CheckCircle2, CreditCard, Megaphone, QrCode, RefreshCw, Shield, Ticket, User, Wallet2, XCircle } from "lucide-react"
+import {
+  BarChart3,
+  Bell,
+  CheckCircle2,
+  CreditCard,
+  Headset,
+  KeyRound,
+  Megaphone,
+  QrCode,
+  Radio,
+  RefreshCw,
+  Shield,
+  Ticket,
+  User,
+  Wallet2,
+  XCircle,
+} from "lucide-react"
 
 type AdminPayment = {
   id?: string | number
@@ -158,6 +174,30 @@ export default function AdminPage() {
                   <Megaphone className="h-4 w-4 text-purple-200" /> Novedades
                 </div>
                 <p className="mt-1 text-xs text-slate-300">Avisos</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/support">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Headset className="h-4 w-4 text-purple-200" /> Mi Soporte
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Tickets y ayuda</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/notifications">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Bell className="h-4 w-4 text-purple-200" /> Notificaciones
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Avisos del sistema</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/security">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <KeyRound className="h-4 w-4 text-purple-200" /> Cód. Seguridad
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Código / verificación</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/live">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Radio className="h-4 w-4 text-purple-200" /> Sorteo en Vivo
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Transmisión</p>
               </Link>
             </div>
           </section>

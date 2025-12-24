@@ -1,75 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useMemo, useState } from "react"
 import RequireRole from "../../_components/RequireRole"
-import { fetchSuperadminSettings, updateSuperadminModules } from "@/lib/api"
-import { Crown, Save, Settings2, Users } from "lucide-react"
-
-type Settings = {
-  branding?: Record<string, unknown>
-  modules?: Record<string, unknown>
-  company?: Record<string, unknown>
-}
+import { Crown, FileText, Flag, Mail, MailSearch, Palette, Shield, Ticket, Users, Wrench } from "lucide-react"
 
 export default function SuperadminPage() {
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
-  const [settings, setSettings] = useState<Settings | null>(null)
-  const [modulesDraft, setModulesDraft] = useState<Record<string, unknown>>({})
-
-  const load = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    setMessage(null)
-    try {
-      const s = await fetchSuperadminSettings()
-      setSettings(s)
-      const mods = (s as any)?.modules
-      setModulesDraft(mods && typeof mods === "object" ? { ...(mods as any) } : {})
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudieron cargar los ajustes.")
-      setSettings(null)
-      setModulesDraft({})
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
-
-  const moduleKeys = useMemo(() => {
-    const keys = Object.keys(modulesDraft || {})
-    keys.sort((a, b) => a.localeCompare(b))
-    return keys
-  }, [modulesDraft])
-
-  const toggle = (key: string) => {
-    setModulesDraft((prev) => {
-      const cur = !!(prev as any)?.[key]
-      return { ...prev, [key]: !cur }
-    })
-  }
-
-  const onSave = async () => {
-    setSaving(true)
-    setError(null)
-    setMessage(null)
-    try {
-      await updateSuperadminModules(modulesDraft)
-      setMessage("Módulos actualizados")
-      await load()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudieron guardar los módulos.")
-    } finally {
-      setSaving(false)
-    }
-  }
-
   return (
     <RequireRole allow={["superadmin"]} nextPath="/superadmin" title="Superadmin">
       <div className="min-h-screen bg-linear-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
@@ -100,48 +35,64 @@ export default function SuperadminPage() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-black/30">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="text-lg font-bold text-white">Módulos</h3>
-              <button
-                type="button"
-                onClick={onSave}
-                disabled={saving || loading}
-                className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-4 py-2 text-sm font-extrabold text-white hover:bg-purple-500 transition disabled:opacity-60"
-              >
-                <Save className="h-4 w-4" /> {saving ? "Guardando..." : "Guardar"}
-              </button>
+          <section className="rounded-3xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg shadow-black/30">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Menú (como en la app)</p>
+            <div className="mt-3 grid gap-3 grid-cols-2 sm:grid-cols-3">
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/users">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Users className="h-4 w-4 text-purple-200" /> Usuarios
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Gestión</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/raffles">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Ticket className="h-4 w-4 text-purple-200" /> Administrar Rifas
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Crear / revisar</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/support">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Wrench className="h-4 w-4 text-purple-200" /> Soporte Técnico
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Incidencias</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/smtp">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Mail className="h-4 w-4 text-purple-200" /> Correo SMTP
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Configuración</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/audit">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Shield className="h-4 w-4 text-purple-200" /> Auditoría
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Bitácora</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/branding">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Palette className="h-4 w-4 text-purple-200" /> Branding
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Marca</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/modules">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <FileText className="h-4 w-4 text-purple-200" /> Módulos
+                </div>
+                <p className="mt-1 text-xs text-slate-300">ON / OFF</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/mail-logs">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <MailSearch className="h-4 w-4 text-purple-200" /> Logs de Correo
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Envíos/errores</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/reports">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Flag className="h-4 w-4 text-purple-200" /> Denuncias y reportes
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Moderación</p>
+              </Link>
             </div>
-
-            {loading ? <p className="mt-4 text-sm text-slate-300">Cargando…</p> : null}
-            {error ? <div className="mt-4 rounded-xl border border-red-400/40 bg-red-900/30 px-4 py-3 text-sm text-red-100">{error}</div> : null}
-            {message ? <div className="mt-4 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">{message}</div> : null}
-
-            {!loading ? (
-              moduleKeys.length ? (
-                <div className="mt-4 grid gap-2">
-                  {moduleKeys.map((k) => (
-                    <button
-                      key={k}
-                      type="button"
-                      onClick={() => toggle(k)}
-                      className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-left"
-                    >
-                      <span className="text-sm font-semibold text-white">{k}</span>
-                      <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
-                        (modulesDraft as any)?.[k] ? "bg-amber-400/15 text-amber-300" : "bg-white/10 text-slate-300"
-                      }`}>
-                        <Settings2 className="h-4 w-4" /> {(modulesDraft as any)?.[k] ? "ON" : "OFF"}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/40 px-4 py-6 text-center text-slate-200">
-                  No hay módulos configurados.
-                </div>
-              )
-            ) : null}
           </section>
         </main>
       </div>
