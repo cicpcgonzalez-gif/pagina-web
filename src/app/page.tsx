@@ -97,8 +97,8 @@ export default async function Home() {
           </div>
 
           <div className="relative">
-            <div className="pointer-events-none absolute -left-20 top-0 h-48 w-48 animate-float-slow rounded-full bg-[#ff6b00]/15 blur-3xl" />
-            <div className="pointer-events-none absolute -right-20 bottom-0 h-48 w-48 animate-float-slow rounded-full bg-[#3b82f6]/20 blur-3xl" />
+            <div className="absolute -left-20 top-0 h-48 w-48 animate-float-slow rounded-full bg-[#ff6b00]/15 blur-3xl" />
+            <div className="absolute -right-20 bottom-0 h-48 w-48 animate-float-slow rounded-full bg-[#3b82f6]/20 blur-3xl" />
 
             <div className="relative space-y-4 rounded-3xl glass-cyber border-neon-blue p-6 shadow-2xl">
               <HomeLoginCard />
@@ -300,8 +300,8 @@ export default async function Home() {
         </section>
 
         <section className="relative overflow-hidden rounded-3xl glass-cyber border-neon-blue p-12 text-center">
-          <div className="pointer-events-none absolute left-1/4 top-0 h-48 w-48 animate-float-slow rounded-full bg-[#ff6b00]/20 blur-3xl" />
-          <div className="pointer-events-none absolute bottom-0 right-1/4 h-48 w-48 animate-float-slow rounded-full bg-[#3b82f6]/25 blur-3xl" />
+          <div className="absolute left-1/4 top-0 h-48 w-48 animate-float-slow rounded-full bg-[#ff6b00]/20 blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 h-48 w-48 animate-float-slow rounded-full bg-[#3b82f6]/25 blur-3xl" />
 
           <div className="relative">
             <h2 className="font-[var(--font-display)] text-4xl font-bold text-white sm:text-5xl">
