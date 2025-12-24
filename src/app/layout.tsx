@@ -1,4 +1,4 @@
-﻿import type React from "react"
+import type React from "react"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { Urbanist, Inter } from "next/font/google"
@@ -20,8 +20,7 @@ const sans = Inter({
 
 export const metadata: Metadata = {
   title: "MEGA RIFAS | La Nueva Era de las Rifas",
-  description: "Tus jugadas ahora serÃ¡n perfectas y seguras. Todas las rifas en un solo lugar.",
-  other: { "x-build": "4f661fc-20251223-202210" },
+  description: "Tus jugadas ahora serán perfectas y seguras. Todas las rifas en un solo lugar.",
 }
 
 export default function RootLayout({
@@ -118,10 +117,10 @@ export default function RootLayout({
                   </div>
                   <span className="font-[var(--font-display)] text-lg font-bold text-white">MEGA RIFAS</span>
                 </div>
-                <p className="text-sm text-white/60">Â© 2025 MegaRifas. La nueva era de las rifas.</p>
+                <p className="text-sm text-white/60">© 2025 MegaRifas. La nueva era de las rifas.</p>
                 <div className="flex gap-4 text-sm text-white/60">
                   <a href="#" className="hover:text-white">
-                    TÃ©rminos
+                    Términos
                   </a>
                   <a href="#" className="hover:text-white">
                     Privacidad
