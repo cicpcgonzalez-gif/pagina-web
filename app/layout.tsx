@@ -92,26 +92,55 @@ export default function RootLayout({
                 <span className="text-[10px] uppercase tracking-wider text-cyan-400/80">La Nueva Era</span>
               </div>
             </Link>
-            <nav className="flex items-center gap-3 text-sm font-medium">
+            <nav className="hidden lg:flex items-center gap-1 text-sm font-medium">
               <Link
-                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:text-orange-400"
-                style={{
-                  transition: "all 0.3s ease",
-                }}
+                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:text-orange-400 hover:bg-white/5"
                 href="/rifas"
               >
                 <Trophy className="h-4 w-4" />
-                <span className="hidden sm:inline">Rifas</span>
+                Rifas
               </Link>
               <Link
-                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:text-cyan-400"
+                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:text-cyan-400 hover:bg-white/5"
+                href="/wallet"
+              >
+                Wallet
+              </Link>
+              <Link
+                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:text-cyan-400 hover:bg-white/5"
+                href="/perfil"
+              >
+                Perfil
+              </Link>
+              <Link
+                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:text-cyan-400 hover:bg-white/5"
+                href="/verificar"
+              >
+                Tickets
+              </Link>
+              <Link
+                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:text-cyan-400 hover:bg-white/5"
                 href="/ganadores"
               >
                 <Users className="h-4 w-4" />
-                <span className="hidden sm:inline">Ganadores</span>
+                Ganadores
               </Link>
               <Link
-                className="rounded-lg px-4 py-2 text-white transition"
+                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:text-purple-400 hover:bg-white/5"
+                href="/admin"
+              >
+                Admin
+              </Link>
+              <Link
+                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:text-pink-400 hover:bg-white/5"
+                href="/superadmin"
+              >
+                SuperAdmin
+              </Link>
+            </nav>
+            <div className="flex items-center gap-3">
+              <Link
+                className="hidden sm:block rounded-lg px-4 py-2 text-white transition"
                 style={{
                   background: "rgba(255, 255, 255, 0.05)",
                   backdropFilter: "blur(10px)",
@@ -130,7 +159,7 @@ export default function RootLayout({
               >
                 Registrarse
               </Link>
-            </nav>
+            </div>
           </div>
         </header>
         {children}
