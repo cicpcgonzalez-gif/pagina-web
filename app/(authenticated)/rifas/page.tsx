@@ -2,7 +2,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { fetchRaffles } from "@/lib/api"
 import { Calendar, Ticket, DollarSign, Heart, MessageCircle, Send, Bookmark, MoreHorizontal } from "lucide-react"
-import Stories from "@/app/_components/Stories"
+import Stories from "../../_components/Stories"
 
 type Raffle = {
   id: string
