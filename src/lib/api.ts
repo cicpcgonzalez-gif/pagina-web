@@ -331,16 +331,18 @@ export async function adminCreateRaffle(payload: {
 }
 
 export async function requestPasswordReset(payload: { email: string }) {
-  return safeFetch("/auth/forgot-password", {
+  return safeFetch("/auth/password/reset/request", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
-export async function resetPassword(payload: { token: string; password: string }) {
-  return safeFetch("/auth/reset-password", {
+export async function resetPassword(payload: { token: string; password: string } | { token: string; newPassword: string }) {
+  const token = (payload as any)?.token;
+  const newPassword = (payload as any)?.newPassword ?? (payload as any)?.password;
+  return safeFetch("/auth/password/reset/confirm", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ token, newPassword }),
   });
 }
 
@@ -374,27 +376,26 @@ export async function verifyTwoFactor(payload: { email: string; code: string }) 
 
 export async function fetchAdminPayments() {
   try {
-    return await safeFetch<Array<Record<string, unknown>>>("/admin/payments");
+    return await safeFetch<Array<Record<string, unknown>>>('/admin/manual-payments');
   } catch {
     return [];
   }
 }
 
 export async function syncPayments() {
-  return safeFetch<{ synced?: number; message?: string }>("/admin/payments/sync", {
-    method: "POST",
-  });
+  const list = await safeFetch<Array<Record<string, unknown>>>('/admin/manual-payments');
+  return { synced: Array.isArray(list) ? list.length : 0, message: 'Pagos actualizados.' };
 }
 
 export async function reconcilePayment(paymentId: string | number) {
-  return safeFetch<{ status?: string; message?: string }>(`/admin/payments/${paymentId}/reconcile`, {
+  return safeFetch<{ status?: string; message?: string }>(`/admin/manual-payments/${paymentId}/approve`, {
     method: "POST",
   });
 }
 
 export async function fetchAdminWinners() {
   try {
-    return await safeFetch<Array<Record<string, unknown>>>("/admin/winners");
+    return await safeFetch<Array<Record<string, unknown>>>('/winners');
   } catch {
     return [];
   }
