@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { ChevronRight, Grid3x3, RefreshCw, Upload, Camera, Zap, Menu, X } from "lucide-react"
+import { ChevronRight, RefreshCw, Upload, Camera, Zap, X } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -17,15 +17,13 @@ export default function PerfilPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 text-white">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-lg border-b border-white/5">
-        <div className="flex items-center justify-between px-4 py-4">
-          <button onClick={() => setShowDrawer(true)} className="p-2">
-            <Menu className="w-6 h-6" />
-          </button>
+      <header
+        className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-lg border-b"
+        style={{ borderColor: "rgba(251, 146, 60, 0.2)" }}
+      >
+        <div className="flex items-center justify-center gap-3 px-4 py-4">
+          <Image src="/images/icon.png" alt="MEGA RIFAS" width={40} height={40} className="rounded-full" />
           <h1 className="text-2xl font-bold">Mi perfil</h1>
-          <button className="p-2 rounded-xl bg-slate-800/50 border border-white/10">
-            <Grid3x3 className="w-5 h-5" />
-          </button>
         </div>
       </header>
 
@@ -183,7 +181,13 @@ export default function PerfilPage() {
               <p className="text-gray-400 text-sm">No tienes publicaciones cerradas.</p>
             </div>
 
-            <Button className="w-full mt-6 bg-purple-600 hover:bg-purple-700 text-white py-6 rounded-2xl text-lg font-semibold">
+            <Button
+              className="w-full mt-6 text-white py-6 rounded-2xl text-lg font-semibold"
+              style={{
+                background: "linear-gradient(135deg, #fb923c 0%, #22d3ee 100%)",
+                boxShadow: "0 8px 24px rgba(251, 146, 60, 0.4)",
+              }}
+            >
               ✏️ Editar Perfil
             </Button>
           </div>
@@ -201,8 +205,17 @@ export default function PerfilPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               className={`px-6 py-3 rounded-2xl font-semibold whitespace-nowrap transition-all ${
-                activeTab === tab.id ? "bg-purple-600 text-white" : "bg-slate-800/50 text-gray-400 hover:bg-slate-800"
+                activeTab === tab.id ? "" : "bg-slate-800/50 text-gray-400 hover:bg-slate-800"
               }`}
+              style={
+                activeTab === tab.id
+                  ? {
+                      background: "linear-gradient(135deg, #fb923c 0%, #22d3ee 100%)",
+                      color: "white",
+                      boxShadow: "0 0 20px rgba(251, 146, 60, 0.5)",
+                    }
+                  : {}
+              }
             >
               {tab.label}
             </button>
@@ -264,7 +277,13 @@ export default function PerfilPage() {
               </div>
             </div>
 
-            <Button className="w-full mt-6 bg-purple-600 hover:bg-purple-700 text-white py-6 rounded-2xl text-lg font-semibold">
+            <Button
+              className="w-full mt-6 text-white py-6 rounded-2xl text-lg font-semibold"
+              style={{
+                background: "linear-gradient(135deg, #fb923c 0%, #22d3ee 100%)",
+                boxShadow: "0 8px 24px rgba(251, 146, 60, 0.4)",
+              }}
+            >
               Guardar Cambios
             </Button>
           </div>
@@ -299,7 +318,13 @@ export default function PerfilPage() {
               </div>
             </div>
 
-            <Button className="w-full mt-6 bg-purple-600 hover:bg-purple-700 text-white py-6 rounded-2xl text-lg font-semibold">
+            <Button
+              className="w-full mt-6 text-white py-6 rounded-2xl text-lg font-semibold"
+              style={{
+                background: "linear-gradient(135deg, #fb923c 0%, #22d3ee 100%)",
+                boxShadow: "0 8px 24px rgba(251, 146, 60, 0.4)",
+              }}
+            >
               Guardar Cambios
             </Button>
           </div>
@@ -348,7 +373,13 @@ export default function PerfilPage() {
               </div>
             </div>
 
-            <Button className="w-full mt-6 bg-purple-600 hover:bg-purple-700 text-white py-6 rounded-2xl text-lg font-semibold flex items-center justify-center gap-2">
+            <Button
+              className="w-full mt-6 text-white py-6 rounded-2xl text-lg font-semibold flex items-center justify-center gap-2"
+              style={{
+                background: "linear-gradient(135deg, #fb923c 0%, #22d3ee 100%)",
+                boxShadow: "0 8px 24px rgba(251, 146, 60, 0.4)",
+              }}
+            >
               <Upload className="w-5 h-5" />
               Enviar verificación
             </Button>
@@ -381,7 +412,13 @@ export default function PerfilPage() {
               <p className="text-gray-300 mb-4">
                 Destaca tu perfil en la página principal por 24 horas. Tienes 1 boost gratis cada semana.
               </p>
-              <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 rounded-2xl text-lg font-semibold">
+              <Button
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 rounded-2xl text-lg font-semibold"
+                style={{
+                  background: "linear-gradient(135deg, #fb923c 0%, #22d3ee 100%)",
+                  boxShadow: "0 8px 24px rgba(251, 146, 60, 0.4)",
+                }}
+              >
                 Activar Boost Gratis
               </Button>
             </div>
@@ -416,7 +453,13 @@ export default function PerfilPage() {
                 </div>
               </div>
 
-              <Button className="w-full mt-6 bg-purple-600 hover:bg-purple-700 text-white py-6 rounded-2xl text-lg font-semibold">
+              <Button
+                className="w-full mt-6 text-white py-6 rounded-2xl text-lg font-semibold"
+                style={{
+                  background: "linear-gradient(135deg, #fb923c 0%, #22d3ee 100%)",
+                  boxShadow: "0 8px 24px rgba(251, 146, 60, 0.4)",
+                }}
+              >
                 Guardar Cambios
               </Button>
             </div>

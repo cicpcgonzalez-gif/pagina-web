@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft, Download, X, Ticket, Trophy, WalletIcon, User, Shield } from "lucide-react"
+import { Download, X, Ticket, Trophy, WalletIcon, User, Shield } from "lucide-react"
 
 export default function TicketsPage() {
   const [showCerrados, setShowCerrados] = useState(false)
@@ -44,26 +44,11 @@ export default function TicketsPage() {
         }}
       >
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/rifas" className="hover:opacity-80 transition-opacity">
-                <ArrowLeft className="w-6 h-6 text-white" />
-              </Link>
-              <h1 className="text-2xl font-bold text-white">Mis Tickets</h1>
-            </div>
-            <button
-              onClick={() => setShowCerrados(true)}
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
-              style={{
-                background: "rgba(168, 85, 247, 0.2)",
-                border: "1px solid rgba(168, 85, 247, 0.4)",
-                color: "#a855f7",
-              }}
-            >
-              Cerrados
-            </button>
+          <div className="flex items-center justify-center gap-3">
+            <Image src="/images/icon.png" alt="MEGA RIFAS" width={40} height={40} className="rounded-full" />
+            <h1 className="text-2xl font-bold text-white">Mis Tickets</h1>
           </div>
-          <p className="text-gray-400 mt-2">Aquí ves tus compras y rifas.</p>
+          <p className="text-gray-400 mt-2 text-center">Aquí ves tus compras y rifas.</p>
         </div>
       </header>
 

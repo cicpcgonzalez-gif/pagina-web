@@ -27,24 +27,25 @@ export default function RifasPage() {
   return (
     <div
       className="min-h-screen"
-      style={{ background: "linear-gradient(135deg, #0a1628 0%, #1a2744 50%, #0a1628 100%)" }}
+      style={{ background: "linear-gradient(135deg, #0a0e1a 0%, #1a1f3a 50%, #0a0e1a 100%)" }}
     >
       {/* Header */}
       <header
         className="sticky top-0 z-50 border-b"
         style={{
-          background: "rgba(10, 22, 40, 0.8)",
+          background: "rgba(10, 14, 26, 0.8)",
           backdropFilter: "blur(20px)",
-          borderColor: "rgba(251, 146, 60, 0.2)",
+          borderColor: "rgba(251, 146, 60, 0.3)",
         }}
       >
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center gap-3">
+            <Image src="/images/icon.png" alt="MEGA RIFAS" width={40} height={40} className="rounded-full" />
             <h1 className="text-2xl font-bold text-white">MEGA RIFAS</h1>
           </div>
           <div
             className="h-1 w-24 mx-auto mt-2"
-            style={{ background: "linear-gradient(90deg, #a855f7, #ec4899)" }}
+            style={{ background: "linear-gradient(90deg, #fb923c, #22d3ee)" }}
           ></div>
         </div>
       </header>
@@ -52,11 +53,12 @@ export default function RifasPage() {
       <main className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Sorteos Activos Card */}
         <div
-          className="mb-6 rounded-2xl p-6 border"
+          className="mb-6 rounded-2xl p-6 border transition-all hover:scale-[1.02]"
           style={{
-            background: "linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(236, 72, 153, 0.1))",
+            background: "linear-gradient(135deg, rgba(251, 146, 60, 0.1), rgba(34, 211, 238, 0.1))",
             backdropFilter: "blur(10px)",
-            borderColor: "rgba(168, 85, 247, 0.3)",
+            borderColor: "rgba(251, 146, 60, 0.3)",
+            boxShadow: "0 8px 32px rgba(251, 146, 60, 0.15)",
           }}
         >
           <div className="flex items-center justify-between mb-3">
@@ -88,7 +90,7 @@ export default function RifasPage() {
               style={{
                 background: "rgba(15, 23, 42, 0.6)",
                 backdropFilter: "blur(10px)",
-                borderColor: "rgba(71, 85, 105, 0.5)",
+                borderColor: "rgba(251, 146, 60, 0.3)",
               }}
             />
           </div>
@@ -102,10 +104,10 @@ export default function RifasPage() {
               onClick={() => setActiveTab(tab)}
               className="px-6 py-3 rounded-xl font-medium whitespace-nowrap transition-all"
               style={{
-                background: activeTab === tab ? "linear-gradient(135deg, #a855f7, #ec4899)" : "rgba(15, 23, 42, 0.6)",
+                background: activeTab === tab ? "linear-gradient(135deg, #fb923c, #22d3ee)" : "rgba(15, 23, 42, 0.6)",
                 color: activeTab === tab ? "white" : "#94a3b8",
                 border: `1px solid ${activeTab === tab ? "transparent" : "rgba(71, 85, 105, 0.5)"}`,
-                boxShadow: activeTab === tab ? "0 0 20px rgba(168, 85, 247, 0.5)" : "none",
+                boxShadow: activeTab === tab ? "0 0 20px rgba(251, 146, 60, 0.5)" : "none",
               }}
             >
               {tab === "todas" && "Todas"}
@@ -123,11 +125,12 @@ export default function RifasPage() {
           {rifas.map((rifa) => (
             <div
               key={rifa.id}
-              className="rounded-2xl overflow-hidden border"
+              className="rounded-2xl overflow-hidden border transition-all hover:scale-[1.02]"
               style={{
                 background: "linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.8))",
                 backdropFilter: "blur(10px)",
-                borderColor: "rgba(71, 85, 105, 0.5)",
+                borderColor: "rgba(251, 146, 60, 0.2)",
+                boxShadow: "0 8px 32px rgba(251, 146, 60, 0.1)",
               }}
             >
               {/* Rifero Info */}
@@ -175,8 +178,8 @@ export default function RifasPage() {
                 <button
                   className="px-8 py-3 rounded-xl font-bold text-white transition-all hover:scale-105"
                   style={{
-                    background: "linear-gradient(135deg, #a855f7, #ec4899)",
-                    boxShadow: "0 0 20px rgba(168, 85, 247, 0.5)",
+                    background: "linear-gradient(135deg, #fb923c 0%, #f97316 100%)",
+                    boxShadow: "0 8px 30px rgba(251, 146, 60, 0.4), 0 0 60px rgba(251, 146, 60, 0.2)",
                   }}
                 >
                   Jugar

@@ -1,3 +1,5 @@
+import Image from "next/image"
+
 export default function WalletPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0e1c] via-[#0d1425] to-[#1a1f3a] text-white">
@@ -6,35 +8,24 @@ export default function WalletPage() {
         className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/10"
         style={{
           background: "linear-gradient(135deg, rgba(10, 14, 28, 0.95) 0%, rgba(13, 20, 37, 0.95) 100%)",
-          boxShadow: "0 8px 32px rgba(255, 119, 0, 0.15)",
+          boxShadow: "0 8px 32px rgba(251, 146, 60, 0.15)",
         }}
       >
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-center gap-3">
+          <Image src="/images/icon.png" alt="MEGA RIFAS" width={40} height={40} className="rounded-full" />
           <h1 className="text-2xl font-bold">MEGA RIFAS</h1>
-          <div className="flex gap-3">
-            <a
-              href="/login"
-              className="px-6 py-2 rounded-full font-semibold transition-all"
-              style={{
-                background: "linear-gradient(135deg, #ff7700 0%, #ff9500 100%)",
-                boxShadow: "0 4px 20px rgba(255, 119, 0, 0.4)",
-              }}
-            >
-              Iniciar Sesión
-            </a>
-          </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
+      <main className="container mx-auto px-4 py-8 max-w-4xl pb-32">
         {/* Card principal de Wallet */}
         <div
-          className="rounded-3xl p-6 mb-6"
+          className="rounded-3xl p-6 mb-6 transition-all hover:scale-[1.02]"
           style={{
             background: "linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)",
             backdropFilter: "blur(20px)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
+            border: "1px solid rgba(251, 146, 60, 0.2)",
+            boxShadow: "0 8px 32px rgba(251, 146, 60, 0.15)",
           }}
         >
           <div className="flex items-start justify-between mb-6">
@@ -61,7 +52,7 @@ export default function WalletPage() {
             </button>
           </div>
 
-          <div className="text-6xl font-black mb-8" style={{ color: "#fbbf24" }}>
+          <div className="text-6xl font-black mb-8" style={{ color: "#fb923c" }}>
             Bs. 12000.00
           </div>
 
@@ -69,9 +60,9 @@ export default function WalletPage() {
             <button
               className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-lg transition-all hover:scale-105"
               style={{
-                background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
-                color: "#000",
-                boxShadow: "0 8px 24px rgba(251, 191, 36, 0.4)",
+                background: "linear-gradient(135deg, #fb923c 0%, #f97316 100%)",
+                color: "#fff",
+                boxShadow: "0 8px 24px rgba(251, 146, 60, 0.4)",
               }}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,8 +73,10 @@ export default function WalletPage() {
             <button
               className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-lg transition-all hover:scale-105"
               style={{
-                background: "rgba(255, 255, 255, 0.1)",
-                border: "1px solid rgba(255, 255, 255, 0.2)",
+                background: "linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)",
+                color: "#fff",
+                border: "none",
+                boxShadow: "0 8px 24px rgba(34, 211, 238, 0.4)",
               }}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,7 +95,7 @@ export default function WalletPage() {
               }}
             >
               <p className="text-gray-400 text-sm mb-1">Ingresos</p>
-              <p className="text-2xl font-bold" style={{ color: "#fbbf24" }}>
+              <p className="text-2xl font-bold" style={{ color: "#fb923c" }}>
                 Bs. 0
               </p>
             </div>
@@ -114,7 +107,7 @@ export default function WalletPage() {
               }}
             >
               <p className="text-gray-400 text-sm mb-1">Gastos</p>
-              <p className="text-2xl font-bold" style={{ color: "#ff7700" }}>
+              <p className="text-2xl font-bold" style={{ color: "#22d3ee" }}>
                 Bs. 0
               </p>
             </div>
@@ -137,8 +130,8 @@ export default function WalletPage() {
           style={{
             background: "linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)",
             backdropFilter: "blur(20px)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
+            border: "1px solid rgba(251, 146, 60, 0.2)",
+            boxShadow: "0 8px 32px rgba(251, 146, 60, 0.15)",
           }}
         >
           <h3 className="text-xl font-bold mb-4">Movimientos</h3>
@@ -174,8 +167,8 @@ export default function WalletPage() {
           style={{
             background: "linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)",
             backdropFilter: "blur(20px)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
+            border: "1px solid rgba(251, 146, 60, 0.2)",
+            boxShadow: "0 8px 32px rgba(251, 146, 60, 0.15)",
           }}
         >
           <h3 className="text-xl font-bold mb-4">Historial de Pagos</h3>
@@ -215,7 +208,7 @@ export default function WalletPage() {
                     <p className="text-gray-400 text-sm">Ref: {pago.ref}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xl font-bold mb-2" style={{ color: "#fbbf24" }}>
+                    <p className="text-xl font-bold mb-2" style={{ color: "#fb923c" }}>
                       {pago.monto}
                     </p>
                     <span
@@ -265,7 +258,7 @@ export default function WalletPage() {
               },
               {
                 name: "Ganadores",
-                icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z",
+                icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138z",
                 href: "/ganadores",
               },
               {

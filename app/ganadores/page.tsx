@@ -42,10 +42,10 @@ export default function GanadoresPage() {
             placeholder="Buscar ganador, premio o rifa..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 rounded-xl text-white placeholder-gray-500"
+            className="w-full pl-12 pr-4 py-4 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
             style={{
               background: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
+              border: "1px solid rgba(251, 146, 60, 0.2)",
               backdropFilter: "blur(10px)",
             }}
           />
