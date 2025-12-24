@@ -4,12 +4,47 @@ import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { login } from "@/lib/api"
+import { setUserRole } from "@/lib/session"
 
 export default function LoginPage() {
+  const router = useRouter()
+
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+
+  const onSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setMessage(null)
+    setLoading(true)
+
+    try {
+      const res = await login({ email, password })
+      const role = (res as any)?.user?.role ? String((res as any).user.role) : null
+      if (role) setUserRole(role)
+
+      const next = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("next") : null
+      if (next) {
+        router.push(next)
+        return
+      }
+
+      const normalizedRole = String(role || "").toLowerCase()
+      if (normalizedRole === "superadmin") router.push("/superadmin")
+      else if (normalizedRole === "admin" || normalizedRole === "organizer") router.push("/admin")
+      else router.push("/rifas")
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "No se pudo iniciar sesión."
+      setMessage(msg)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div
@@ -46,7 +81,7 @@ export default function LoginPage() {
             borderColor: "rgba(251, 146, 60, 0.3)",
           }}
         >
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={onSubmit}>
             {/* Email Input */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
@@ -58,6 +93,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="correo@ejemplo.com"
+                required
                 className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 border outline-none focus:border-orange-500 transition-all"
                 style={{
                   background: "rgba(15, 23, 42, 0.6)",
@@ -78,6 +114,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  required
                   className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 border outline-none focus:border-orange-500 transition-all pr-12"
                   style={{
                     background: "rgba(15, 23, 42, 0.6)",
@@ -110,14 +147,27 @@ export default function LoginPage() {
             {/* Login Button */}
             <button
               type="submit"
-              className="w-full py-4 rounded-xl font-bold text-white transition-all hover:scale-105"
+              disabled={loading}
+              className="w-full py-4 rounded-xl font-bold text-white transition-all hover:scale-105 disabled:opacity-60 disabled:hover:scale-100"
               style={{
                 background: "linear-gradient(135deg, #a855f7, #ec4899)",
                 boxShadow: "0 0 30px rgba(168, 85, 247, 0.5)",
               }}
             >
-              Entrar
+              {loading ? "Verificando..." : "Entrar"}
             </button>
+
+            {message ? (
+              <div
+                className="rounded-xl px-4 py-3 text-sm border"
+                style={{
+                  background: "rgba(239, 68, 68, 0.12)",
+                  borderColor: "rgba(239, 68, 68, 0.35)",
+                }}
+              >
+                {message}
+              </div>
+            ) : null}
 
             {/* Forgot Password */}
             <div className="text-center">
