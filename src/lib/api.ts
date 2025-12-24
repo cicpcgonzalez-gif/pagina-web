@@ -2,10 +2,7 @@ import { mockRaffles, mockStatus } from "./mock";
 import type { ModuleConfig, Raffle, SystemStatus, UserProfile, UserTicket } from "./types";
 import { getAuthToken, getRefreshToken, setAuthToken, setRefreshToken } from "./session";
 
-// Fallback to backend URL on the server so SSR pages do not crash if the env var is missing in production.
-const API_BASE = typeof window !== "undefined"
-  ? "/api"
-  : process.env.NEXT_PUBLIC_API_BASE_URL || "https://pagina-web-j7di.onrender.com";
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
 
 const uuid = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -140,7 +137,6 @@ export async function fetchRaffle(id: string | number) {
 export async function login(payload: {
   email: string;
   password: string;
-  captchaToken?: string;
 }): Promise<{ token: string; accessToken?: string; refreshToken?: string; user: { role?: string } }> {
   const data = await safeFetch("/auth/login", {
     method: "POST",
@@ -164,7 +160,6 @@ export async function register(payload: {
   address?: string;
   dob?: string;
   cedula?: string;
-  captchaToken?: string;
 }): Promise<{ token?: string; accessToken?: string; refreshToken?: string; user?: { role?: string }; require2FA?: boolean }> {
   const data = await safeFetch("/register", {
     method: "POST",
@@ -335,14 +330,14 @@ export async function adminCreateRaffle(payload: {
   });
 }
 
-export async function requestPasswordReset(payload: { email: string; captchaToken?: string }) {
+export async function requestPasswordReset(payload: { email: string }) {
   return safeFetch("/auth/forgot-password", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
-export async function resetPassword(payload: { token: string; password: string; captchaToken?: string }) {
+export async function resetPassword(payload: { token: string; password: string }) {
   return safeFetch("/auth/reset-password", {
     method: "POST",
     body: JSON.stringify(payload),
