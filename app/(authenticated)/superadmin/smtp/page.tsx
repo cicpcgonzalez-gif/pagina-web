@@ -1,10 +1,72 @@
 "use client"
 
 import Link from "next/link"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import RequireRole from "../../../_components/RequireRole"
-import { Mail } from "lucide-react"
+import { fetchSuperadminSettings, updateSuperadminSmtp } from "@/lib/api"
+import { Mail, RefreshCw, Save } from "lucide-react"
+
+type Settings = {
+  smtp?: Record<string, unknown>
+}
 
 export default function SuperadminSmtpPage() {
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
+  const [settings, setSettings] = useState<Settings | null>(null)
+
+  const [draftText, setDraftText] = useState("{}")
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const s = await fetchSuperadminSettings()
+      setSettings(s)
+      const smtp = (s as any)?.smtp
+      setDraftText(JSON.stringify(smtp && typeof smtp === "object" ? smtp : {}, null, 2))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo cargar la configuración SMTP.")
+      setSettings(null)
+      setDraftText("{}")
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const parsedDraft = useMemo(() => {
+    try {
+      const v = JSON.parse(draftText)
+      if (!v || typeof v !== "object" || Array.isArray(v)) return { ok: false as const, error: "El JSON debe ser un objeto." }
+      return { ok: true as const, value: v as Record<string, unknown> }
+    } catch {
+      return { ok: false as const, error: "JSON inválido." }
+    }
+  }, [draftText])
+
+  const onSave = async () => {
+    setSaving(true)
+    setError(null)
+    setMessage(null)
+    try {
+      if (!parsedDraft.ok) throw new Error(parsedDraft.error)
+      await updateSuperadminSmtp(parsedDraft.value)
+      setMessage("SMTP actualizado")
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo guardar SMTP.")
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <RequireRole allow={["superadmin"]} nextPath="/superadmin/smtp" title="Correo SMTP">
       <div className="min-h-screen bg-linear-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
@@ -24,15 +86,57 @@ export default function SuperadminSmtpPage() {
               <Mail className="h-4 w-4" /> Config
             </div>
             <h2 className="mt-3 text-2xl font-extrabold leading-tight text-white">Configuración SMTP</h2>
-            <p className="mt-2 text-slate-200 text-sm">Pendiente de endpoint para ver/editar SMTP desde la web.</p>
+            <p className="mt-2 text-slate-200 text-sm">Conectado a <span className="font-semibold">/superadmin/settings</span> (leer) y <span className="font-semibold">/superadmin/settings/smtp</span> (PATCH).</p>
             <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={onSave}
+                disabled={saving || loading || !parsedDraft.ok}
+                className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-5 py-3 text-sm font-extrabold text-white hover:bg-purple-500 transition disabled:opacity-60"
+              >
+                <Save className="h-4 w-4" /> {saving ? "Guardando..." : "Guardar"}
+              </button>
+              <button
+                type="button"
+                onClick={load}
+                disabled={loading}
+                className="inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/15 transition disabled:opacity-60"
+              >
+                <RefreshCw className="h-4 w-4" /> {loading ? "Cargando..." : "Actualizar"}
+              </button>
               <Link className="rounded-full px-5 py-3 bg-white/10 hover:bg-white/15 transition font-semibold" href="/superadmin">
                 Volver
               </Link>
             </div>
           </section>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-6 text-center text-slate-200">Próximamente.</div>
+          <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-black/30">
+            {loading ? <p className="text-sm text-slate-300">Cargando…</p> : null}
+            {error ? <div className="mt-4 rounded-xl border border-red-400/40 bg-red-900/30 px-4 py-3 text-sm text-red-100">{error}</div> : null}
+            {message ? <div className="mt-4 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">{message}</div> : null}
+            {!parsedDraft.ok ? (
+              <div className="mt-4 rounded-xl border border-red-400/40 bg-red-900/20 px-4 py-3 text-sm text-red-100">{parsedDraft.error}</div>
+            ) : null}
+
+            <div className="mt-4 grid gap-3">
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+                <p className="text-xs font-semibold text-slate-300">SMTP (JSON)</p>
+                <textarea
+                  value={draftText}
+                  onChange={(e) => setDraftText(e.target.value)}
+                  rows={14}
+                  className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 font-mono text-xs text-white outline-none focus:border-purple-500"
+                  spellCheck={false}
+                />
+                <p className="mt-2 text-xs text-slate-400">Se envía tal cual en el body del PATCH.</p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+                <p className="text-xs font-semibold text-slate-300">Vista actual (desde backend)</p>
+                <pre className="mt-2 overflow-auto rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-xs text-slate-100">{JSON.stringify((settings as any)?.smtp ?? {}, null, 2)}</pre>
+              </div>
+            </div>
+          </section>
         </main>
       </div>
     </RequireRole>

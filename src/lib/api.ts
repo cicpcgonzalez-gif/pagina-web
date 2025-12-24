@@ -460,15 +460,109 @@ export async function publishWinner(payload: {
 }
 
 export async function fetchSuperadminSettings() {
-  return safeFetch<{ branding?: Record<string, unknown>; modules?: Record<string, unknown>; company?: Record<string, unknown> }>(
-    "/superadmin/settings",
-  );
+  return safeFetch<{
+    branding?: Record<string, unknown>;
+    modules?: Record<string, unknown>;
+    company?: Record<string, unknown>;
+    smtp?: Record<string, unknown>;
+    techSupport?: Record<string, unknown>;
+  }>("/superadmin/settings");
 }
 
 export async function updateSuperadminModules(modules: Record<string, unknown>) {
   return safeFetch("/superadmin/settings/modules", {
     method: "PATCH",
     body: JSON.stringify({ modules }),
+  });
+}
+
+export async function updateSuperadminBranding(branding: Record<string, unknown>) {
+  return safeFetch("/superadmin/settings/branding", {
+    method: "PATCH",
+    body: JSON.stringify(branding),
+  });
+}
+
+export async function updateSuperadminSmtp(smtp: Record<string, unknown>) {
+  return safeFetch("/superadmin/settings/smtp", {
+    method: "PATCH",
+    body: JSON.stringify(smtp),
+  });
+}
+
+export async function updateSuperadminTechSupport(techSupport: Record<string, unknown>) {
+  return safeFetch("/superadmin/settings/tech-support", {
+    method: "PATCH",
+    body: JSON.stringify(techSupport),
+  });
+}
+
+export async function fetchTechSupportSettings() {
+  return safeFetch<Record<string, unknown>>("/settings/tech-support", { method: "GET" }, { skipRefresh: true });
+}
+
+export async function fetchAdminSecurityCode() {
+  return safeFetch<{ code?: string; active?: boolean }>("/admin/security-code");
+}
+
+export async function regenerateAdminSecurityCode() {
+  return safeFetch<{ code?: string }>("/admin/security-code/regenerate", { method: "POST" });
+}
+
+export async function fetchAdminMetricsSummary() {
+  return safeFetch<Record<string, unknown>>("/admin/metrics/summary");
+}
+
+export async function fetchAdminMetricsByState() {
+  return safeFetch<Array<Record<string, unknown>>>("/admin/metrics/by-state");
+}
+
+export async function fetchAdminMetricsTopBuyers() {
+  return safeFetch<Array<Record<string, unknown>>>("/admin/metrics/top-buyers");
+}
+
+export async function fetchAnnouncements() {
+  return safeFetch<Array<Record<string, unknown>>>("/announcements", { method: "GET" }, { skipRefresh: true });
+}
+
+export async function adminCreateAnnouncement(payload: { title: string; content: string; imageUrl?: string }) {
+  return safeFetch("/admin/announcements", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function adminBroadcastPush(payload: { title: string; body: string }) {
+  return safeFetch<{ message?: string; count?: number }>("/admin/push/broadcast", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchSuperadminMailLogs() {
+  return safeFetch<Array<Record<string, unknown>>>("/superadmin/mail/logs");
+}
+
+export async function fetchSuperadminAuditUsers() {
+  return safeFetch<Array<Record<string, unknown>>>("/superadmin/audit/users");
+}
+
+export async function fetchSuperadminAuditActions() {
+  return safeFetch<Array<Record<string, unknown>>>("/superadmin/audit/actions");
+}
+
+export async function fetchSuperadminReports(params?: { status?: string; take?: number }) {
+  const qs = new URLSearchParams();
+  if (params?.status) qs.set("status", params.status);
+  if (params?.take) qs.set("take", String(params.take));
+  const q = qs.toString();
+  return safeFetch<Array<Record<string, unknown>>>(`/superadmin/reports${q ? `?${q}` : ""}`);
+}
+
+export async function updateSuperadminReportStatus(reportId: string | number, status: string) {
+  return safeFetch<{ id?: number; status?: string }>(`/superadmin/reports/${reportId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
   });
 }
 
