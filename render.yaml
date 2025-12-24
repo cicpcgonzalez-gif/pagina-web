@@ -1,10 +1,14 @@
 services:
   - type: web
-    name: rifas-web
+    name: mega-rifas
     env: node
     rootDir: .
-    buildCommand: cd src/screens/web && npm install && npm run build
-    startCommand: cd src/screens/web && npm run start
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: NEXT_PUBLIC_API_BASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_RECAPTCHA_SITE_KEY
         sync: false
