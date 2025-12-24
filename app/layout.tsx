@@ -4,7 +4,6 @@ import { Urbanist, Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import Link from "next/link"
-import { Trophy, Users } from "lucide-react"
 
 const display = Urbanist({
   variable: "--font-display",
@@ -92,62 +91,16 @@ export default function RootLayout({
                 <span className="text-[10px] uppercase tracking-wider text-cyan-400/80">La Nueva Era</span>
               </div>
             </Link>
-            <nav className="hidden lg:flex items-center gap-1 text-sm font-medium">
-              <Link
-                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:text-orange-400 hover:bg-white/5"
-                href="/rifas"
-              >
-                <Trophy className="h-4 w-4" />
-                Rifas
-              </Link>
-              <Link
-                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:text-cyan-400 hover:bg-white/5"
-                href="/wallet"
-              >
-                Wallet
-              </Link>
-              <Link
-                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:text-cyan-400 hover:bg-white/5"
-                href="/perfil"
-              >
-                Perfil
-              </Link>
-              <Link
-                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:text-cyan-400 hover:bg-white/5"
-                href="/verificar"
-              >
-                Tickets
-              </Link>
-              <Link
-                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:text-cyan-400 hover:bg-white/5"
-                href="/ganadores"
-              >
-                <Users className="h-4 w-4" />
-                Ganadores
-              </Link>
-              <Link
-                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:text-purple-400 hover:bg-white/5"
-                href="/admin"
-              >
-                Admin
-              </Link>
-              <Link
-                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:text-pink-400 hover:bg-white/5"
-                href="/superadmin"
-              >
-                SuperAdmin
-              </Link>
-            </nav>
             <div className="flex items-center gap-3">
               <Link
-                className="hidden sm:block rounded-lg px-4 py-2 text-white transition"
+                className="hidden sm:block rounded-lg px-4 py-2 text-white transition hover:bg-white/10"
                 style={{
                   background: "rgba(255, 255, 255, 0.05)",
                   backdropFilter: "blur(10px)",
                 }}
                 href="/login"
               >
-                Login
+                Iniciar Sesión
               </Link>
               <Link
                 className="rounded-lg px-4 py-2 font-semibold text-white transition hover:-translate-y-[1px]"
