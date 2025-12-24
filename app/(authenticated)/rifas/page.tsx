@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { fetchRaffles } from "@/lib/api"
 import { Sparkles, RefreshCw, Search, MoreHorizontal, ThumbsUp, Heart, Send } from "lucide-react"
+import WinnersTicker from "../../_components/WinnersTicker"
 
 type Raffle = {
   id: string
@@ -165,7 +166,7 @@ export default function RifasPage() {
                     }`}
                     aria-disabled={soldOut}
                   >
-                    {soldOut ? "Agotado" : "Jugar"}
+                    {soldOut ? "Agotado" : "Participar ahora"}
                   </Link>
                 </div>
 
@@ -233,6 +234,9 @@ export default function RifasPage() {
           </Link>
         </section>
 
+        {/* Winners ticker */}
+        <WinnersTicker />
+
         {/* Search and filters */}
         <section className="space-y-3">
           <div className="relative">
@@ -272,6 +276,23 @@ export default function RifasPage() {
         <section className="space-y-3">
           <h3 className="text-lg font-bold text-white">Novedades</h3>
           {content}
+        </section>
+
+        {/* Motivational message */}
+        <section className="rounded-2xl border border-purple-500/30 bg-slate-900/80 px-4 py-4 text-center text-slate-100 shadow-inner shadow-purple-900/20">
+          <p className="text-lg font-bold text-white">Cada boleto es una oportunidad</p>
+          <p className="text-sm text-slate-300 mt-1">Asegura tus números y participa antes de que cierre el sorteo.</p>
+        </section>
+
+        {/* Sponsors */}
+        <section className="rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-4 text-slate-200">
+          <p className="text-sm font-semibold mb-3 text-purple-200">Patrocinadores</p>
+          <div className="flex flex-wrap gap-3 text-xs text-slate-300">
+            <span className="rounded-full bg-slate-800 px-3 py-1">MegaPlay</span>
+            <span className="rounded-full bg-slate-800 px-3 py-1">Seguros Plus</span>
+            <span className="rounded-full bg-slate-800 px-3 py-1">PagosFlash</span>
+            <span className="rounded-full bg-slate-800 px-3 py-1">TechNova</span>
+          </div>
         </section>
       </main>
     </div>

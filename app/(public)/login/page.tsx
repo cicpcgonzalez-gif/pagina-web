@@ -47,7 +47,7 @@ export default function LoginPage() {
     <div
       className="min-h-screen flex items-center justify-center p-4"
       style={{
-        background: "linear-gradient(135deg, #0a1628 0%, #1a2744 50%, #0a1628 100%)",
+        background: "linear-gradient(135deg, #0b0b1e 0%, #1a0f2e 50%, #0b0b1e 100%)",
       }}
     >
       <div className="w-full max-w-md">
@@ -73,15 +73,16 @@ export default function LoginPage() {
         <div
           className="rounded-2xl p-8 border"
           style={{
-            background: "linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.8))",
-            backdropFilter: "blur(20px)",
-            borderColor: "rgba(251, 146, 60, 0.3)",
+            background: "linear-gradient(145deg, rgba(36, 20, 60, 0.92), rgba(24, 16, 44, 0.92))",
+            backdropFilter: "blur(18px)",
+            borderColor: "rgba(250, 204, 21, 0.35)",
+            boxShadow: "0 20px 50px rgba(107, 33, 168, 0.35)",
           }}
         >
           <form className="space-y-6" onSubmit={onSubmit}>
             {/* Email Input */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-purple-100 mb-2">
                 Correo electrónico
               </label>
               <input
@@ -91,17 +92,17 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="correo@ejemplo.com"
                 required
-                className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 border outline-none focus:border-orange-500 transition-all"
+                className="w-full px-4 py-3 rounded-xl text-white placeholder-purple-200/60 border outline-none focus:border-purple-500 transition-all"
                 style={{
-                  background: "rgba(15, 23, 42, 0.6)",
-                  borderColor: "rgba(71, 85, 105, 0.5)",
+                  background: "rgba(17, 12, 32, 0.7)",
+                  borderColor: "rgba(107, 33, 168, 0.5)",
                 }}
               />
             </div>
 
             {/* Password Input */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-purple-100 mb-2">
                 Contraseña
               </label>
               <div className="relative">
@@ -112,10 +113,10 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 border outline-none focus:border-orange-500 transition-all pr-12"
+                  className="w-full px-4 py-3 rounded-xl text-white placeholder-purple-200/60 border outline-none focus:border-purple-500 transition-all pr-12"
                   style={{
-                    background: "rgba(15, 23, 42, 0.6)",
-                    borderColor: "rgba(71, 85, 105, 0.5)",
+                    background: "rgba(17, 12, 32, 0.7)",
+                    borderColor: "rgba(107, 33, 168, 0.5)",
                   }}
                 />
                 <button
@@ -135,9 +136,9 @@ export default function LoginPage() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-600 text-purple-600 focus:ring-purple-500"
+                  className="w-4 h-4 rounded border-purple-600 text-purple-500 focus:ring-purple-400 bg-slate-900/60"
                 />
-                <span className="text-sm text-gray-300">Mantener la cuenta abierta</span>
+                <span className="text-sm text-purple-100">Mantener sesión</span>
               </label>
             </div>
 
@@ -145,10 +146,10 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 rounded-xl font-bold text-white transition-all hover:scale-105 disabled:opacity-60 disabled:hover:scale-100"
+              className="w-full py-4 rounded-xl font-bold text-slate-900 transition-all hover:scale-105 disabled:opacity-60 disabled:hover:scale-100"
               style={{
-                background: "linear-gradient(135deg, #a855f7, #ec4899)",
-                boxShadow: "0 0 30px rgba(168, 85, 247, 0.5)",
+                background: "linear-gradient(135deg, #facc15, #eab308)",
+                boxShadow: "0 0 30px rgba(250, 204, 21, 0.45)",
               }}
             >
               {loading ? "Verificando..." : "Entrar"}
@@ -170,20 +171,20 @@ export default function LoginPage() {
             <div className="text-center">
               <Link
                 href="/recuperar"
-                className="text-sm text-purple-400 hover:text-purple-300 transition-colors inline-flex items-center gap-2"
+                className="text-sm text-purple-300 hover:text-purple-200 transition-colors inline-flex items-center gap-2"
               >
                 <span>¿Olvidaste tu contraseña?</span>
               </Link>
             </div>
 
             {/* Register Link */}
-            <div className="text-center pt-4 border-t" style={{ borderColor: "rgba(71, 85, 105, 0.3)" }}>
+            <div className="text-center pt-4 border-t" style={{ borderColor: "rgba(107, 33, 168, 0.35)" }}>
               <Link
                 href="/register"
-                className="text-sm text-gray-400 hover:text-white transition-colors inline-flex items-center gap-2"
+                className="text-sm text-purple-200 hover:text-white transition-colors inline-flex items-center gap-2"
               >
                 <span>¿No tienes cuenta?</span>
-                <span className="text-purple-400 font-medium">Crear cuenta nueva</span>
+                <span className="text-amber-300 font-semibold">Crear cuenta nueva</span>
               </Link>
             </div>
           </form>

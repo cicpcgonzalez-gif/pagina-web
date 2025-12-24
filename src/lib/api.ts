@@ -1,5 +1,5 @@
 import { mockRaffles, mockStatus } from "./mock";
-import type { ModuleConfig, Raffle, SystemStatus, UserProfile, UserTicket } from "./types";
+import type { ModuleConfig, Raffle, SystemStatus, UserProfile, UserTicket, Winner } from "./types";
 import { getAuthToken, getRefreshToken, setAuthToken, setRefreshToken } from "./session";
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
@@ -305,8 +305,32 @@ export async function fetchMyPayments() {
   return [];
 }
 
-export async function fetchWinners() {
-  return safeFetch<Array<Record<string, unknown>>>("/winners");
+export async function fetchWinners(): Promise<Winner[]> {
+  try {
+    const raw = await safeFetch<
+      Array<{
+        id?: string | number;
+        user?: { name?: string; avatar?: string };
+        prize?: string;
+        raffle?: { title?: string };
+        photoUrl?: string;
+        testimonial?: string;
+        drawDate?: string;
+      }>
+    >("/winners");
+
+    return raw.map((w, i) => ({
+      id: w.id ?? `winner-${i}`,
+      user: w.user,
+      prize: w.prize ?? "Premio",
+      raffle: w.raffle,
+      photoUrl: w.photoUrl,
+      testimonial: w.testimonial,
+      drawDate: w.drawDate,
+    } satisfies Winner));
+  } catch {
+    return [];
+  }
 }
 
 export async function updateProfile(payload: Partial<UserProfile> & { avatar?: string }) {
