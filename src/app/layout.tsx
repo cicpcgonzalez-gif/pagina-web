@@ -4,7 +4,8 @@ import Link from "next/link"
 import { Urbanist, Inter } from "next/font/google"
 import "./globals.css"
 import LogoutButton from "@/components/LogoutButton"
-import { Zap, Trophy, Users } from "lucide-react"
+import { Trophy, Users } from "lucide-react"
+import Image from "next/image"
 
 const display = Urbanist({
   variable: "--font-display",
@@ -46,15 +47,24 @@ export default function RootLayout({
             }}
           >
             <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-              <Link href="/" className="flex items-center gap-2">
-                <div
-                  className="flex h-10 w-10 items-center justify-center rounded-xl"
-                  style={{
-                    background: "linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%)",
-                    boxShadow: "0 0 24px rgba(255, 107, 0, 0.5)",
-                  }}
-                >
-                  <Zap className="h-5 w-5 text-white" />
+              <Link href="/" className="flex items-center gap-3">
+                <div className="relative">
+                  <div
+                    className="absolute inset-0 rounded-full blur-xl"
+                    style={{
+                      background: "radial-gradient(circle, rgba(255,107,0,0.4) 0%, transparent 70%)",
+                    }}
+                  />
+                  <Image
+                    src="/images/icon.png"
+                    alt="MEGA RIFAS"
+                    width={48}
+                    height={48}
+                    className="relative rounded-full"
+                    style={{
+                      filter: "drop-shadow(0 0 12px rgba(255,107,0,0.5))",
+                    }}
+                  />
                 </div>
                 <div className="flex flex-col leading-tight">
                   <span className="font-[var(--font-display)] text-xl font-bold tracking-tight text-white">
@@ -73,7 +83,7 @@ export default function RootLayout({
                 </Link>
                 <Link
                   className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:bg-white/10 hover:text-white"
-                  href="/estado"
+                  href="/ganadores"
                 >
                   <Users className="h-4 w-4" />
                   <span className="hidden sm:inline">Ganadores</span>
@@ -109,12 +119,16 @@ export default function RootLayout({
             <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
               <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
                 <div className="flex items-center gap-2">
-                  <div
-                    className="flex h-8 w-8 items-center justify-center rounded-lg"
-                    style={{ background: "linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%)" }}
-                  >
-                    <Zap className="h-4 w-4 text-white" />
-                  </div>
+                  <Image
+                    src="/images/icon.png"
+                    alt="MEGA RIFAS"
+                    width={32}
+                    height={32}
+                    className="rounded-full"
+                    style={{
+                      filter: "drop-shadow(0 0 8px rgba(255,107,0,0.4))",
+                    }}
+                  />
                   <span className="font-[var(--font-display)] text-lg font-bold text-white">MEGA RIFAS</span>
                 </div>
                 <p className="text-sm text-white/60">© 2025 MegaRifas. La nueva era de las rifas.</p>
