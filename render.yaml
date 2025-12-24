@@ -3,8 +3,8 @@ services:
     name: rifas-web
     env: node
     rootDir: .
-    buildCommand: cd src/screens/web && npm install && npm run build
-    startCommand: cd src/screens/web && npm run start
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
     envVars:
       - key: NEXT_PUBLIC_API_BASE_URL
         sync: false
