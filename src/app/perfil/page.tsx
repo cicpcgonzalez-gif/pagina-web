@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from "react";
 import { changePassword, deleteAccount, fetchModules, fetchMyTickets, fetchProfile, updateProfile } from "@/lib/api";
 import { clearAuthToken, getAuthToken, getUserRole, setUserRole } from "@/lib/session";
 import type { ModuleConfig, UserProfile, UserTicket } from "@/lib/types";
+import { RequireAuth } from "@/components/app/RequireAuth";
+import { AppShell } from "@/components/app/AppShell";
 import {
   Camera,
   CheckCircle2,
@@ -205,23 +207,26 @@ export default function PerfilPage() {
 
   if (!loadingModules && !profileEnabled) {
     return (
-      <main className="w-full px-4 pb-20 pt-10 bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] text-white">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-white/10 bg-white/10 p-6 shadow-md shadow-black/30">
-          <p className="text-lg font-semibold">Módulo de perfil desactivado.</p>
-          <p className="mt-2 text-sm text-white/75">Actívalo para editar tu identidad y ver tus boletos.</p>
-          {modulesError && <p className="mt-2 text-xs text-red-200">{modulesError}</p>}
-        </div>
-      </main>
+      <RequireAuth>
+        <AppShell title="Perfil" subtitle="Módulo desactivado">
+          <div className="mx-auto max-w-3xl rounded-2xl border border-white/10 bg-white/10 p-6 shadow-md shadow-black/30">
+            <p className="text-lg font-semibold">Módulo de perfil desactivado.</p>
+            <p className="mt-2 text-sm text-white/75">Actívalo para editar tu identidad y ver tus boletos.</p>
+            {modulesError && <p className="mt-2 text-xs text-red-200">{modulesError}</p>}
+          </div>
+        </AppShell>
+      </RequireAuth>
     );
   }
 
   return (
-    <main className="w-full px-0 pb-20 pt-10 bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] text-white">
-      <div className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-r from-[#0f172a] via-[#111827] to-[#0f172a] p-[1px] shadow-2xl shadow-black/40">
+    <RequireAuth>
+    <AppShell title="Perfil" subtitle="Tu mural de identidad">
+      <div className="overflow-hidden rounded-3xl border border-white/10 bg-linear-to-r from-[#0f172a] via-[#111827] to-[#0f172a] p-px shadow-2xl shadow-black/40">
         <div className="flex flex-col gap-6 rounded-3xl bg-night-sky/90 p-6 md:p-8">
           <div className="flex flex-col gap-2">
             <p className="text-xs uppercase tracking-[0.25em] text-white/70">Perfil</p>
-            <h1 className="font-[var(--font-display)] text-3xl text-white sm:text-4xl">Mural de identidad</h1>
+            <h1 className="font-(--font-display) text-3xl text-white sm:text-4xl">Mural de identidad</h1>
             <p className="text-base text-white/80">Personaliza tu mural como en la app móvil: foto, bio, redes y accesos.</p>
           </div>
 
@@ -229,7 +234,7 @@ export default function PerfilPage() {
             <div className="space-y-6 rounded-2xl border border-white/10 bg-white/5 p-8 text-center shadow-lg shadow-black/30">
               <div className="flex flex-col items-center gap-4">
                 <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#22d3ee33] via-[#a855f733] to-transparent blur-2xl" />
+                  <div className="absolute inset-0 rounded-full bg-linear-to-br from-[#22d3ee33] via-[#a855f733] to-transparent blur-2xl" />
                   <div className="relative h-32 w-32 overflow-hidden rounded-full border border-white/20 bg-white/5 shadow-inner shadow-black/40">
                     {avatarPreview ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -545,6 +550,7 @@ export default function PerfilPage() {
           </div>
         </section>
       )}
-    </main>
+    </AppShell>
+    </RequireAuth>
   );
 }

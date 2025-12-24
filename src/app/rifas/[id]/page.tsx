@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { fetchRaffle, initiatePayment, purchaseTickets, submitManualPayment } from "@/lib/api";
+import { RequireAuth } from "@/components/app/RequireAuth";
+import { AppShell } from "@/components/app/AppShell";
 
 type AssignedNumbers = Array<string | number>;
 
@@ -140,30 +142,34 @@ export default function RaffleDetailPage() {
 
   if (loading) {
     return (
-      <main className="container mx-auto px-4 py-8">
-        <p>Cargando detalles de la rifa...</p>
-      </main>
+      <RequireAuth>
+        <AppShell title="Rifa" subtitle="Cargando detalles...">
+          <p className="text-sm text-white/70">Cargando detalles de la rifa...</p>
+        </AppShell>
+      </RequireAuth>
     );
   }
 
   if (!raffle) {
     return (
-      <main className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold">Rifa no encontrada</h1>
-        <p>No pudimos encontrar los detalles para esta rifa. Por favor, vuelve al mural.</p>
-      </main>
+      <RequireAuth>
+        <AppShell title="Rifa no encontrada" subtitle="Vuelve al mural e inténtalo de nuevo.">
+          <p className="text-sm text-white/70">No pudimos encontrar los detalles para esta rifa.</p>
+        </AppShell>
+      </RequireAuth>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] text-white">
-      <div className="mx-auto grid max-w-5xl gap-10 px-4 pb-16 pt-10 lg:grid-cols-[1.1fr_0.9fr]">
+    <RequireAuth>
+      <AppShell title={raffle.title} subtitle="Compra y pagos en un solo lugar.">
+      <div className="mx-auto grid max-w-5xl gap-10 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-black/30">
           <div className="relative h-72 w-full overflow-hidden rounded-xl">
             {banner && (
               <Image src={banner} alt={raffle.title} fill className="object-cover" priority />
             )}
-            <div className="absolute inset-0 bg-gradient-to-tr from-[#0b1224]/70 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-black/40" />
             <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-[#0f172a] shadow">
               Sorteo {raffle.drawDate}
             </div>
@@ -182,7 +188,7 @@ export default function RaffleDetailPage() {
               <span>{progress}% vendido</span>
             </div>
             <div className="mt-2 h-2 rounded-full bg-white/10">
-              <div className="h-2 rounded-full bg-gradient-to-r from-[#3b82f6] to-[#22d3ee]" style={{ width: `${progress}%` }} />
+              <div className="h-2 rounded-full bg-neon-blue-gradient" style={{ width: `${progress}%` }} />
             </div>
             <p className="mt-1 text-xs text-white/60">
               Disponibles: {raffle.ticketsAvailable} / {raffle.ticketsTotal}
@@ -203,7 +209,7 @@ export default function RaffleDetailPage() {
           </div>
 
           <div className="grid gap-2 sm:grid-cols-2">
-            <Button onClick={onPurchase} size="lg" disabled={processing} className="bg-gradient-to-r from-[#3b82f6] to-[#22d3ee] text-white">
+            <Button onClick={onPurchase} size="lg" disabled={processing} className="bg-neon-blue-gradient text-white">
               {processing ? "Procesando..." : "Comprar"}
             </Button>
             <Button onClick={onPay} size="lg" variant="outline" disabled={processing} className="border-white/30 text-white hover:border-white/60">
@@ -254,6 +260,7 @@ export default function RaffleDetailPage() {
           )}
         </div>
       </div>
-    </main>
+      </AppShell>
+    </RequireAuth>
   );
 }

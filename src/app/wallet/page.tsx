@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchMyPayments, fetchWallet } from "@/lib/api";
 import type { PaymentReceipt, WalletMovement } from "@/lib/types";
+import { RequireAuth } from "@/components/app/RequireAuth";
+import { AppShell } from "@/components/app/AppShell";
 
 export default function WalletPage() {
   const [balance, setBalance] = useState(0);
@@ -59,13 +61,8 @@ export default function WalletPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] text-white">
-      <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 pb-16 pt-14">
-        <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.25em] text-white/70">Wallet</p>
-          <h1 className="font-[var(--font-display)] text-3xl text-white sm:text-4xl">Saldo, retiros y movimientos.</h1>
-          <p className="text-white/75">Consulta tu balance, movimientos y pagos registrados.</p>
-        </div>
+    <RequireAuth>
+      <AppShell title="Wallet" subtitle="Saldo, movimientos y pagos.">
 
         {error && (
           <div className="rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div>
@@ -152,7 +149,7 @@ export default function WalletPage() {
             })}
           </div>
         </div>
-      </div>
-    </main>
+      </AppShell>
+    </RequireAuth>
   );
 }

@@ -3,9 +3,8 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { Urbanist, Inter } from "next/font/google"
 import "./globals.css"
-import LogoutButton from "@/components/LogoutButton"
-import { Trophy, Users } from "lucide-react"
 import Image from "next/image"
+import { TopNav } from "@/components/app/TopNav"
 
 const display = Urbanist({
   variable: "--font-display",
@@ -67,44 +66,14 @@ export default function RootLayout({
                   />
                 </div>
                 <div className="flex flex-col leading-tight">
-                  <span className="font-[var(--font-display)] text-xl font-bold tracking-tight text-white">
+                  <span className="text-xl font-bold tracking-tight text-white">
                     MEGA RIFAS
                   </span>
                   <span className="text-[10px] uppercase tracking-wider text-white/60">La Nueva Era</span>
                 </div>
               </Link>
               <nav className="flex items-center gap-3 text-sm font-medium">
-                <Link
-                  className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:bg-white/10 hover:text-white"
-                  href="/rifas"
-                >
-                  <Trophy className="h-4 w-4" />
-                  <span className="hidden sm:inline">Rifas</span>
-                </Link>
-                <Link
-                  className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-white/80 transition hover:bg-white/10 hover:text-white"
-                  href="/ganadores"
-                >
-                  <Users className="h-4 w-4" />
-                  <span className="hidden sm:inline">Ganadores</span>
-                </Link>
-                <Link
-                  className="rounded-lg bg-white/10 px-4 py-2 text-white transition hover:bg-white/20"
-                  href="/login"
-                >
-                  Login
-                </Link>
-                <Link
-                  className="rounded-lg px-4 py-2 font-semibold text-white transition hover:-translate-y-[1px]"
-                  style={{
-                    background: "linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%)",
-                    boxShadow: "0 4px 20px rgba(255, 107, 0, 0.4)",
-                  }}
-                  href="/register"
-                >
-                  Registrarse
-                </Link>
-                <LogoutButton />
+                <TopNav />
               </nav>
             </div>
           </header>
@@ -129,7 +98,7 @@ export default function RootLayout({
                       filter: "drop-shadow(0 0 8px rgba(255,107,0,0.4))",
                     }}
                   />
-                  <span className="font-[var(--font-display)] text-lg font-bold text-white">MEGA RIFAS</span>
+                  <span className="text-lg font-bold text-white">MEGA RIFAS</span>
                 </div>
                 <p className="text-sm text-white/60">© 2025 MegaRifas. La nueva era de las rifas.</p>
                 <div className="flex gap-4 text-sm text-white/60">

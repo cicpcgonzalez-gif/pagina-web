@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { fetchWinners } from "@/lib/api";
 import type { Winner } from "@/lib/types";
+import { RequireAuth } from "@/components/app/RequireAuth";
+import { AppShell } from "@/components/app/AppShell";
 
 export default function GanadoresPage() {
   const [winners, setWinners] = useState<Winner[]>([]);
@@ -30,13 +32,8 @@ export default function GanadoresPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] text-white">
-      <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 pb-16 pt-14">
-        <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.25em] text-white/70">Ganadores</p>
-          <h1 className="font-[var(--font-display)] text-3xl text-white sm:text-4xl">Muro de confianza y resultados.</h1>
-          <p className="text-white/75">Ganadores reales con foto, premio, fecha de sorteo y testimonio si aplica.</p>
-        </div>
+    <RequireAuth>
+      <AppShell title="Ganadores" subtitle="Muro de la Fama: resultados reales.">
 
         {error && (
           <div className="rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div>
@@ -82,7 +79,7 @@ export default function GanadoresPage() {
             </article>
           ))}
         </div>
-      </div>
-    </main>
+      </AppShell>
+    </RequireAuth>
   );
 }

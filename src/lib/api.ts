@@ -84,6 +84,16 @@ type RemoteRaffle = {
   endDate?: string;
   drawDate?: string;
   status?: string;
+  description?: string;
+  stats?: { total?: number; sold?: number; remaining?: number };
+  style?: { bannerImage?: string; gallery?: string[]; themeColor?: string };
+};
+
+const normalizeRaffleStatus = (raw?: string): Raffle["status"] => {
+  const s = String(raw || "").trim().toLowerCase();
+  if (s === "active" || s === "activa") return "activa";
+  if (s === "paused" || s === "pausada") return "pausada";
+  return "cerrada";
 };
 
 export async function fetchRaffles(): Promise<Raffle[]> {
@@ -92,16 +102,18 @@ export async function fetchRaffles(): Promise<Raffle[]> {
     return raw.map((item, index) => {
       const total = item.totalTickets ?? item.ticketsTotal ?? 0;
       const sold = item.soldTickets ?? item._count?.tickets ?? 0;
+      const remaining = item.stats?.remaining ?? (total ? Math.max(total - sold, 0) : 0);
       return {
         id: String(item.id ?? `raffle-${index}`),
         title: item.name ?? item.title ?? "Rifa",
         price: Number(item.ticketPrice ?? item.price ?? 0),
-        ticketsAvailable: Math.max(0, total - sold),
+        ticketsAvailable: Number.isFinite(remaining) ? Math.max(0, remaining) : Math.max(0, total - sold),
         ticketsTotal: total || 1,
         drawDate: item.endDate ?? item.drawDate ?? "Por definir",
-        status: (item.status ?? "activa").toLowerCase() === "activa"
-          ? "activa"
-          : "cerrada",
+        status: normalizeRaffleStatus(item.status),
+        description: item.description,
+        stats: item.stats,
+        style: item.style,
       } satisfies Raffle;
     });
   } catch {
@@ -123,7 +135,7 @@ export async function fetchRaffle(id: string | number) {
     ticketsAvailable: remaining,
     ticketsTotal: total || 1,
     drawDate: data.endDate ?? data.drawDate ?? "Por definir",
-    status: (data.status ?? "activa").toLowerCase() === "activa" ? "activa" : "cerrada",
+    status: normalizeRaffleStatus(data.status),
     description: data.description,
     stats: data.stats,
     style: data.style,

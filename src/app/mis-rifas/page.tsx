@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchMyRaffles } from "@/lib/api";
 import type { MyRaffle } from "@/lib/types";
 import { formatTicketNumber } from "@/lib/utils";
+import { RequireAuth } from "@/components/app/RequireAuth";
+import { AppShell } from "@/components/app/AppShell";
 
 export default function MisRifasPage() {
   const [items, setItems] = useState<MyRaffle[]>([]);
@@ -38,13 +40,8 @@ export default function MisRifasPage() {
   }, [items]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#0b1224] via-[#0f172a] to-[#0f172a] text-white">
-      <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 pb-16 pt-14">
-        <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.25em] text-white/70">Mis rifas</p>
-          <h1 className="font-[var(--font-display)] text-3xl text-white sm:text-4xl">Tus sorteos activos y cerrados.</h1>
-          <p className="text-white/75">Listado de rifas compradas, números asignados, estado y acceso al detalle.</p>
-        </div>
+    <RequireAuth>
+      <AppShell title="Tickets" subtitle="Tu historial de compras (rifas y números asignados).">
 
         <div className="grid gap-3 sm:grid-cols-3">
           {[{ label: "Total", value: totals.total }, { label: "Ganadas", value: totals.winners }, { label: "Pendientes", value: totals.pending }].map((tile) => (
@@ -116,10 +113,7 @@ export default function MisRifasPage() {
                       <span>{Math.round(progress)}%</span>
                     </div>
                     <div className="h-2 rounded-full bg-white/10">
-                      <div
-                        className="h-2 rounded-full bg-gradient-to-r from-[#3b82f6] to-[#22d3ee]"
-                        style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
-                      />
+                      <div className="h-2 rounded-full bg-neon-blue-gradient" style={{ width: `${Math.min(100, Math.max(0, progress))}%` }} />
                     </div>
                     <button className="w-full rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-white/40">
                       Ver detalles
@@ -130,7 +124,7 @@ export default function MisRifasPage() {
             );
           })}
         </div>
-      </div>
-    </main>
+      </AppShell>
+    </RequireAuth>
   );
 }
