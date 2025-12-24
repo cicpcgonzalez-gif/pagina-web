@@ -63,14 +63,13 @@ export default function PerfilPage() {
       const payload: Partial<UserProfile> & { avatar?: string } = {
         name: name.trim() || undefined,
         bio: bio.trim() || undefined,
-        avatarUrl: avatarUrl.trim() || undefined,
+        avatar: avatarUrl.trim() || undefined,
         socials: {
           instagram: instagram.trim() || undefined,
           whatsapp: whatsapp.trim() || undefined,
         },
       }
-      const result = await updateProfile(payload)
-      const user = (result as any)?.user as UserProfile | undefined
+      const user = await updateProfile(payload)
       setProfile(user ?? profile)
       setMessage("Perfil actualizado")
     } catch (e) {

@@ -2,20 +2,10 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { fetchRaffles } from "@/lib/api"
+import { fetchRaffles, reactToRaffle } from "@/lib/api"
+import type { Raffle } from "@/lib/types"
 import { Sparkles, RefreshCw, Search, MoreHorizontal, ThumbsUp, Heart, Send } from "lucide-react"
 import WinnersTicker from "../../_components/WinnersTicker"
-
-type Raffle = {
-  id: string
-  title: string
-  price: number
-  ticketsAvailable: number
-  ticketsTotal: number
-  drawDate: string
-  status: string
-  imageUrl?: string
-}
 
 const currency = new Intl.NumberFormat("es-VE", { style: "currency", currency: "USD", minimumFractionDigits: 2 })
 
@@ -25,10 +15,14 @@ export default function RifasPage() {
   const [items, setItems] = useState<Raffle[]>([])
   const [query, setQuery] = useState("")
   const [filter, setFilter] = useState<"todas" | "cierre" | "precio">("todas")
+  const [reacting, setReacting] = useState<Record<string, boolean>>({})
+  const [reactions, setReactions] = useState<Record<string, { like?: boolean; heart?: boolean }>>({})
 
   useEffect(() => {
     let mounted = true
-    ;(async () => {
+    const load = async () => {
+      setLoading(true)
+      setError(null)
       try {
         const data = await fetchRaffles()
         if (!mounted) return
@@ -39,11 +33,45 @@ export default function RifasPage() {
       } finally {
         if (mounted) setLoading(false)
       }
-    })()
+    }
+    load()
     return () => {
       mounted = false
     }
   }, [])
+
+  const onRefresh = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await fetchRaffles()
+      setItems(Array.isArray(data) ? (data as any) : [])
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudieron cargar las rifas.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const onReact = async (raffleId: string, type: "LIKE" | "HEART") => {
+    const key = `${raffleId}:${type}`
+    if (reacting[key]) return
+    setReacting((s) => ({ ...s, [key]: true }))
+    setError(null)
+    try {
+      const res = await reactToRaffle(raffleId, type)
+      const active = !!(res as any)?.active
+      setReactions((prev) => {
+        const current = prev[raffleId] || {}
+        if (type === "LIKE") return { ...prev, [raffleId]: { ...current, like: active } }
+        return { ...prev, [raffleId]: { ...current, heart: active } }
+      })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo reaccionar.")
+    } finally {
+      setReacting((s) => ({ ...s, [key]: false }))
+    }
+  }
 
   const content = useMemo(() => {
     const normalized = query.trim().toLowerCase()
@@ -92,6 +120,11 @@ export default function RifasPage() {
           const sold = Math.max(0, r.ticketsTotal - r.ticketsAvailable)
           const percent = r.ticketsTotal > 0 ? Math.min(100, Math.round((sold / r.ticketsTotal) * 100)) : 0
           const soldOut = r.ticketsAvailable <= 0 || r.status?.toLowerCase() === "closed"
+          const banner = (r as any)?.style?.bannerImage
+          const gallery0 = Array.isArray((r as any)?.style?.gallery) ? (r as any).style.gallery[0] : undefined
+          const imageUrl = banner || gallery0 || "/images/raffle-placeholder.jpg"
+          const likeActive = !!reactions[String(r.id)]?.like
+          const heartActive = !!reactions[String(r.id)]?.heart
 
           return (
             <div
@@ -100,7 +133,7 @@ export default function RifasPage() {
             >
               <div className="flex items-center justify-between px-4 pt-4 pb-2">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 p-[2px] shadow-lg shadow-purple-500/20">
+                  <div className="h-10 w-10 rounded-full bg-linear-to-br from-purple-500 to-indigo-500 p-0.5 shadow-lg shadow-purple-500/20">
                     <div className="h-full w-full rounded-full bg-slate-900 grid place-items-center text-xs font-bold text-white">
                       MR
                     </div>
@@ -113,9 +146,9 @@ export default function RifasPage() {
                 <MoreHorizontal className="h-5 w-5 text-slate-300" />
               </div>
 
-              <div className="relative aspect-[4/3] bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
+              <div className="relative aspect-4/3 bg-linear-to-br from-slate-800 via-slate-900 to-slate-950">
                 <img
-                  src={r.imageUrl || "/images/raffle-placeholder.jpg"}
+                  src={String(imageUrl)}
                   alt={r.title}
                   className="h-full w-full object-cover"
                   onError={(e) => {
@@ -123,7 +156,7 @@ export default function RifasPage() {
                     target.style.display = "none"
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/25 to-black/65" />
+                <div className="absolute inset-0 bg-linear-to-b from-transparent via-black/25 to-black/65" />
 
                 <div className="absolute left-4 top-4 rounded-full bg-purple-600/90 px-3 py-1 text-[11px] font-semibold text-white shadow">
                   {r.status || "Activa"}
@@ -145,14 +178,28 @@ export default function RifasPage() {
               <div className="space-y-4 px-4 py-4">
                 <div className="flex items-center justify-between text-sm text-slate-200">
                   <div className="flex items-center gap-4 text-slate-300">
-                    <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => onReact(String(r.id), "LIKE")}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-1 transition ${
+                        likeActive ? "bg-purple-500/15 text-purple-200" : "hover:bg-white/10"
+                      }`}
+                      aria-pressed={likeActive}
+                    >
                       <ThumbsUp className="h-4 w-4" />
                       <span>{Math.max(sold, 1)}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onReact(String(r.id), "HEART")}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-1 transition ${
+                        heartActive ? "bg-purple-500/15 text-purple-200" : "hover:bg-white/10"
+                      }`}
+                      aria-pressed={heartActive}
+                    >
                       <Heart className="h-4 w-4" />
                       <span>0</span>
-                    </div>
+                    </button>
                     <div className="flex items-center gap-1">
                       <Send className="h-4 w-4" />
                     </div>
@@ -197,7 +244,7 @@ export default function RifasPage() {
   }, [loading, error, items])
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white pb-24">
+    <div className="min-h-screen bg-linear-to-b from-slate-950 via-slate-900 to-slate-950 text-white pb-24">
       <header className="sticky top-0 z-20 bg-slate-950/90 backdrop-blur border-b border-slate-800">
         <div className="mx-auto max-w-4xl px-4 py-4">
           <div className="flex items-center justify-center">
@@ -212,7 +259,7 @@ export default function RifasPage() {
 
       <main className="mx-auto max-w-4xl px-4 py-4 space-y-6">
         {/* Hero card */}
-        <section className="rounded-3xl border border-purple-500/30 bg-gradient-to-br from-slate-900 to-slate-950 p-5 shadow-xl shadow-purple-900/30">
+        <section className="rounded-3xl border border-purple-500/30 bg-linear-to-br from-slate-900 to-slate-950 p-5 shadow-xl shadow-purple-900/30">
           <div className="flex items-center justify-between mb-3">
             <div className="inline-flex items-center gap-2 rounded-full bg-purple-800/60 px-3 py-1 text-sm font-semibold text-purple-100 shadow-inner shadow-purple-900/40">
               <Sparkles className="h-4 w-4" /> Sorteos Activos
@@ -221,6 +268,7 @@ export default function RifasPage() {
               type="button"
               className="rounded-full bg-slate-800/80 p-2 text-slate-200 hover:bg-slate-700 transition"
               aria-label="Refrescar"
+              onClick={onRefresh}
             >
               <RefreshCw className="h-4 w-4" />
             </button>

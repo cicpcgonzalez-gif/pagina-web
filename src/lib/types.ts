@@ -78,6 +78,47 @@ export type WalletMovement = {
   reference?: string;
 };
 
+export type PaymentDetails = {
+  raffle?: { id?: string | number; title?: string };
+  paymentMethods?: string[];
+  bankDetails?: Record<string, unknown> | null;
+  seller?: {
+    id?: string | number;
+    publicId?: string;
+    name?: string | null;
+    email?: string;
+    avatar?: string;
+    identityVerified?: boolean;
+    securityIdLast8?: string | null;
+  } | null;
+};
+
+export type AdminTicket = {
+  id?: string | number;
+  number?: number;
+  serialNumber?: string;
+  status?: string;
+  createdAt?: string;
+  raffleId?: string | number;
+  raffleTitle?: string;
+  user?: {
+    id?: string | number;
+    publicId?: string;
+    email?: string;
+    name?: string;
+    phone?: string;
+    cedula?: string;
+  };
+  seller?: {
+    id?: string | number;
+    publicId?: string;
+    name?: string | null;
+    email?: string;
+    avatar?: string;
+    securityIdLast8?: string | null;
+  };
+};
+
 export type PaymentReceipt = {
   id?: string | number;
   raffleId?: string | number;

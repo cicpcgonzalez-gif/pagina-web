@@ -1,5 +1,5 @@
 import { mockRaffles, mockStatus } from "./mock";
-import type { ModuleConfig, Raffle, SystemStatus, UserProfile, UserTicket, Winner } from "./types";
+import type { AdminTicket, ModuleConfig, PaymentDetails, Raffle, SystemStatus, UserProfile, UserTicket, Winner } from "./types";
 import { getAuthToken, getRefreshToken, setAuthToken, setRefreshToken } from "./session";
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
@@ -290,6 +290,56 @@ export async function fetchWallet() {
   return safeFetch<{ balance?: number; transactions?: Array<Record<string, unknown>> }>("/wallet");
 }
 
+export async function topupWallet(amount: number) {
+  return safeFetch<{ message?: string }>("/wallet/topup", {
+    method: "POST",
+    body: JSON.stringify({ amount }),
+  });
+}
+
+export async function fetchRafflePaymentDetails(raffleId: string | number) {
+  return safeFetch<PaymentDetails>(`/raffles/${raffleId}/payment-details`);
+}
+
+export async function reactToRaffle(raffleId: string | number, type: "LIKE" | "HEART") {
+  return safeFetch<{ message?: string; active?: boolean }>(`/raffles/${raffleId}/react`, {
+    method: "POST",
+    body: JSON.stringify({ type }),
+  });
+}
+
+export async function fetchAdminTickets(params?: {
+  q?: string;
+  raffleId?: string | number;
+  status?: string;
+  from?: string;
+  to?: string;
+  email?: string;
+  phone?: string;
+  cedula?: string;
+  number?: string | number;
+  serial?: string;
+  take?: number;
+  offset?: number;
+}): Promise<AdminTicket[]> {
+  const qs = new URLSearchParams();
+  if (params?.q) qs.set("q", params.q);
+  if (params?.raffleId != null && params.raffleId !== "") qs.set("raffleId", String(params.raffleId));
+  if (params?.status) qs.set("status", params.status);
+  if (params?.from) qs.set("from", params.from);
+  if (params?.to) qs.set("to", params.to);
+  if (params?.email) qs.set("email", params.email);
+  if (params?.phone) qs.set("phone", params.phone);
+  if (params?.cedula) qs.set("cedula", params.cedula);
+  if (params?.number != null && params.number !== "") qs.set("number", String(params.number));
+  if (params?.serial) qs.set("serial", params.serial);
+  if (params?.take) qs.set("take", String(params.take));
+  if (params?.offset) qs.set("offset", String(params.offset));
+  const q = qs.toString();
+  const list = await safeFetch<AdminTicket[]>(`/admin/tickets${q ? `?${q}` : ""}`);
+  return Array.isArray(list) ? list : [];
+}
+
 export async function fetchMyPayments() {
   // Algunos entornos exponen pagos como /payments, otros /me/payments.
   const candidates = ["/payments/my", "/me/payments", "/payments"];
@@ -333,10 +383,17 @@ export async function fetchWinners(): Promise<Winner[]> {
   }
 }
 
-export async function updateProfile(payload: Partial<UserProfile> & { avatar?: string }) {
-  return safeFetch<{ user: UserProfile }>("/me", {
+export async function updateProfile(payload: Partial<UserProfile> & { avatar?: string; avatarUrl?: string }) {
+  // El backend soporta: { name, avatar, bio, socials }
+  const body = {
+    name: payload?.name,
+    avatar: payload?.avatar ?? payload?.avatarUrl ?? (payload as any)?.avatarUrl,
+    bio: payload?.bio,
+    socials: payload?.socials,
+  };
+  return safeFetch<UserProfile>("/me", {
     method: "PATCH",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   });
 }
 

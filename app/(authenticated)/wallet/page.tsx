@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { fetchWallet } from "@/lib/api"
+import { fetchWallet, topupWallet } from "@/lib/api"
 import { getAuthToken } from "@/lib/session"
 import type { WalletMovement } from "@/lib/types"
 import { Wallet as WalletIcon } from "lucide-react"
@@ -14,6 +14,9 @@ export default function WalletPage() {
   const [error, setError] = useState<string | null>(null)
   const [balance, setBalance] = useState<number | null>(null)
   const [movements, setMovements] = useState<WalletMovement[]>([])
+  const [topupAmount, setTopupAmount] = useState<string>("")
+  const [toppingUp, setToppingUp] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
 
   useEffect(() => {
     const token = getAuthToken()
@@ -23,7 +26,9 @@ export default function WalletPage() {
     }
 
     let mounted = true
-    ;(async () => {
+
+    const load = async () => {
+      setError(null)
       try {
         const data = await fetchWallet()
         if (!mounted) return
@@ -37,12 +42,40 @@ export default function WalletPage() {
       } finally {
         if (mounted) setLoading(false)
       }
-    })()
+    }
+
+    load()
 
     return () => {
       mounted = false
     }
   }, [router])
+
+  const onTopup = async () => {
+    setError(null)
+    setMessage(null)
+    const amount = Number(topupAmount)
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setError("Monto inválido")
+      return
+    }
+
+    setToppingUp(true)
+    try {
+      await topupWallet(amount)
+      const data = await fetchWallet()
+      const b = (data as any)?.balance
+      setBalance(typeof b === "number" ? b : b ? Number(b) : 0)
+      const tx = (data as any)?.transactions
+      setMovements(Array.isArray(tx) ? (tx as any) : [])
+      setTopupAmount("")
+      setMessage("Recarga exitosa")
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo recargar.")
+    } finally {
+      setToppingUp(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-linear-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
@@ -84,12 +117,38 @@ export default function WalletPage() {
           <div className="rounded-xl border border-red-400/40 bg-red-900/30 px-4 py-3 text-sm text-red-100">{error}</div>
         ) : null}
 
+        {message ? (
+          <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">{message}</div>
+        ) : null}
+
         {!loading && !error ? (
           <>
             <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-black/30">
               <p className="text-xs text-slate-400">Balance</p>
               <p className="mt-1 text-4xl font-extrabold text-amber-300">{(balance ?? 0).toFixed(2)}</p>
               <p className="mt-1 text-xs text-slate-400">(Monto mostrado según el backend)</p>
+
+              <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+                <p className="text-sm font-semibold text-white">Recargar saldo</p>
+                <p className="mt-1 text-xs text-slate-300">Ingresa un monto y confirma.</p>
+                <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <input
+                    value={topupAmount}
+                    onChange={(e) => setTopupAmount(e.target.value)}
+                    inputMode="decimal"
+                    placeholder="Ej: 10"
+                    className="w-full rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none focus:border-purple-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={onTopup}
+                    disabled={toppingUp}
+                    className="inline-flex items-center justify-center rounded-full bg-amber-400 px-6 py-3 text-sm font-extrabold text-slate-900 hover:bg-amber-300 transition disabled:opacity-60"
+                  >
+                    {toppingUp ? "Recargando..." : "Recargar"}
+                  </button>
+                </div>
+              </div>
             </section>
 
             <section className="space-y-3">
