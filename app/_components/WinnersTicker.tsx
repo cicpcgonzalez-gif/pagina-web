@@ -56,9 +56,9 @@ export default function WinnersTicker() {
           {marquee.map((w, idx) => (
             <div
               key={`${w.id ?? idx}-${idx}`}
-              className="flex items-center gap-3 rounded-xl bg-slate-800/80 px-3 py-2 min-w-[240px] border border-slate-700"
+              className="flex items-center gap-3 rounded-xl bg-slate-800/80 px-3 py-2 min-w-60 border border-slate-700"
             >
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 text-white grid place-items-center text-xs font-bold">
+              <div className="h-8 w-8 rounded-full bg-linear-to-br from-purple-500 to-indigo-500 text-white grid place-items-center text-xs font-bold">
                 {w.user?.name?.charAt(0)?.toUpperCase() ?? "G"}
               </div>
               <div className="text-xs leading-tight text-slate-100">

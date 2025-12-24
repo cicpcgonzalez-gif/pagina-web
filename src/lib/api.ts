@@ -670,3 +670,43 @@ export async function superadminResetPasswordByEmail(email: string) {
     body: JSON.stringify({ email }),
   });
 }
+
+export async function fetchSuperadminAdminsActiveRaffles(params?: { includeClosed?: boolean }) {
+  const qs = new URLSearchParams();
+  if (params?.includeClosed) qs.set("includeClosed", "true");
+  const q = qs.toString();
+  return safeFetch<Array<Record<string, unknown>>>(`/superadmin/admins/active-raffles${q ? `?${q}` : ""}`);
+}
+
+export async function superadminSearchRiferos(params: { q: string; take?: number; includeInactive?: boolean; scanTake?: number }) {
+  const qs = new URLSearchParams();
+  qs.set("q", params.q);
+  if (params.take) qs.set("take", String(params.take));
+  if (params.scanTake) qs.set("scanTake", String(params.scanTake));
+  if (params.includeInactive) qs.set("includeInactive", "true");
+  const q = qs.toString();
+  return safeFetch<Array<Record<string, unknown>>>(`/superadmin/riferos/search?${q}`);
+}
+
+export async function superadminFetchRiferoRaffles(riferoIdOrPublicId: string | number, params?: { status?: "active" | "draft" | "closed" | "all" }) {
+  const qs = new URLSearchParams();
+  if (params?.status) qs.set("status", params.status);
+  const q = qs.toString();
+  return safeFetch<{ user?: Record<string, unknown>; raffles?: Array<Record<string, unknown>> }>(
+    `/superadmin/riferos/${riferoIdOrPublicId}/raffles${q ? `?${q}` : ""}`,
+  );
+}
+
+export async function superadminReportRaffle(raffleId: string | number, payload: { reason: string; details?: string }) {
+  return safeFetch<{ message?: string; reportId?: number | null }>(`/superadmin/raffles/${raffleId}/report`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function superadminCloseRaffle(raffleId: string | number, payload: { reason: string; details?: string }) {
+  return safeFetch<{ message?: string }>(`/superadmin/raffles/${raffleId}/close`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}

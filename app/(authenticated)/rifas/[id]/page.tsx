@@ -125,7 +125,7 @@ export default function RifaDetallePage() {
               <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Mega Rifas</p>
               <h1 className="text-lg font-extrabold text-white">DETALLE</h1>
             </div>
-            <div className="w-23" />
+            <div className="w-24" />
           </div>
         </div>
       </header>
@@ -267,7 +267,7 @@ export default function RifaDetallePage() {
                   {paymentDetails?.bankDetails ? (
                     <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
                       <p className="text-xs text-slate-400">Datos bancarios</p>
-                      <pre className="mt-2 whitespace-pre-wrap wrap-break-word rounded-xl border border-slate-800 bg-slate-950/50 p-3 text-xs text-slate-100">
+                      <pre className="mt-2 whitespace-pre-wrap break-words rounded-xl border border-slate-800 bg-slate-950/50 p-3 text-xs text-slate-100">
                         {JSON.stringify(paymentDetails.bankDetails, null, 2)}
                       </pre>
                     </div>

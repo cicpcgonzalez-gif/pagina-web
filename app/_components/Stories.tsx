@@ -16,9 +16,9 @@ export default function Stories() {
     <div className="bg-white border-b border-gray-200 py-4 mb-2">
       <div className="flex space-x-4 overflow-x-auto px-4 no-scrollbar">
         {stories.map((story) => (
-          <div key={story.id} className="flex flex-col items-center space-y-1 flex-shrink-0 cursor-pointer">
-            <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 to-fuchsia-600">
-              <div className="w-full h-full rounded-full p-[2px] bg-white">
+          <div key={story.id} className="flex flex-col items-center space-y-1 shrink-0 cursor-pointer">
+            <div className="w-16 h-16 rounded-full p-0.5 bg-linear-to-tr from-yellow-400 to-fuchsia-600">
+              <div className="w-full h-full rounded-full p-0.5 bg-white">
                 <img
                   src={story.image}
                   alt={story.name}

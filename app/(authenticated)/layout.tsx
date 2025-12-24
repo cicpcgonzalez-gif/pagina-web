@@ -10,7 +10,7 @@ export default function AuthenticatedLayout({
 }) {
   return (
     <div className="flex flex-col min-h-screen bg-slate-950 text-white">
-      <main className="flex-grow pb-24">
+      <main className="grow pb-24">
         <RequireAuth>{children}</RequireAuth>
       </main>
       <BottomNav />

@@ -266,7 +266,7 @@ export default function RifasPage() {
             </div>
             <button
               type="button"
-              className="rounded-full bg-slate-800/80 p-2 text-slate-200 hover:bg-slate-700 transition"
+              className="rounded-full bg-white/10 p-2 text-slate-200 hover:bg-white/15 transition"
               aria-label="Refrescar"
               onClick={onRefresh}
             >
@@ -293,7 +293,7 @@ export default function RifasPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar rifas..."
-              className="w-full rounded-xl border border-slate-800 bg-slate-900/80 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-purple-500 focus:outline-none"
+              className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 outline-none focus:border-purple-500"
             />
           </div>
           <div className="flex flex-wrap gap-2">

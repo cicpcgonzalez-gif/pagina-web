@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Banknote, Bitcoin, CreditCard, Plus, Smartphone, Wallet } from "lucide-react";
 import { adminActivateRaffle, adminCreateRaffle } from "@/lib/api";
 import {
   Dialog,
@@ -28,6 +28,16 @@ const LOTTERIES = [
   "La Ricachona",
   "La Ruca",
   "El Terminalito / La Granjita",
+];
+
+const THEME_SWATCHES = ["#2563eb", "#dc2626", "#16a34a", "#d97706", "#7c3aed", "#db2777"];
+
+const PAYMENT_METHODS: Array<{ key: string; label: string; Icon: React.ComponentType<{ className?: string }> }> = [
+  { key: "mobile_payment", label: "Pago Móvil", Icon: Smartphone },
+  { key: "wallet", label: "Wallet", Icon: Wallet },
+  { key: "transfer", label: "Transferencia", Icon: CreditCard },
+  { key: "zelle", label: "Zelle", Icon: Banknote },
+  { key: "binance", label: "Binance", Icon: Bitcoin },
 ];
 
 async function fileToJpegDataUrl(file: File, opts?: { maxSide?: number; quality?: number }) {
@@ -198,20 +208,27 @@ export function CreateRaffleModal({ onCreated }: Props) {
           Crear rifa
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>Crear o Editar Rifa</DialogTitle>
-          <DialogDescription>
-            Completa los datos generales, tickets, lotería e imágenes. Puedes guardar como borrador o publicar.
-          </DialogDescription>
-        </DialogHeader>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            submit("publish");
-          }}
-          className="grid gap-4 py-4"
-        >
+      <DialogContent className="sm:max-w-3xl max-h-[92vh] overflow-hidden p-0 bg-slate-950 text-white border border-slate-800">
+        <div className="flex max-h-[92vh] flex-col">
+          <div className="shrink-0 border-b border-slate-800 bg-slate-950/90 px-6 pb-4 pt-3">
+            <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-white/15" />
+            <DialogHeader className="space-y-1">
+              <DialogTitle className="text-base sm:text-lg font-extrabold tracking-tight text-white">Crear rifa</DialogTitle>
+              <DialogDescription className="text-xs sm:text-sm text-slate-300">
+                Completa los datos y luego guarda como borrador o publica.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <form
+              id="create-raffle-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                submit("publish");
+              }}
+              className="grid gap-4"
+            >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <label htmlFor="title" className="text-sm font-semibold">
@@ -317,6 +334,51 @@ export function CreateRaffleModal({ onCreated }: Props) {
                 <option value={5}>5</option>
                 <option value={6}>6</option>
               </select>
+            </div>
+          </div>
+
+          <div className="mt-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+            <p className="text-sm font-extrabold text-amber-300">Métodos de Pago Aceptados</p>
+            <p className="mt-1 text-xs text-slate-300">Selecciona qué métodos de pago estarán disponibles para esta rifa.</p>
+
+            <div className="mt-3 grid gap-2">
+              {PAYMENT_METHODS.map(({ key, label, Icon }) => {
+                const enabled = paymentMethods.includes(key);
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => togglePayment(key)}
+                    disabled={busy}
+                    className={
+                      "w-full rounded-xl border px-4 py-3 text-left transition flex items-center justify-between gap-3 " +
+                      (enabled
+                        ? "border-emerald-400/40 bg-emerald-500/10"
+                        : "border-slate-800 bg-slate-950/40 hover:bg-slate-950/55")
+                    }
+                  >
+                    <span className="inline-flex items-center gap-3 min-w-0">
+                      <span
+                        className={
+                          "grid h-10 w-10 place-items-center rounded-xl border " +
+                          (enabled ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200" : "border-slate-800 bg-white/5 text-slate-300")
+                        }
+                      >
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <span className={"text-sm font-bold truncate " + (enabled ? "text-white" : "text-slate-200")}>{label}</span>
+                    </span>
+                    <span
+                      className={
+                        "h-5 w-5 rounded-full border-2 grid place-items-center " +
+                        (enabled ? "border-emerald-400" : "border-slate-500")
+                      }
+                    >
+                      {enabled ? <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" /> : null}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -519,13 +581,29 @@ export function CreateRaffleModal({ onCreated }: Props) {
                   disabled={busy}
                   className="h-10 w-12 rounded-md border border-slate-800 bg-transparent"
                 />
-                <input
-                  value={themeColor}
-                  onChange={(e) => setThemeColor(e.target.value)}
-                  disabled={busy}
-                  className="w-full rounded-md border border-slate-800 bg-slate-950/40 px-3 py-2 text-sm text-white outline-none focus:border-purple-500/60"
-                />
+                <div className="flex items-center gap-2">
+                  {THEME_SWATCHES.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setThemeColor(c)}
+                      disabled={busy}
+                      className={
+                        "h-9 w-9 rounded-full border-2 transition " +
+                        (themeColor === c ? "border-white" : "border-transparent")
+                      }
+                      style={{ backgroundColor: c }}
+                      aria-label={`Color ${c}`}
+                    />
+                  ))}
+                </div>
               </div>
+              <input
+                value={themeColor}
+                onChange={(e) => setThemeColor(e.target.value)}
+                disabled={busy}
+                className="w-full rounded-md border border-slate-800 bg-slate-950/40 px-3 py-2 text-sm text-white outline-none focus:border-purple-500/60"
+              />
             </div>
             <div className="grid gap-2">
               <label htmlFor="whatsapp" className="text-sm font-semibold">
@@ -555,23 +633,29 @@ export function CreateRaffleModal({ onCreated }: Props) {
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-2">
-            <Button type="button" variant="outline" onClick={() => submit("draft")} disabled={busy}>
-              Guardar borrador
-            </Button>
-            <Button type="submit" disabled={busy}>
-              {busy ? "Procesando..." : "Publicar"}
-            </Button>
-          </DialogFooter>
-        </form>
-        {message ? (
-          <p className="text-sm text-center text-slate-200 mt-2">
-            {message}
-            {String(message || "").includes("413") ? (
-              <span className="block text-xs text-slate-400 mt-1">Si ves “413 / entity too large”, usa imágenes más ligeras.</span>
+            </form>
+          </div>
+
+          <div className="shrink-0 border-t border-slate-800 bg-slate-950/90 px-6 py-4">
+            {message ? (
+              <p className="text-sm text-center text-slate-200 mb-3">
+                {message}
+                {String(message || "").includes("413") ? (
+                  <span className="block text-xs text-slate-400 mt-1">Si ves “413 / entity too large”, usa imágenes más ligeras.</span>
+                ) : null}
+              </p>
             ) : null}
-          </p>
-        ) : null}
+
+            <DialogFooter className="gap-2 sm:gap-2">
+              <Button type="button" variant="outline" onClick={() => submit("draft")} disabled={busy}>
+                Guardar borrador
+              </Button>
+              <Button type="submit" form="create-raffle-form" disabled={busy}>
+                {busy ? "Procesando..." : "Publicar"}
+              </Button>
+            </DialogFooter>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

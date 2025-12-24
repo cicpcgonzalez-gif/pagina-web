@@ -33,8 +33,9 @@ export default function PublicLayout({
               </div>
               <div className="flex flex-col leading-tight">
                 <span
-                  className="font-[var(--font-display)] text-xl font-bold tracking-tight"
+                  className="text-xl font-bold tracking-tight"
                   style={{
+                    fontFamily: "var(--font-display)",
                     background: "linear-gradient(135deg, #fb923c 0%, #22d3ee 100%)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
@@ -69,7 +70,7 @@ export default function PublicLayout({
                     background: "linear-gradient(135deg, rgba(251, 146, 60, 0.1), rgba(34, 211, 238, 0.1))",
                   }}
                 />
-                <span className="font-[var(--font-display)] text-lg font-bold text-white">MEGA RIFAS</span>
+                <span className="text-lg font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>MEGA RIFAS</span>
               </div>
               <p className="text-sm text-white/60">© 2025 MegaRifas. Todos los derechos reservados.</p>
               <div className="flex gap-4 text-sm text-white/60">

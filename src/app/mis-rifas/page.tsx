@@ -115,7 +115,7 @@ export default function MisRifasPage() {
                     <div className="h-2 rounded-full bg-white/10">
                       <div className="h-2 rounded-full bg-neon-blue-gradient" style={{ width: `${Math.min(100, Math.max(0, progress))}%` }} />
                     </div>
-                    <button className="w-full rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:border-white/40">
+                    <button className="w-full rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold text-white transition hover:-translate-y-px hover:border-white/40">
                       Ver detalles
                     </button>
                   </div>

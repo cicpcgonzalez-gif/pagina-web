@@ -98,7 +98,7 @@ export function HomeLoginCard() {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#3b82f6] to-[#22d3ee] px-4 py-3 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:shadow-lg hover:shadow-[#22d3ee]/30 disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-[#3b82f6] to-[#22d3ee] px-4 py-3 text-sm font-semibold text-white transition hover:-translate-y-px hover:shadow-lg hover:shadow-[#22d3ee]/30 disabled:opacity-60"
         >
           <LogIn className="h-4 w-4" /> {loading ? "Verificando..." : "Entrar"}
         </button>
