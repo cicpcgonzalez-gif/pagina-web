@@ -11,8 +11,9 @@ import Image from "next/image"
 
 export default function PerfilPage() {
   const [activeTab, setActiveTab] = useState<"personal" | "legal" | "kyc" | "plan">("personal")
-  const [showDrawer, setShowDrawer] = useState(false)
   const [showPublicaciones, setShowPublicaciones] = useState(false)
+  const [showDrawer, setShowDrawer] = useState(false)
+  const [expandPublicaciones, setExpandPublicaciones] = useState(false)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 text-white">
