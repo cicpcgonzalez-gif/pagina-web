@@ -429,6 +429,12 @@ export async function reconcilePayment(paymentId: string | number) {
   });
 }
 
+export async function rejectManualPayment(paymentId: string | number) {
+  return safeFetch<{ status?: string; message?: string }>(`/admin/manual-payments/${paymentId}/reject`, {
+    method: "POST",
+  });
+}
+
 export async function fetchAdminWinners() {
   try {
     return await safeFetch<Array<Record<string, unknown>>>('/winners');
@@ -450,5 +456,36 @@ export async function publishWinner(payload: {
   return safeFetch("/admin/winners", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchSuperadminSettings() {
+  return safeFetch<{ branding?: Record<string, unknown>; modules?: Record<string, unknown>; company?: Record<string, unknown> }>(
+    "/superadmin/settings",
+  );
+}
+
+export async function updateSuperadminModules(modules: Record<string, unknown>) {
+  return safeFetch("/superadmin/settings/modules", {
+    method: "PATCH",
+    body: JSON.stringify({ modules }),
+  });
+}
+
+export async function fetchAllUsers() {
+  return safeFetch<Array<Record<string, unknown>>>("/users");
+}
+
+export async function superadminUpdateUserStatus(userId: string | number, status: string) {
+  return safeFetch(`/superadmin/users/${userId}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+}
+
+export async function superadminResetPasswordByEmail(email: string) {
+  return safeFetch("/superadmin/users/reset-password-by-email", {
+    method: "POST",
+    body: JSON.stringify({ email }),
   });
 }

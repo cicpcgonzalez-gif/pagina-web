@@ -8,8 +8,8 @@ export default function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <main className="flex-grow pb-20">{children}</main>
+    <div className="flex flex-col min-h-screen bg-slate-950 text-white">
+      <main className="flex-grow pb-24">{children}</main>
       <BottomNav />
     </div>
   );
