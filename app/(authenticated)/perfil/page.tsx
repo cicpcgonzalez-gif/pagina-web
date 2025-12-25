@@ -422,7 +422,7 @@ export default function PerfilPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 py-4 space-y-6 pb-24">
+      <main className="mx-auto max-w-4xl px-4 py-4 space-y-4 pb-24">
         {loading ? <p className="text-slate-300">Cargando…</p> : null}
         {errorMsg ? (
           <div className="rounded-xl border border-red-400/40 bg-red-900/30 px-4 py-3 text-sm text-red-100">{errorMsg}</div>
@@ -600,8 +600,8 @@ export default function PerfilPage() {
         ) : null}
 
         {!loading && profile ? (
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-black/30 space-y-5">
-            <div className="flex items-start justify-between gap-4">
+          <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-black/30 space-y-3">
+            <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="h-12 w-12 shrink-0 rounded-full bg-linear-to-br from-purple-500 to-indigo-500 p-0.5 overflow-hidden">
                   {profile.avatarUrl || profile.avatar ? (
@@ -624,7 +624,7 @@ export default function PerfilPage() {
                   </p>
 
                   {(!!profile.verified || !!profile.identityVerified) ? (
-                    <div className="mt-2 flex flex-wrap gap-2">
+                    <div className="mt-1.5 flex flex-wrap gap-2">
                       {!!profile.verified ? (
                         <span className="inline-flex items-center gap-1 rounded-full border border-blue-400/30 bg-blue-400/10 px-3 py-1 text-xs font-semibold text-blue-100">
                           <CheckCircle2 className="h-4 w-4" /> Email verificado
@@ -641,14 +641,14 @@ export default function PerfilPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-3xl border border-slate-800 bg-slate-950/40 p-4">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-3xl border border-slate-800 bg-slate-950/40 p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-slate-400">Tickets</p>
                     <p className="text-2xl font-extrabold text-white leading-none">{tickets.length}</p>
                   </div>
-                  <div className="h-11 w-11 rounded-2xl border border-white/10 bg-white/5 grid place-items-center">
+                  <div className="h-10 w-10 rounded-2xl border border-white/10 bg-white/5 grid place-items-center">
                     <Ticket className="h-5 w-5 text-slate-200" />
                   </div>
                 </div>
@@ -657,21 +657,21 @@ export default function PerfilPage() {
               <button
                 type="button"
                 onClick={() => setReferralsVisible(true)}
-                className="rounded-3xl border border-slate-800 bg-slate-950/40 p-4 text-left hover:bg-slate-950/60"
+                className="rounded-3xl border border-slate-800 bg-slate-950/40 p-3 text-left hover:bg-slate-950/60"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-slate-400">Referidos</p>
                     <p className="text-2xl font-extrabold text-white leading-none">{referrals.length}</p>
                   </div>
-                  <div className="h-11 w-11 rounded-2xl border border-white/10 bg-white/5 grid place-items-center">
+                  <div className="h-10 w-10 rounded-2xl border border-white/10 bg-white/5 grid place-items-center">
                     <Users className="h-5 w-5 text-slate-200" />
                   </div>
                 </div>
               </button>
             </div>
 
-            <p className="text-sm text-slate-300 text-center">
+            <p className="text-xs text-slate-300 text-center">
               {isOrganizerRole ? "Promociona tus rifas • Más alcance • Más ventas" : "Compra segura • Participa y gana • Invita y suma beneficios"}
             </p>
           </section>
