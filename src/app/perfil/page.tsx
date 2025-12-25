@@ -404,6 +404,8 @@ export default function PerfilPage() {
   }
 
   const idLabel = (profile as any)?.securityId || (profile as any)?.publicId || "—";
+  const normalizedRole = String((profile as any)?.role || "").toLowerCase();
+  const roleLabel = normalizedRole === "superadmin" ? "Super Admin" : normalizedRole === "admin" ? "Admin" : null;
   const hasAnySocial =
     !!profile.socials?.whatsapp ||
     !!profile.socials?.instagram ||
@@ -563,6 +565,9 @@ export default function PerfilPage() {
             </div>
 
             <div className="min-w-0 flex-1">
+              {roleLabel ? (
+                <p className="truncate text-sm font-semibold text-white/80">{roleLabel}</p>
+              ) : null}
               <p className="truncate text-xl font-extrabold text-white">{profile.name || "Usuario"}</p>
               <p className="mt-1 text-xs text-white/60">ID: {idLabel}</p>
 

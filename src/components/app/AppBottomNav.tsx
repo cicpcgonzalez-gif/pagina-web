@@ -21,7 +21,7 @@ export function AppBottomNav() {
     { href: "/perfil", label: "Perfil" },
   ];
 
-  if (role === "superadmin") items.push({ href: "/superadmin", label: "Superadmin" });
+  if (role === "superadmin") items.push({ href: "/superadmin", label: "Super Admin" });
   else if (role === "admin" || role === "organizer") items.push({ href: "/admin", label: "Admin" });
 
   const isActive = (href: string) => {
