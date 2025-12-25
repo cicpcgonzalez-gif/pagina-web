@@ -35,6 +35,7 @@ import {
   RefreshCcw,
   Save,
   Shield,
+  Ticket,
   Trash,
   User,
   X,
@@ -78,6 +79,14 @@ function statusPillClass(status: unknown) {
   if (s === "approved" || s === "success" || s === "completed") return "border-emerald-400/30 bg-emerald-400/10 text-emerald-100"
   if (s === "rejected" || s === "failed") return "border-red-400/30 bg-red-500/10 text-red-100"
   return "border-amber-400/30 bg-amber-400/10 text-amber-100"
+}
+
+function raffleStatusPillClass(status: unknown) {
+  const s = String(status || "").toLowerCase()
+  if (s === "activa" || s === "active") return "border-emerald-400/30 bg-emerald-400/10 text-emerald-100"
+  if (s === "cerrada" || s === "closed") return "border-slate-400/30 bg-slate-400/10 text-slate-100"
+  if (s === "pausada" || s === "paused") return "border-amber-400/30 bg-amber-400/10 text-amber-100"
+  return "border-white/10 bg-white/5 text-slate-100"
 }
 
 function buildDraftFromProfile(me: UserProfile | null): Partial<UserProfile> {
@@ -131,6 +140,7 @@ export default function PerfilPage() {
   const [tab, setTab] = useState<"personal" | "legal" | "kyc" | "subscription">("personal")
 
   const [draft, setDraft] = useState<Partial<UserProfile>>({})
+  const [avatarPicking, setAvatarPicking] = useState(false)
   const [passwordForm, setPasswordForm] = useState({ current: "", next: "" })
   const [changingPassword, setChangingPassword] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -354,6 +364,20 @@ export default function PerfilPage() {
       ...prev,
       [key]: { previewUrl: dataUrl, base64: dataUrl },
     }))
+  }
+
+  const onPickAvatarFile = async (file: File | null) => {
+    if (!file) return
+    setAvatarPicking(true)
+    setMessage("")
+    try {
+      const dataUrl = await readAsDataUrl(file)
+      setDraft((prev) => ({ ...prev, avatar: dataUrl }))
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "No se pudo cargar la imagen.")
+    } finally {
+      setAvatarPicking(false)
+    }
   }
 
   const onSubmitKyc = async () => {
@@ -618,17 +642,32 @@ export default function PerfilPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3">
-                <p className="text-xs text-slate-400">Tickets</p>
-                <p className="text-lg font-extrabold text-white">{tickets.length}</p>
+              <div className="rounded-3xl border border-slate-800 bg-slate-950/40 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-slate-400">Tickets</p>
+                    <p className="text-2xl font-extrabold text-white leading-none">{tickets.length}</p>
+                  </div>
+                  <div className="h-11 w-11 rounded-2xl border border-white/10 bg-white/5 grid place-items-center">
+                    <Ticket className="h-5 w-5 text-slate-200" />
+                  </div>
+                </div>
               </div>
+
               <button
                 type="button"
                 onClick={() => setReferralsVisible(true)}
-                className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-left hover:bg-slate-950/60"
+                className="rounded-3xl border border-slate-800 bg-slate-950/40 p-4 text-left hover:bg-slate-950/60"
               >
-                <p className="text-xs text-slate-400">Referidos</p>
-                <p className="text-lg font-extrabold text-white">{referrals.length}</p>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-slate-400">Referidos</p>
+                    <p className="text-2xl font-extrabold text-white leading-none">{referrals.length}</p>
+                  </div>
+                  <div className="h-11 w-11 rounded-2xl border border-white/10 bg-white/5 grid place-items-center">
+                    <Users className="h-5 w-5 text-slate-200" />
+                  </div>
+                </div>
               </button>
             </div>
 
@@ -738,10 +777,32 @@ export default function PerfilPage() {
                   <Link
                     key={String(r?.id ?? idx)}
                     href={r?.id != null ? `/rifas/${String(r.id)}` : "/rifas"}
-                    className="block rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3 hover:bg-slate-950/60"
+                    className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-950/40 px-3 py-3 hover:bg-slate-950/60"
                   >
-                    <p className="text-sm font-semibold text-white truncate">{String(r?.title || "Rifa")}</p>
-                    <p className="text-xs text-slate-400">Estado: {String(r?.status || "-")}</p>
+                    <div className="h-14 w-14 shrink-0 rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+                      {(() => {
+                        const style = r?.style || {}
+                        const gallery0 = Array.isArray(style?.gallery) ? style.gallery?.[0] : null
+                        const img = style?.bannerImage || gallery0 || r?.bannerImage || r?.image || null
+                        return img ? (
+                          <img src={String(img)} alt="Rifa" className="h-full w-full object-cover" loading="lazy" />
+                        ) : (
+                          <div className="h-full w-full grid place-items-center text-xs font-extrabold text-white">MR</div>
+                        )
+                      })()}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-extrabold text-white truncate">{String(r?.title || "Rifa")}</p>
+                      <p className="text-xs text-slate-400 truncate">{r?.endDate ? new Date(r.endDate).toLocaleDateString() : r?.drawDate ? new Date(r.drawDate).toLocaleDateString() : ""}</p>
+                    </div>
+
+                    <div className="shrink-0 flex items-center gap-2">
+                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-extrabold ${raffleStatusPillClass(r?.status)}`}>
+                        {String(r?.status || "-")}
+                      </span>
+                      <ChevronRight className="h-5 w-5 text-slate-400" />
+                    </div>
                   </Link>
                 ))}
               </div>
@@ -815,13 +876,30 @@ export default function PerfilPage() {
                   <div className="space-y-3">
                     <p className="text-sm font-extrabold text-white">Información Pública</p>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">Avatar URL</label>
-                      <input
-                        value={String((draft as any)?.avatar || "")}
-                        onChange={(e) => setDraft((p) => ({ ...p, avatar: e.target.value }))}
-                        className="w-full rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none focus:border-purple-500"
-                        placeholder="https://..."
-                      />
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">Avatar</label>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="h-14 w-14 rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+                          {(draft as any)?.avatar ? (
+                            <img src={String((draft as any)?.avatar)} alt="Avatar" className="h-full w-full object-cover" />
+                          ) : profile?.avatarUrl || profile?.avatar ? (
+                            <img src={String(profile?.avatarUrl || profile?.avatar)} alt="Avatar" className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="h-full w-full grid place-items-center text-sm font-extrabold text-white">
+                              {(profile?.name || profile?.email || "U").charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="block w-full text-xs text-slate-300"
+                            onChange={(e) => onPickAvatarFile(e.target.files?.[0] || null)}
+                          />
+                          <p className="mt-1 text-[11px] text-slate-400">Selecciona una imagen desde tu PC.</p>
+                          {avatarPicking ? <p className="mt-1 text-[11px] text-slate-300">Cargando imagen...</p> : null}
+                        </div>
+                      </div>
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-slate-300 mb-1">Nombre Visible</label>
@@ -1018,13 +1096,30 @@ export default function PerfilPage() {
                 <p className="text-sm font-extrabold text-white">Editar Información</p>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">Avatar URL</label>
-                    <input
-                      value={String((draft as any)?.avatar || "")}
-                      onChange={(e) => setDraft((p) => ({ ...p, avatar: e.target.value }))}
-                      className="w-full rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none focus:border-purple-500"
-                      placeholder="https://..."
-                    />
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">Avatar</label>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="h-14 w-14 rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+                        {(draft as any)?.avatar ? (
+                          <img src={String((draft as any)?.avatar)} alt="Avatar" className="h-full w-full object-cover" />
+                        ) : profile?.avatarUrl || profile?.avatar ? (
+                          <img src={String(profile?.avatarUrl || profile?.avatar)} alt="Avatar" className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="h-full w-full grid place-items-center text-sm font-extrabold text-white">
+                            {(profile?.name || profile?.email || "U").charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="block w-full text-xs text-slate-300"
+                          onChange={(e) => onPickAvatarFile(e.target.files?.[0] || null)}
+                        />
+                        <p className="mt-1 text-[11px] text-slate-400">Selecciona una imagen desde tu PC.</p>
+                        {avatarPicking ? <p className="mt-1 text-[11px] text-slate-300">Cargando imagen...</p> : null}
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1">Nombre</label>
