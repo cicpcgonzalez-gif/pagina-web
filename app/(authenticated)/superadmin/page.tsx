@@ -46,22 +46,85 @@ export default function SuperadminPage() {
               <Crown className="h-4 w-4" /> Control total
             </div>
             <h2 className="mt-3 text-2xl font-extrabold leading-tight text-white">Panel Superadmin</h2>
-            <p className="mt-2 text-slate-200 text-sm">Como en la app: el acceso principal es <span className="font-semibold">Denuncias y reportes</span>.</p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Link className="inline-flex items-center gap-2 rounded-full bg-amber-400 px-5 py-3 text-sm font-extrabold text-slate-900 hover:bg-amber-300 transition" href="/superadmin/reports">
-                <Flag className="h-4 w-4" /> Denuncias y reportes
+            <p className="mt-2 text-slate-200 text-sm">
+              Igual que en la app: este panel incluye opciones de <span className="font-semibold">Admin</span> y de <span className="font-semibold">Superadmin</span>.
+            </p>
+          </section>
+
+          <section className="rounded-3xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg shadow-black/30">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Admin (como en la app)</p>
+            <div className="mt-3 grid gap-3 grid-cols-2 sm:grid-cols-3">
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/perfil">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Users className="h-4 w-4 text-purple-200" /> Perfil
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Cuenta</p>
               </Link>
-              <Link className="inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/15 transition" href="/superadmin/users">
-                <Users className="h-4 w-4" /> Usuarios
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/support">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Wrench className="h-4 w-4 text-purple-200" /> Mi Soporte
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Ayuda</p>
               </Link>
-              <Link className="rounded-full px-5 py-3 bg-white/10 hover:bg-white/15 transition font-semibold" href="/admin">
-                Ir a Admin
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/notifications">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Mail className="h-4 w-4 text-purple-200" /> Notificaciones
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Push</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/security">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Shield className="h-4 w-4 text-purple-200" /> Cód. Seguridad
+                </div>
+                <p className="mt-1 text-xs text-slate-300">2FA</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/live">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Ticket className="h-4 w-4 text-purple-200" /> Sorteo en Vivo
+                </div>
+                <p className="mt-1 text-xs text-slate-300">En directo</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/raffles">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Ticket className="h-4 w-4 text-purple-200" /> Gestión de Rifas
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Admin</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/dashboard">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <FileText className="h-4 w-4 text-purple-200" /> Dashboard
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Métricas</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/payments">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <FileText className="h-4 w-4 text-purple-200" /> Validar Pagos
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Pagos</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/movements">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <FileText className="h-4 w-4 text-purple-200" /> Movimientos
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Transacciones</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/tickets">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Ticket className="h-4 w-4 text-purple-200" /> Verificador
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Tickets</p>
+              </Link>
+              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/admin/news">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <MailSearch className="h-4 w-4 text-purple-200" /> Novedades
+                </div>
+                <p className="mt-1 text-xs text-slate-300">Anuncios</p>
               </Link>
             </div>
           </section>
 
           <section className="rounded-3xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg shadow-black/30">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Menú (como en la app)</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Superadmin (como en la app)</p>
             <div className="mt-3 grid gap-3 grid-cols-2 sm:grid-cols-3">
               <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/users">
                 <div className="flex items-center gap-2 text-sm font-extrabold">
@@ -73,13 +136,13 @@ export default function SuperadminPage() {
                 <div className="flex items-center gap-2 text-sm font-extrabold">
                   <Ticket className="h-4 w-4 text-purple-200" /> Administrar Rifas
                 </div>
-                <p className="mt-1 text-xs text-slate-300">Crear / revisar</p>
+                <p className="mt-1 text-xs text-slate-300">Rifero / moderación</p>
               </Link>
               <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/support">
                 <div className="flex items-center gap-2 text-sm font-extrabold">
                   <Wrench className="h-4 w-4 text-purple-200" /> Soporte Técnico
                 </div>
-                <p className="mt-1 text-xs text-slate-300">Incidencias</p>
+                <p className="mt-1 text-xs text-slate-300">Contacto global</p>
               </Link>
               <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/smtp">
                 <div className="flex items-center gap-2 text-sm font-extrabold">
