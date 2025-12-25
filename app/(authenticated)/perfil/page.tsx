@@ -31,6 +31,7 @@ import {
   Save,
   Shield,
   Trash,
+  User,
   Users,
 } from "lucide-react"
 
