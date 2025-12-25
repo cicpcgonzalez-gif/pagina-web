@@ -1,18 +1,17 @@
 "use client"
 
-import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { fetchMyTickets } from "@/lib/api"
+import { fetchMyRaffles } from "@/lib/api"
 import { getAuthToken } from "@/lib/session"
-import type { UserTicket } from "@/lib/types"
+import type { MyRaffle } from "@/lib/types"
 import { Ticket as TicketIcon } from "lucide-react"
 
 export default function TicketsPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [items, setItems] = useState<UserTicket[]>([])
+  const [items, setItems] = useState<MyRaffle[]>([])
 
   useEffect(() => {
     const token = getAuthToken()
@@ -24,7 +23,7 @@ export default function TicketsPage() {
     let mounted = true
     ;(async () => {
       try {
-        const data = await fetchMyTickets()
+        const data = await fetchMyRaffles()
         if (!mounted) return
         setItems(Array.isArray(data) ? (data as any) : [])
       } catch (e) {
@@ -83,10 +82,14 @@ export default function TicketsPage() {
               <div className="grid gap-4">
                 {items.map((t, idx) => {
                   const id = t.id ?? idx + 1
-                  const raffleTitle = t.raffleTitle || (t as any)?.raffle?.title || "Rifa"
-                  const status = String(t.status ?? t.state ?? "").trim() || "activo"
-                  const number = t.number ?? (t as any)?.ticketNumber
-                  const serial = t.serial ?? t.serialNumber ?? t.code
+                  const raffleTitle = (t as any)?.raffle?.title || "Rifa"
+                  const status = String((t as any)?.status ?? "").trim() || "activo"
+                  const serial = (t as any)?.serialNumber
+                  const numbers = Array.isArray((t as any)?.numbers)
+                    ? ((t as any).numbers as any[]).filter((n) => n !== null && n !== undefined)
+                    : (t as any)?.numbers != null
+                      ? [String((t as any).numbers)]
+                      : []
                   return (
                     <article key={String(id)} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-black/30">
                       <div className="flex items-start justify-between gap-3">
@@ -101,8 +104,10 @@ export default function TicketsPage() {
 
                       <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                         <div className="rounded-xl bg-slate-950/60 p-3 border border-slate-800">
-                          <p className="text-xs text-slate-400">Número</p>
-                          <p className="text-base font-bold text-amber-300">{number ?? "—"}</p>
+                          <p className="text-xs text-slate-400">Números</p>
+                          <p className="text-xs font-semibold text-slate-100 wrap-break-word">
+                            {numbers.length ? numbers.slice(0, 20).join(" ") : "—"}
+                          </p>
                         </div>
                         <div className="rounded-xl bg-slate-950/60 p-3 border border-slate-800">
                           <p className="text-xs text-slate-400">Serial</p>
@@ -120,15 +125,6 @@ export default function TicketsPage() {
             )}
           </section>
         ) : null}
-
-        <div className="flex gap-3">
-          <Link className="rounded-full px-5 py-3 bg-purple-600 text-white font-semibold hover:bg-purple-500 transition" href="/rifas">
-            Buscar rifas
-          </Link>
-          <Link className="rounded-full px-5 py-3 bg-white/10 hover:bg-white/15 transition font-semibold" href="/wallet">
-            Ver billetera
-          </Link>
-        </div>
       </main>
     </div>
   )

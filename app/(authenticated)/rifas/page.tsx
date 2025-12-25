@@ -126,6 +126,16 @@ export default function RifasPage() {
           const likeActive = !!reactions[String(r.id)]?.like
           const heartActive = !!reactions[String(r.id)]?.heart
 
+          const rawInstantWins = (r as any)?.instantWins ?? (r as any)?.style?.instantWins
+          const instantWinsList: string[] = Array.isArray(rawInstantWins)
+            ? rawInstantWins.map((x: any) => String(x)).filter(Boolean)
+            : typeof rawInstantWins === "string"
+              ? rawInstantWins
+                  .split(/[,\s]+/)
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+              : []
+
           return (
             <div
               key={r.id}
@@ -176,6 +186,25 @@ export default function RifasPage() {
               </div>
 
               <div className="space-y-4 px-4 py-4">
+                {instantWinsList.length > 0 ? (
+                  <div className="rounded-2xl border border-purple-500/25 bg-purple-900/15 px-4 py-3">
+                    <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-purple-200">Bendecidos</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {instantWinsList.slice(0, 20).map((n, idx) => (
+                        <span
+                          key={`${r.id}-iw-${n}-${idx}`}
+                          className="rounded-full border border-purple-400/30 bg-white/5 px-3 py-1 text-xs font-semibold text-white"
+                        >
+                          #{n}
+                        </span>
+                      ))}
+                      {instantWinsList.length > 20 ? (
+                        <span className="text-xs font-semibold text-purple-200">+{instantWinsList.length - 20}</span>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+
                 <div className="flex items-center justify-between text-sm text-slate-200">
                   <div className="flex items-center gap-4 text-slate-300">
                     <button

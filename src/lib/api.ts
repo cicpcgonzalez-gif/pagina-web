@@ -89,7 +89,7 @@ type RemoteRaffle = {
   status?: string;
   description?: string;
   stats?: { total?: number; sold?: number; remaining?: number };
-  style?: { bannerImage?: string; gallery?: string[]; themeColor?: string };
+  style?: { bannerImage?: string; gallery?: string[]; themeColor?: string; instantWins?: Array<number | string> | string };
   isSoldOut?: boolean;
   instantWins?: Array<number | string> | string;
   reactionCounts?: { LIKE?: number; HEART?: number };
@@ -159,7 +159,7 @@ export async function fetchRaffles(): Promise<Raffle[]> {
         status: normalizeRaffleStatus(item.status),
         description: item.description,
         isSoldOut,
-        instantWins: normalizeInstantWins(item.instantWins),
+        instantWins: normalizeInstantWins(item.instantWins ?? item.style?.instantWins),
         reactionCounts: item.reactionCounts,
         myReaction: item.myReaction,
         stats: item.stats,
@@ -205,7 +205,7 @@ export async function fetchRaffle(id: string | number) {
     status: normalizeRaffleStatus(data.status),
     description: data.description,
     isSoldOut,
-    instantWins: normalizeInstantWins(data.instantWins),
+    instantWins: normalizeInstantWins(data.instantWins ?? (data as any)?.style?.instantWins),
     reactionCounts: data.reactionCounts,
     myReaction: data.myReaction,
     stats: data.stats,
@@ -373,6 +373,18 @@ export async function fetchWallet() {
   return safeFetch<{ balance?: number; transactions?: Array<Record<string, unknown>> }>('/wallet');
 }
 
+export async function fetchBankDetails(): Promise<Record<string, unknown> | null> {
+  try {
+    const data = await safeFetch<Record<string, unknown> | { bankDetails?: unknown }>("/admin/bank-details");
+    const normalized = (data && typeof data === "object" && (data as any).bankDetails != null)
+      ? (data as any).bankDetails
+      : data;
+    return normalized && typeof normalized === "object" ? (normalized as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchMyReferrals() {
   return safeFetch<{ code?: string; referrals?: Array<{ name?: string; createdAt?: string; verified?: boolean }> }>(
     '/me/referrals',
@@ -405,10 +417,10 @@ export async function submitKyc(payload: { documentType?: string; frontImage: st
   });
 }
 
-export async function topupWallet(amount: number) {
+export async function topupWallet(amount: number, provider?: string) {
   return safeFetch<{ message?: string }>("/wallet/topup", {
     method: "POST",
-    body: JSON.stringify({ amount }),
+    body: JSON.stringify({ amount, ...(provider ? { provider } : {}) }),
   });
 }
 
