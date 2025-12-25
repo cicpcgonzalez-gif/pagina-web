@@ -32,18 +32,10 @@ export default function RootLayout({
     <html lang="es">
       <body
         className={`${display.variable} ${sans.variable} antialiased text-foreground`}
-        style={{
-          background: "linear-gradient(135deg, #0a1929 0%, #0f172a 25%, #1e1b4b 50%, #1e3a8a 75%, #0c4a6e 100%)",
-          backgroundAttachment: "fixed",
-        }}
       >
         <div className="min-h-screen">
           <header
-            className="sticky top-0 z-50 backdrop-blur-xl border-b"
-            style={{
-              background: "rgba(15,23,42,0.75)",
-              borderColor: "rgba(59, 130, 246, 0.25)",
-            }}
+            className="app-bar sticky top-0 z-50 border-b"
           >
             <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
               <Link href="/" className="flex items-center gap-3">
@@ -51,7 +43,7 @@ export default function RootLayout({
                   <div
                     className="absolute inset-0 rounded-full blur-xl"
                     style={{
-                      background: "radial-gradient(circle, rgba(255,107,0,0.4) 0%, transparent 70%)",
+                      background: "radial-gradient(circle, rgba(168,85,247,0.45) 0%, transparent 70%)",
                     }}
                   />
                   <Image
@@ -61,7 +53,7 @@ export default function RootLayout({
                     height={48}
                     className="relative rounded-full"
                     style={{
-                      filter: "drop-shadow(0 0 12px rgba(255,107,0,0.5))",
+                      filter: "drop-shadow(0 0 12px rgba(168,85,247,0.50))",
                     }}
                   />
                 </div>
@@ -79,11 +71,7 @@ export default function RootLayout({
           </header>
           {children}
           <footer
-            className="backdrop-blur-xl border-t mt-20"
-            style={{
-              background: "rgba(15,23,42,0.75)",
-              borderColor: "rgba(59, 130, 246, 0.25)",
-            }}
+            className="app-bar mt-20 border-t"
           >
             <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
               <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
@@ -95,7 +83,7 @@ export default function RootLayout({
                     height={32}
                     className="rounded-full"
                     style={{
-                      filter: "drop-shadow(0 0 8px rgba(255,107,0,0.4))",
+                      filter: "drop-shadow(0 0 8px rgba(168,85,247,0.40))",
                     }}
                   />
                   <span className="text-lg font-bold text-white">MEGA RIFAS</span>
