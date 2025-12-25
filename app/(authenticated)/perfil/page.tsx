@@ -28,7 +28,6 @@ import {
   Music,
   Pencil,
   Plane,
-  RefreshCcw,
   Save,
   Shield,
   Trash,
@@ -442,12 +441,6 @@ export default function PerfilPage() {
               >
                 <Pencil className="h-4 w-4" /> {editing ? "Cerrar edición" : "Editar"}
               </button>
-              <Link
-                href="/wallet"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500"
-              >
-                <RefreshCcw className="h-4 w-4" /> Ver billetera
-              </Link>
             </div>
           </section>
         ) : null}
