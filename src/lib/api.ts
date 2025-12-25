@@ -498,6 +498,16 @@ export async function fetchWinners(): Promise<Winner[]> {
   }
 }
 
+export async function fetchInstantWinsFeed(take = 80): Promise<Array<Record<string, unknown>>> {
+  const t = Number.isFinite(take) ? Math.max(1, Math.min(200, Math.trunc(take))) : 80;
+  try {
+    const list = await safeFetch<Array<Record<string, unknown>>>(`/feed/instant-wins?take=${t}`);
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function updateProfile(payload: Partial<UserProfile> & { avatar?: string; avatarUrl?: string }) {
   const normalizeSocials = (socials: UserProfile['socials'] | undefined) => {
     if (!socials) return undefined;
