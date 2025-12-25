@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import RequireRole from "../../../_components/RequireRole"
 import { fetchSuperadminMailLogs } from "@/lib/api"
 import { MailSearch, RefreshCw } from "lucide-react"
@@ -28,6 +28,29 @@ export default function SuperadminMailLogsPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      load()
+    }, 20_000)
+    return () => clearInterval(id)
+  }, [load])
+
+  const normalized = useMemo(() => {
+    return items
+      .filter(Boolean)
+      .map((it) => {
+        const anyIt: any = it
+        return {
+          id: anyIt?.id ?? `${anyIt?.timestamp ?? ""}-${anyIt?.to ?? anyIt?.email ?? ""}`,
+          to: String(anyIt?.to ?? anyIt?.email ?? anyIt?.recipient ?? "-"),
+          subject: String(anyIt?.subject ?? "Correo"),
+          status: String(anyIt?.status ?? "-"),
+          timestamp: anyIt?.timestamp ? String(anyIt.timestamp) : anyIt?.createdAt ? String(anyIt.createdAt) : "",
+          errorText: anyIt?.error ? String(anyIt.error) : anyIt?.errorMessage ? String(anyIt.errorMessage) : "",
+        }
+      })
+  }, [items])
 
   return (
     <RequireRole allow={["superadmin"]} nextPath="/superadmin/mail-logs" title="Logs de correo">
@@ -68,32 +91,29 @@ export default function SuperadminMailLogsPage() {
 
           <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-black/30">
             <h3 className="text-sm font-extrabold text-white">Registros</h3>
-            <p className="mt-1 text-xs text-slate-300">Total: {items.length}</p>
+            <p className="mt-1 text-xs text-slate-300">Total: {normalized.length}</p>
 
-            {!loading && !items.length ? (
+            {!loading && !normalized.length ? (
               <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/40 px-4 py-6 text-center text-slate-200">Sin logs.</div>
             ) : null}
 
             <div className="mt-4 space-y-3">
-              {items.slice(0, 50).map((it, idx) => {
-                const id = (it as any)?.id ?? idx
-                const to = (it as any)?.to ?? (it as any)?.email ?? (it as any)?.recipient
-                const subject = (it as any)?.subject
-                const status = (it as any)?.status
-                const createdAt = (it as any)?.createdAt
-                const errorText = (it as any)?.error ?? (it as any)?.errorMessage
+              {normalized.slice(0, 50).map((it) => {
+                const statusOk = String(it.status).toUpperCase() === "SENT"
                 return (
-                  <div key={String(id)} className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+                  <div key={String(it.id)} className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      <p className="text-sm font-extrabold text-white">{subject ? String(subject) : "Correo"}</p>
-                      <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">{String(status ?? "-")}</span>
+                      <p className="text-sm font-extrabold text-white">{it.subject}</p>
+                      <span
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                          statusOk ? "bg-emerald-500/15 text-emerald-200" : "bg-red-500/15 text-red-200"
+                        }`}
+                      >
+                        {it.status}
+                      </span>
                     </div>
-                    <p className="mt-2 text-xs text-slate-300">Para: {String(to ?? "-")}{createdAt ? ` · ${new Date(String(createdAt)).toLocaleString()}` : ""}</p>
-                    {errorText ? <p className="mt-2 text-xs text-red-200 whitespace-pre-wrap">{String(errorText)}</p> : null}
-                    <details className="mt-3">
-                      <summary className="cursor-pointer text-xs font-semibold text-slate-300">Ver JSON</summary>
-                      <pre className="mt-2 overflow-auto rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-xs text-slate-100">{JSON.stringify(it, null, 2)}</pre>
-                    </details>
+                    <p className="mt-2 text-xs text-slate-300">Para: {it.to}{it.timestamp ? ` · ${new Date(it.timestamp).toLocaleString()}` : ""}</p>
+                    {it.errorText ? <p className="mt-2 text-xs text-red-200 whitespace-pre-wrap">{it.errorText}</p> : null}
                   </div>
                 )
               })}

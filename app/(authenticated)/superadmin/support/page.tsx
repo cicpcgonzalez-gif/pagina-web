@@ -3,11 +3,24 @@
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import RequireRole from "../../../_components/RequireRole"
-import { fetchSuperadminSettings, fetchTechSupportSettings, updateSuperadminTechSupport } from "@/lib/api"
+import { fetchSuperadminSettings, updateSuperadminTechSupport } from "@/lib/api"
 import { Headset, RefreshCw, Save } from "lucide-react"
 
 type Settings = {
   techSupport?: Record<string, unknown>
+}
+
+type TechSupportForm = {
+  phone: string
+  email: string
+}
+
+const normalizeTechSupportFromServer = (techSupport: unknown): TechSupportForm => {
+  const safe: any = techSupport && typeof techSupport === "object" ? techSupport : {}
+  return {
+    phone: typeof safe.phone === "string" ? safe.phone : "",
+    email: typeof safe.email === "string" ? safe.email : "",
+  }
 }
 
 export default function SuperadminSupportPage() {
@@ -16,24 +29,22 @@ export default function SuperadminSupportPage() {
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [settings, setSettings] = useState<Settings | null>(null)
-  const [publicSettings, setPublicSettings] = useState<Record<string, unknown> | null>(null)
-  const [draftText, setDraftText] = useState("{}")
+  const [form, setForm] = useState<TechSupportForm>({ phone: "", email: "" })
+  const [fieldErrors, setFieldErrors] = useState<{ phone?: string; email?: string }>({})
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     setMessage(null)
+    setFieldErrors({})
     try {
-      const [s, pub] = await Promise.all([fetchSuperadminSettings(), fetchTechSupportSettings()])
+      const s = await fetchSuperadminSettings()
       setSettings(s)
-      setPublicSettings(pub)
-      const t = (s as any)?.techSupport
-      setDraftText(JSON.stringify(t && typeof t === "object" ? t : {}, null, 2))
+      setForm(normalizeTechSupportFromServer((s as any)?.techSupport))
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo cargar soporte técnico.")
       setSettings(null)
-      setPublicSettings(null)
-      setDraftText("{}")
+      setForm({ phone: "", email: "" })
     } finally {
       setLoading(false)
     }
@@ -43,23 +54,24 @@ export default function SuperadminSupportPage() {
     load()
   }, [load])
 
-  const parsedDraft = useMemo(() => {
-    try {
-      const v = JSON.parse(draftText)
-      if (!v || typeof v !== "object" || Array.isArray(v)) return { ok: false as const, error: "El JSON debe ser un objeto." }
-      return { ok: true as const, value: v as Record<string, unknown> }
-    } catch {
-      return { ok: false as const, error: "JSON inválido." }
-    }
-  }, [draftText])
+  const isValid = useMemo(() => {
+    const phoneOk = !!form.phone.trim()
+    const emailOk = !!form.email.trim()
+    return phoneOk && emailOk
+  }, [form])
 
   const onSave = async () => {
     setSaving(true)
     setError(null)
     setMessage(null)
     try {
-      if (!parsedDraft.ok) throw new Error(parsedDraft.error)
-      await updateSuperadminTechSupport(parsedDraft.value)
+      const nextErrors: { phone?: string; email?: string } = {}
+      if (!form.phone.trim()) nextErrors.phone = "* Requerido"
+      if (!form.email.trim()) nextErrors.email = "* Requerido"
+      setFieldErrors(nextErrors)
+      if (Object.keys(nextErrors).length) throw new Error("Completa los campos requeridos.")
+
+      await updateSuperadminTechSupport({ phone: form.phone.trim(), email: form.email.trim() })
       setMessage("Soporte técnico actualizado")
       await load()
     } catch (e) {
@@ -93,7 +105,7 @@ export default function SuperadminSupportPage() {
               <button
                 type="button"
                 onClick={onSave}
-                disabled={saving || loading || !parsedDraft.ok}
+                disabled={saving || loading || !isValid}
                 className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-5 py-3 text-sm font-extrabold text-white hover:bg-purple-500 transition disabled:opacity-60"
               >
                 <Save className="h-4 w-4" /> {saving ? "Guardando..." : "Guardar"}
@@ -116,31 +128,39 @@ export default function SuperadminSupportPage() {
             {loading ? <p className="text-sm text-slate-300">Cargando…</p> : null}
             {error ? <div className="mt-4 rounded-xl border border-red-400/40 bg-red-900/30 px-4 py-3 text-sm text-red-100">{error}</div> : null}
             {message ? <div className="mt-4 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">{message}</div> : null}
-            {!parsedDraft.ok ? (
-              <div className="mt-4 rounded-xl border border-red-400/40 bg-red-900/20 px-4 py-3 text-sm text-red-100">{parsedDraft.error}</div>
-            ) : null}
 
             <div className="mt-4 grid gap-3">
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-                <p className="text-xs font-semibold text-slate-300">Tech support (JSON)</p>
-                <textarea
-                  value={draftText}
-                  onChange={(e) => setDraftText(e.target.value)}
-                  rows={12}
-                  className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 font-mono text-xs text-white outline-none focus:border-purple-500"
-                  spellCheck={false}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300" htmlFor="phone">WhatsApp Soporte</label>
+                <input
+                  id="phone"
+                  value={form.phone}
+                  onChange={(e) => setForm((s) => ({ ...s, phone: e.target.value }))}
+                  placeholder="+58 412 1234567"
+                  className={`mt-2 w-full rounded-xl border bg-slate-950/60 px-4 py-3 text-sm text-white outline-none focus:border-purple-500 ${
+                    fieldErrors.phone ? "border-red-500" : "border-slate-800"
+                  }`}
                 />
-                <p className="mt-2 text-xs text-slate-400">Se envía tal cual en el body del PATCH.</p>
+                {fieldErrors.phone ? <p className="mt-2 text-xs text-red-200">{fieldErrors.phone}</p> : null}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300" htmlFor="email">Email Soporte</label>
+                <input
+                  id="email"
+                  value={form.email}
+                  onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))}
+                  placeholder="soporte@app.com"
+                  className={`mt-2 w-full rounded-xl border bg-slate-950/60 px-4 py-3 text-sm text-white outline-none focus:border-purple-500 ${
+                    fieldErrors.email ? "border-red-500" : "border-slate-800"
+                  }`}
+                />
+                {fieldErrors.email ? <p className="mt-2 text-xs text-red-200">{fieldErrors.email}</p> : null}
               </div>
 
               <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-                <p className="text-xs font-semibold text-slate-300">Vista actual (superadmin)</p>
+                <p className="text-xs font-semibold text-slate-300">Vista actual (desde backend)</p>
                 <pre className="mt-2 overflow-auto rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-xs text-slate-100">{JSON.stringify((settings as any)?.techSupport ?? {}, null, 2)}</pre>
-              </div>
-
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-                <p className="text-xs font-semibold text-slate-300">Vista pública</p>
-                <pre className="mt-2 overflow-auto rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-xs text-slate-100">{JSON.stringify(publicSettings ?? {}, null, 2)}</pre>
               </div>
             </div>
           </section>

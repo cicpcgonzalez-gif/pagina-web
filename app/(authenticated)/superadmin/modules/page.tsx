@@ -12,13 +12,20 @@ type Settings = {
   company?: Record<string, unknown>
 }
 
+type ModulesDraft = {
+  user?: { registration?: boolean; manualPayments?: boolean }
+  system?: { maintenance?: boolean }
+}
+
+const getBool = (v: unknown) => typeof v === "boolean" ? v : undefined
+
 export default function SuperadminModulesPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [settings, setSettings] = useState<Settings | null>(null)
-  const [modulesDraft, setModulesDraft] = useState<Record<string, unknown>>({})
+  const [modulesDraft, setModulesDraft] = useState<ModulesDraft>({ user: {}, system: {} })
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -28,11 +35,21 @@ export default function SuperadminModulesPage() {
       const s = await fetchSuperadminSettings()
       setSettings(s)
       const mods = (s as any)?.modules
-      setModulesDraft(mods && typeof mods === "object" ? { ...(mods as any) } : {})
+      const user = (mods as any)?.user
+      const system = (mods as any)?.system
+      setModulesDraft({
+        user: {
+          registration: getBool(user?.registration),
+          manualPayments: getBool(user?.manualPayments),
+        },
+        system: {
+          maintenance: getBool(system?.maintenance),
+        },
+      })
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudieron cargar los ajustes.")
       setSettings(null)
-      setModulesDraft({})
+      setModulesDraft({ user: {}, system: {} })
     } finally {
       setLoading(false)
     }
@@ -42,16 +59,21 @@ export default function SuperadminModulesPage() {
     load()
   }, [load])
 
-  const moduleKeys = useMemo(() => {
-    const keys = Object.keys(modulesDraft || {})
-    keys.sort((a, b) => a.localeCompare(b))
-    return keys
-  }, [modulesDraft])
+  const enabledUserRegistration = useMemo(() => (modulesDraft?.user?.registration !== false), [modulesDraft])
+  const enabledUserManualPayments = useMemo(() => (modulesDraft?.user?.manualPayments !== false), [modulesDraft])
+  const enabledMaintenance = useMemo(() => (modulesDraft?.system?.maintenance === true), [modulesDraft])
 
-  const toggle = (key: string) => {
+  const toggleUser = (key: "registration" | "manualPayments") => {
     setModulesDraft((prev) => {
-      const cur = !!(prev as any)?.[key]
-      return { ...prev, [key]: !cur }
+      const current = prev?.user?.[key] !== false
+      return { ...prev, user: { ...(prev.user || {}), [key]: !current } }
+    })
+  }
+
+  const toggleMaintenance = () => {
+    setModulesDraft((prev) => {
+      const current = prev?.system?.maintenance === true
+      return { ...prev, system: { ...(prev.system || {}), maintenance: !current } }
     })
   }
 
@@ -60,7 +82,7 @@ export default function SuperadminModulesPage() {
     setError(null)
     setMessage(null)
     try {
-      await updateSuperadminModules(modulesDraft)
+      await updateSuperadminModules(modulesDraft as any)
       setMessage("Módulos actualizados")
       await load()
     } catch (e) {
@@ -111,29 +133,52 @@ export default function SuperadminModulesPage() {
             {message ? <div className="mt-4 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">{message}</div> : null}
 
             {!loading ? (
-              moduleKeys.length ? (
-                <div className="grid gap-2">
-                  {moduleKeys.map((k) => (
-                    <button
-                      key={k}
-                      type="button"
-                      onClick={() => toggle(k)}
-                      className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-left"
-                    >
-                      <span className="text-sm font-semibold text-white">{k}</span>
-                      <span
-                        className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
-                          (modulesDraft as any)?.[k] ? "bg-amber-400/15 text-amber-300" : "bg-white/10 text-slate-300"
-                        }`}
-                      >
-                        <Settings2 className="h-4 w-4" /> {(modulesDraft as any)?.[k] ? "ON" : "OFF"}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-slate-800 bg-slate-950/40 px-4 py-6 text-center text-slate-200">No hay módulos configurados.</div>
-              )
+              <div className="grid gap-2">
+                <button
+                  type="button"
+                  onClick={() => toggleUser("registration")}
+                  className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-left"
+                >
+                  <span className="text-sm font-semibold text-white">Registro de Usuarios</span>
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
+                      enabledUserRegistration ? "bg-amber-400/15 text-amber-300" : "bg-white/10 text-slate-300"
+                    }`}
+                  >
+                    <Settings2 className="h-4 w-4" /> {enabledUserRegistration ? "ON" : "OFF"}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => toggleUser("manualPayments")}
+                  className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-left"
+                >
+                  <span className="text-sm font-semibold text-white">Pagos Manuales</span>
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
+                      enabledUserManualPayments ? "bg-amber-400/15 text-amber-300" : "bg-white/10 text-slate-300"
+                    }`}
+                  >
+                    <Settings2 className="h-4 w-4" /> {enabledUserManualPayments ? "ON" : "OFF"}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={toggleMaintenance}
+                  className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-left"
+                >
+                  <span className="text-sm font-semibold text-white">Modo Mantenimiento</span>
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
+                      enabledMaintenance ? "bg-amber-400/15 text-amber-300" : "bg-white/10 text-slate-300"
+                    }`}
+                  >
+                    <Settings2 className="h-4 w-4" /> {enabledMaintenance ? "ON" : "OFF"}
+                  </span>
+                </button>
+              </div>
             ) : null}
           </section>
         </main>

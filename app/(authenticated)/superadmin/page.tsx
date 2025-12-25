@@ -3,8 +3,30 @@
 import Link from "next/link"
 import RequireRole from "../../_components/RequireRole"
 import { Crown, FileText, Flag, Mail, MailSearch, Palette, Shield, Ticket, Users, Wrench } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { fetchModules } from "@/lib/api"
 
 export default function SuperadminPage() {
+  const [modulesConfig, setModulesConfig] = useState<{ superadmin?: Record<string, boolean> } | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchModules()
+      .then((m) => {
+        if (!cancelled) setModulesConfig(m as any)
+      })
+      .catch(() => {
+        if (!cancelled) setModulesConfig(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const showAudit = useMemo(() => !modulesConfig || modulesConfig?.superadmin?.audit !== false, [modulesConfig])
+  const showBranding = useMemo(() => !modulesConfig || modulesConfig?.superadmin?.branding !== false, [modulesConfig])
+  const showModules = useMemo(() => !modulesConfig || modulesConfig?.superadmin?.modules !== false, [modulesConfig])
+
   return (
     <RequireRole allow={["superadmin"]} nextPath="/superadmin" title="Superadmin">
       <div className="min-h-screen bg-linear-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
@@ -23,10 +45,13 @@ export default function SuperadminPage() {
             <div className="inline-flex items-center gap-2 rounded-full bg-purple-800/60 px-3 py-1 text-sm font-semibold text-purple-100 shadow-inner shadow-purple-900/40">
               <Crown className="h-4 w-4" /> Control total
             </div>
-            <h2 className="mt-3 text-2xl font-extrabold leading-tight text-white">Configuración y usuarios.</h2>
-            <p className="mt-2 text-slate-200 text-sm">Acceso exclusivo para Superadmin.</p>
+            <h2 className="mt-3 text-2xl font-extrabold leading-tight text-white">Panel Superadmin</h2>
+            <p className="mt-2 text-slate-200 text-sm">Como en la app: el acceso principal es <span className="font-semibold">Denuncias y reportes</span>.</p>
             <div className="mt-4 flex flex-wrap gap-3">
-              <Link className="inline-flex items-center gap-2 rounded-full bg-amber-400 px-5 py-3 text-sm font-extrabold text-slate-900 hover:bg-amber-300 transition" href="/usuarios">
+              <Link className="inline-flex items-center gap-2 rounded-full bg-amber-400 px-5 py-3 text-sm font-extrabold text-slate-900 hover:bg-amber-300 transition" href="/superadmin/reports">
+                <Flag className="h-4 w-4" /> Denuncias y reportes
+              </Link>
+              <Link className="inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/15 transition" href="/superadmin/users">
                 <Users className="h-4 w-4" /> Usuarios
               </Link>
               <Link className="rounded-full px-5 py-3 bg-white/10 hover:bg-white/15 transition font-semibold" href="/admin">
@@ -62,24 +87,30 @@ export default function SuperadminPage() {
                 </div>
                 <p className="mt-1 text-xs text-slate-300">Configuración</p>
               </Link>
-              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/audit">
-                <div className="flex items-center gap-2 text-sm font-extrabold">
-                  <Shield className="h-4 w-4 text-purple-200" /> Auditoría
-                </div>
-                <p className="mt-1 text-xs text-slate-300">Bitácora</p>
-              </Link>
-              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/branding">
-                <div className="flex items-center gap-2 text-sm font-extrabold">
-                  <Palette className="h-4 w-4 text-purple-200" /> Branding
-                </div>
-                <p className="mt-1 text-xs text-slate-300">Marca</p>
-              </Link>
-              <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/modules">
-                <div className="flex items-center gap-2 text-sm font-extrabold">
-                  <FileText className="h-4 w-4 text-purple-200" /> Módulos
-                </div>
-                <p className="mt-1 text-xs text-slate-300">ON / OFF</p>
-              </Link>
+              {showAudit ? (
+                <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/audit">
+                  <div className="flex items-center gap-2 text-sm font-extrabold">
+                    <Shield className="h-4 w-4 text-purple-200" /> Auditoría
+                  </div>
+                  <p className="mt-1 text-xs text-slate-300">Bitácora</p>
+                </Link>
+              ) : null}
+              {showBranding ? (
+                <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/branding">
+                  <div className="flex items-center gap-2 text-sm font-extrabold">
+                    <Palette className="h-4 w-4 text-purple-200" /> Branding
+                  </div>
+                  <p className="mt-1 text-xs text-slate-300">Marca</p>
+                </Link>
+              ) : null}
+              {showModules ? (
+                <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/modules">
+                  <div className="flex items-center gap-2 text-sm font-extrabold">
+                    <FileText className="h-4 w-4 text-purple-200" /> Módulos
+                  </div>
+                  <p className="mt-1 text-xs text-slate-300">ON / OFF</p>
+                </Link>
+              ) : null}
               <Link className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 hover:bg-slate-950/55 transition" href="/superadmin/mail-logs">
                 <div className="flex items-center gap-2 text-sm font-extrabold">
                   <MailSearch className="h-4 w-4 text-purple-200" /> Logs de Correo

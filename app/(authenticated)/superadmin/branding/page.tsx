@@ -1,13 +1,28 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import RequireRole from "../../../_components/RequireRole"
 import { fetchSuperadminSettings, updateSuperadminBranding } from "@/lib/api"
 import { Palette, RefreshCw, Save } from "lucide-react"
 
 type Settings = {
   branding?: Record<string, unknown>
+}
+
+type BrandingForm = {
+  title: string
+  tagline: string
+  primaryColor: string
+}
+
+const normalizeBrandingFromServer = (branding: unknown): BrandingForm => {
+  const safe: any = branding && typeof branding === "object" ? branding : {}
+  return {
+    title: typeof safe.title === "string" ? safe.title : "",
+    tagline: typeof safe.tagline === "string" ? safe.tagline : "",
+    primaryColor: typeof safe.primaryColor === "string" ? safe.primaryColor : "",
+  }
 }
 
 export default function SuperadminBrandingPage() {
@@ -17,7 +32,7 @@ export default function SuperadminBrandingPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [settings, setSettings] = useState<Settings | null>(null)
 
-  const [draftText, setDraftText] = useState("{}")
+  const [form, setForm] = useState<BrandingForm>({ title: "", tagline: "", primaryColor: "" })
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -26,12 +41,11 @@ export default function SuperadminBrandingPage() {
     try {
       const s = await fetchSuperadminSettings()
       setSettings(s)
-      const b = (s as any)?.branding
-      setDraftText(JSON.stringify(b && typeof b === "object" ? b : {}, null, 2))
+      setForm(normalizeBrandingFromServer((s as any)?.branding))
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo cargar branding.")
       setSettings(null)
-      setDraftText("{}")
+      setForm({ title: "", tagline: "", primaryColor: "" })
     } finally {
       setLoading(false)
     }
@@ -41,23 +55,16 @@ export default function SuperadminBrandingPage() {
     load()
   }, [load])
 
-  const parsedDraft = useMemo(() => {
-    try {
-      const v = JSON.parse(draftText)
-      if (!v || typeof v !== "object" || Array.isArray(v)) return { ok: false as const, error: "El JSON debe ser un objeto." }
-      return { ok: true as const, value: v as Record<string, unknown> }
-    } catch {
-      return { ok: false as const, error: "JSON inválido." }
-    }
-  }, [draftText])
-
   const onSave = async () => {
     setSaving(true)
     setError(null)
     setMessage(null)
     try {
-      if (!parsedDraft.ok) throw new Error(parsedDraft.error)
-      await updateSuperadminBranding(parsedDraft.value)
+      await updateSuperadminBranding({
+        title: form.title,
+        tagline: form.tagline,
+        primaryColor: form.primaryColor,
+      })
       setMessage("Branding actualizado")
       await load()
     } catch (e) {
@@ -91,7 +98,7 @@ export default function SuperadminBrandingPage() {
               <button
                 type="button"
                 onClick={onSave}
-                disabled={saving || loading || !parsedDraft.ok}
+                disabled={saving || loading}
                 className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-5 py-3 text-sm font-extrabold text-white hover:bg-purple-500 transition disabled:opacity-60"
               >
                 <Save className="h-4 w-4" /> {saving ? "Guardando..." : "Guardar"}
@@ -114,21 +121,37 @@ export default function SuperadminBrandingPage() {
             {loading ? <p className="text-sm text-slate-300">Cargando…</p> : null}
             {error ? <div className="mt-4 rounded-xl border border-red-400/40 bg-red-900/30 px-4 py-3 text-sm text-red-100">{error}</div> : null}
             {message ? <div className="mt-4 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">{message}</div> : null}
-            {!parsedDraft.ok ? (
-              <div className="mt-4 rounded-xl border border-red-400/40 bg-red-900/20 px-4 py-3 text-sm text-red-100">{parsedDraft.error}</div>
-            ) : null}
 
             <div className="mt-4 grid gap-3">
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-                <p className="text-xs font-semibold text-slate-300">Branding (JSON)</p>
-                <textarea
-                  value={draftText}
-                  onChange={(e) => setDraftText(e.target.value)}
-                  rows={14}
-                  className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 font-mono text-xs text-white outline-none focus:border-purple-500"
-                  spellCheck={false}
-                />
-                <p className="mt-2 text-xs text-slate-400">Se envía tal cual en el body del PATCH.</p>
+              <div className="grid gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300" htmlFor="title">Nombre de la App</label>
+                  <input
+                    id="title"
+                    value={form.title}
+                    onChange={(e) => setForm((s) => ({ ...s, title: e.target.value }))}
+                    className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none focus:border-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300" htmlFor="tagline">Slogan</label>
+                  <input
+                    id="tagline"
+                    value={form.tagline}
+                    onChange={(e) => setForm((s) => ({ ...s, tagline: e.target.value }))}
+                    className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none focus:border-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300" htmlFor="primaryColor">Color Primario</label>
+                  <input
+                    id="primaryColor"
+                    value={form.primaryColor}
+                    onChange={(e) => setForm((s) => ({ ...s, primaryColor: e.target.value }))}
+                    placeholder="#2563eb"
+                    className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none focus:border-purple-500"
+                  />
+                </div>
               </div>
 
               <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">

@@ -1,13 +1,44 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import RequireRole from "../../../_components/RequireRole"
 import { fetchSuperadminSettings, updateSuperadminSmtp } from "@/lib/api"
 import { Mail, RefreshCw, Save } from "lucide-react"
 
 type Settings = {
   smtp?: Record<string, unknown>
+}
+
+type SmtpForm = {
+  host: string
+  port: string
+  user: string
+  pass: string
+  secure: boolean
+  fromName: string
+  fromEmail: string
+}
+
+const normalizeBoolean = (value: unknown) => {
+  if (typeof value === "boolean") return value
+  if (typeof value === "string") return value.toLowerCase() === "true"
+  if (typeof value === "number") return value === 1
+  return false
+}
+
+const normalizeSmtpFromServer = (smtp: unknown): SmtpForm => {
+  const safe: any = smtp && typeof smtp === "object" ? smtp : {}
+  const portNumber = Number(safe.port)
+  return {
+    host: typeof safe.host === "string" ? safe.host : "",
+    port: Number.isFinite(portNumber) && portNumber > 0 ? String(portNumber) : "587",
+    user: typeof safe.user === "string" ? safe.user : "",
+    pass: typeof safe.pass === "string" ? safe.pass : "",
+    secure: normalizeBoolean(safe.secure),
+    fromName: typeof safe.fromName === "string" ? safe.fromName : "",
+    fromEmail: typeof safe.fromEmail === "string" ? safe.fromEmail : "",
+  }
 }
 
 export default function SuperadminSmtpPage() {
@@ -17,7 +48,7 @@ export default function SuperadminSmtpPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [settings, setSettings] = useState<Settings | null>(null)
 
-  const [draftText, setDraftText] = useState("{}")
+  const [form, setForm] = useState<SmtpForm>({ host: "", port: "587", user: "", pass: "", secure: false, fromName: "", fromEmail: "" })
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -26,12 +57,11 @@ export default function SuperadminSmtpPage() {
     try {
       const s = await fetchSuperadminSettings()
       setSettings(s)
-      const smtp = (s as any)?.smtp
-      setDraftText(JSON.stringify(smtp && typeof smtp === "object" ? smtp : {}, null, 2))
+      setForm(normalizeSmtpFromServer((s as any)?.smtp))
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo cargar la configuración SMTP.")
       setSettings(null)
-      setDraftText("{}")
+      setForm({ host: "", port: "587", user: "", pass: "", secure: false, fromName: "", fromEmail: "" })
     } finally {
       setLoading(false)
     }
@@ -41,23 +71,20 @@ export default function SuperadminSmtpPage() {
     load()
   }, [load])
 
-  const parsedDraft = useMemo(() => {
-    try {
-      const v = JSON.parse(draftText)
-      if (!v || typeof v !== "object" || Array.isArray(v)) return { ok: false as const, error: "El JSON debe ser un objeto." }
-      return { ok: true as const, value: v as Record<string, unknown> }
-    } catch {
-      return { ok: false as const, error: "JSON inválido." }
-    }
-  }, [draftText])
-
   const onSave = async () => {
     setSaving(true)
     setError(null)
     setMessage(null)
     try {
-      if (!parsedDraft.ok) throw new Error(parsedDraft.error)
-      await updateSuperadminSmtp(parsedDraft.value)
+      await updateSuperadminSmtp({
+        host: form.host,
+        port: Number(form.port),
+        user: form.user,
+        pass: form.pass,
+        secure: form.secure,
+        fromName: form.fromName,
+        fromEmail: form.fromEmail,
+      })
       setMessage("SMTP actualizado")
       await load()
     } catch (e) {
@@ -91,7 +118,7 @@ export default function SuperadminSmtpPage() {
               <button
                 type="button"
                 onClick={onSave}
-                disabled={saving || loading || !parsedDraft.ok}
+                disabled={saving || loading}
                 className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-5 py-3 text-sm font-extrabold text-white hover:bg-purple-500 transition disabled:opacity-60"
               >
                 <Save className="h-4 w-4" /> {saving ? "Guardando..." : "Guardar"}
@@ -114,22 +141,87 @@ export default function SuperadminSmtpPage() {
             {loading ? <p className="text-sm text-slate-300">Cargando…</p> : null}
             {error ? <div className="mt-4 rounded-xl border border-red-400/40 bg-red-900/30 px-4 py-3 text-sm text-red-100">{error}</div> : null}
             {message ? <div className="mt-4 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">{message}</div> : null}
-            {!parsedDraft.ok ? (
-              <div className="mt-4 rounded-xl border border-red-400/40 bg-red-900/20 px-4 py-3 text-sm text-red-100">{parsedDraft.error}</div>
-            ) : null}
 
             <div className="mt-4 grid gap-3">
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-                <p className="text-xs font-semibold text-slate-300">SMTP (JSON)</p>
-                <textarea
-                  value={draftText}
-                  onChange={(e) => setDraftText(e.target.value)}
-                  rows={14}
-                  className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 font-mono text-xs text-white outline-none focus:border-purple-500"
-                  spellCheck={false}
-                />
-                <p className="mt-2 text-xs text-slate-400">Se envía tal cual en el body del PATCH.</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300" htmlFor="host">Host</label>
+                  <input
+                    id="host"
+                    value={form.host}
+                    onChange={(e) => setForm((s) => ({ ...s, host: e.target.value }))}
+                    placeholder="smtp.gmail.com"
+                    className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none focus:border-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300" htmlFor="port">Puerto</label>
+                  <input
+                    id="port"
+                    inputMode="numeric"
+                    value={form.port}
+                    onChange={(e) => setForm((s) => ({ ...s, port: e.target.value }))}
+                    placeholder="587"
+                    className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none focus:border-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300" htmlFor="user">Usuario</label>
+                  <input
+                    id="user"
+                    value={form.user}
+                    onChange={(e) => setForm((s) => ({ ...s, user: e.target.value }))}
+                    autoCapitalize="none"
+                    className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none focus:border-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300" htmlFor="pass">Contraseña</label>
+                  <input
+                    id="pass"
+                    type="password"
+                    value={form.pass}
+                    onChange={(e) => setForm((s) => ({ ...s, pass: e.target.value }))}
+                    className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none focus:border-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300" htmlFor="fromName">From Name</label>
+                  <input
+                    id="fromName"
+                    value={form.fromName}
+                    onChange={(e) => setForm((s) => ({ ...s, fromName: e.target.value }))}
+                    placeholder="MegaRifas"
+                    className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none focus:border-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300" htmlFor="fromEmail">From Email</label>
+                  <input
+                    id="fromEmail"
+                    value={form.fromEmail}
+                    onChange={(e) => setForm((s) => ({ ...s, fromEmail: e.target.value }))}
+                    autoCapitalize="none"
+                    placeholder="no-reply@megarifas.com.ve"
+                    className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none focus:border-purple-500"
+                  />
+                </div>
               </div>
+
+              <button
+                type="button"
+                onClick={() => setForm((s) => ({ ...s, secure: !s.secure }))}
+                className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-left"
+              >
+                <span className="text-sm font-semibold text-white">Conexión Segura (SSL/TLS)</span>
+                <span
+                  className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
+                    form.secure ? "bg-amber-400/15 text-amber-300" : "bg-white/10 text-slate-300"
+                  }`}
+                >
+                  <Mail className="h-4 w-4" /> {form.secure ? "ON" : "OFF"}
+                </span>
+              </button>
 
               <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
                 <p className="text-xs font-semibold text-slate-300">Vista actual (desde backend)</p>

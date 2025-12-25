@@ -1,27 +1,24 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import RequireRole from "../../../_components/RequireRole"
-import { fetchSuperadminAuditActions, fetchSuperadminAuditUsers } from "@/lib/api"
+import { fetchSuperadminAuditActions } from "@/lib/api"
 import { RefreshCw, Shield } from "lucide-react"
 
 export default function SuperadminAuditPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [users, setUsers] = useState<Array<Record<string, unknown>>>([])
   const [actions, setActions] = useState<Array<Record<string, unknown>>>([])
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const [u, a] = await Promise.all([fetchSuperadminAuditUsers(), fetchSuperadminAuditActions()])
-      setUsers(Array.isArray(u) ? (u as any) : [])
+      const a = await fetchSuperadminAuditActions()
       setActions(Array.isArray(a) ? (a as any) : [])
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo cargar la auditoría.")
-      setUsers([])
       setActions([])
     } finally {
       setLoading(false)
@@ -31,6 +28,28 @@ export default function SuperadminAuditPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      load()
+    }, 20_000)
+    return () => clearInterval(id)
+  }, [load])
+
+  const normalized = useMemo(() => {
+    return actions
+      .filter(Boolean)
+      .map((a) => {
+        const anyA: any = a
+        return {
+          id: anyA?.id ?? `${anyA?.timestamp ?? ""}-${anyA?.action ?? ""}`,
+          action: String(anyA?.action ?? "Acción"),
+          detail: String(anyA?.detail ?? ""),
+          ip: anyA?.ip ? String(anyA.ip) : "",
+          timestamp: anyA?.timestamp ? String(anyA.timestamp) : anyA?.createdAt ? String(anyA.createdAt) : "",
+        }
+      })
+  }, [actions])
 
   return (
     <RequireRole allow={["superadmin"]} nextPath="/superadmin/audit" title="Auditoría">
@@ -51,7 +70,7 @@ export default function SuperadminAuditPage() {
               <Shield className="h-4 w-4" /> Logs
             </div>
             <h2 className="mt-3 text-2xl font-extrabold leading-tight text-white">Auditoría</h2>
-            <p className="mt-2 text-slate-200 text-sm">Conectado a <span className="font-semibold">/superadmin/audit/users</span> y <span className="font-semibold">/superadmin/audit/actions</span>.</p>
+            <p className="mt-2 text-slate-200 text-sm">Conectado a <span className="font-semibold">/superadmin/audit/actions</span>.</p>
             <div className="mt-4 flex flex-wrap gap-3">
               <button
                 type="button"
@@ -69,23 +88,28 @@ export default function SuperadminAuditPage() {
 
           {error ? <div className="rounded-2xl border border-red-400/40 bg-red-900/30 px-4 py-3 text-sm text-red-100">{error}</div> : null}
 
-          <section className="grid gap-3 lg:grid-cols-2">
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-black/30">
-              <h3 className="text-sm font-extrabold text-white">Usuarios auditados</h3>
-              <p className="mt-1 text-xs text-slate-300">Total: {users.length}</p>
-              {!loading && !users.length ? <p className="mt-4 text-sm text-slate-300">Sin datos.</p> : null}
-              {users.length ? (
-                <pre className="mt-4 overflow-auto rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-xs text-slate-100">{JSON.stringify(users.slice(0, 50), null, 2)}</pre>
-              ) : null}
-            </div>
+          <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-black/30">
+            <h3 className="text-sm font-extrabold text-white">Acciones</h3>
+            <p className="mt-1 text-xs text-slate-300">Total: {normalized.length}</p>
 
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-black/30">
-              <h3 className="text-sm font-extrabold text-white">Acciones</h3>
-              <p className="mt-1 text-xs text-slate-300">Total: {actions.length}</p>
-              {!loading && !actions.length ? <p className="mt-4 text-sm text-slate-300">Sin datos.</p> : null}
-              {actions.length ? (
-                <pre className="mt-4 overflow-auto rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-xs text-slate-100">{JSON.stringify(actions.slice(0, 50), null, 2)}</pre>
-              ) : null}
+            {!loading && !normalized.length ? (
+              <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/40 px-4 py-6 text-center text-slate-200">No hay registros de auditoría disponibles.</div>
+            ) : null}
+
+            <div className="mt-4 space-y-3">
+              {normalized.slice(0, 80).map((log) => (
+                <div
+                  key={String(log.id)}
+                  className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 border-l-4 border-l-amber-400/80"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <p className="text-sm font-extrabold text-white">{log.action}</p>
+                    {log.timestamp ? <p className="text-xs text-slate-400">{new Date(log.timestamp).toLocaleString()}</p> : null}
+                  </div>
+                  {log.detail ? <p className="mt-2 text-sm text-slate-200 whitespace-pre-wrap">{log.detail}</p> : null}
+                  {log.ip ? <p className="mt-2 text-xs text-slate-400 italic">IP: {log.ip}</p> : null}
+                </div>
+              ))}
             </div>
           </section>
         </main>
