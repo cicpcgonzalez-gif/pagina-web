@@ -5,10 +5,27 @@ export type Raffle = {
   ticketsAvailable: number;
   ticketsTotal: number;
   drawDate: string;
+  endDate?: string;
+  digits?: number;
+  minTickets?: number;
   status: "activa" | "cerrada" | "pausada";
   description?: string;
+  isSoldOut?: boolean;
+  instantWins?: Array<number | string> | string;
+  reactionCounts?: { LIKE?: number; HEART?: number };
+  myReaction?: "LIKE" | "HEART" | null;
   stats?: { total?: number; sold?: number; remaining?: number };
   style?: { bannerImage?: string; gallery?: string[]; themeColor?: string };
+  user?: {
+    id?: string | number;
+    name?: string | null;
+    avatar?: string;
+    securityId?: string | null;
+    publicId?: string;
+    identityVerified?: boolean;
+    isBoosted?: boolean;
+    boostEndsAt?: string;
+  };
 };
 
 export type SystemStatus = {
@@ -19,20 +36,29 @@ export type SystemStatus = {
 
 export type UserProfile = {
   id?: string;
+  publicId?: string;
+  securityId?: string | null;
   email?: string;
   phone?: string;
+  address?: string;
+  cedula?: string;
+  state?: string;
   role?: string;
   name?: string;
   bio?: string;
   avatar?: string;
   avatarUrl?: string;
+  balance?: number;
   socials?: {
     instagram?: string;
     whatsapp?: string;
+    tiktok?: string;
+    telegram?: string;
     links?: Array<{ label: string; url: string }>;
   };
   verified?: boolean;
-  referrals?: Array<{ id?: string; email?: string }>;
+  identityVerified?: boolean;
+  referrals?: Array<{ name?: string; createdAt?: string; verified?: boolean }>; 
   referralCode?: string;
 };
 

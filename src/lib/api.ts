@@ -83,10 +83,28 @@ type RemoteRaffle = {
   _count?: { tickets?: number };
   endDate?: string;
   drawDate?: string;
+  digits?: number | string;
+  ticketDigits?: number | string;
+  minTickets?: number | string;
   status?: string;
   description?: string;
   stats?: { total?: number; sold?: number; remaining?: number };
   style?: { bannerImage?: string; gallery?: string[]; themeColor?: string };
+  isSoldOut?: boolean;
+  instantWins?: Array<number | string> | string;
+  reactionCounts?: { LIKE?: number; HEART?: number };
+  myReaction?: "LIKE" | "HEART" | null;
+  user?: {
+    id?: string | number;
+    name?: string | null;
+    fullName?: string | null;
+    avatar?: string;
+    securityId?: string | null;
+    publicId?: string;
+    identityVerified?: boolean;
+    isBoosted?: boolean;
+    boostEndsAt?: string;
+  };
 };
 
 const normalizeRaffleStatus = (raw?: string): Raffle["status"] => {
@@ -96,6 +114,29 @@ const normalizeRaffleStatus = (raw?: string): Raffle["status"] => {
   return "cerrada";
 };
 
+const normalizeDigits = (raw: unknown): number | undefined => {
+  const n = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isFinite(n)) return undefined;
+  const i = Math.trunc(n);
+  if (i <= 0 || i > 12) return undefined;
+  return i;
+};
+
+const normalizeMinTickets = (raw: unknown): number | undefined => {
+  if (raw === null || raw === undefined) return undefined;
+  const n = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isFinite(n)) return undefined;
+  const i = Math.trunc(n);
+  if (i <= 0) return undefined;
+  return i;
+};
+
+const normalizeInstantWins = (raw: unknown): Array<number | string> | string | undefined => {
+  if (Array.isArray(raw)) return raw as Array<number | string>;
+  if (typeof raw === "string" && raw.trim()) return raw;
+  return undefined;
+};
+
 export async function fetchRaffles(): Promise<Raffle[]> {
   try {
     const raw = await safeFetch<RemoteRaffle[]>("/raffles");
@@ -103,6 +144,8 @@ export async function fetchRaffles(): Promise<Raffle[]> {
       const total = item.totalTickets ?? item.ticketsTotal ?? 0;
       const sold = item.soldTickets ?? item._count?.tickets ?? 0;
       const remaining = item.stats?.remaining ?? (total ? Math.max(total - sold, 0) : 0);
+      const digits = normalizeDigits(item.digits ?? item.ticketDigits);
+      const isSoldOut = Boolean(item.isSoldOut ?? (Number.isFinite(remaining) ? remaining <= 0 : total - sold <= 0));
       return {
         id: String(item.id ?? `raffle-${index}`),
         title: item.name ?? item.title ?? "Rifa",
@@ -110,10 +153,29 @@ export async function fetchRaffles(): Promise<Raffle[]> {
         ticketsAvailable: Number.isFinite(remaining) ? Math.max(0, remaining) : Math.max(0, total - sold),
         ticketsTotal: total || 1,
         drawDate: item.endDate ?? item.drawDate ?? "Por definir",
+        endDate: item.endDate ?? item.drawDate,
+        digits,
+        minTickets: normalizeMinTickets(item.minTickets),
         status: normalizeRaffleStatus(item.status),
         description: item.description,
+        isSoldOut,
+        instantWins: normalizeInstantWins(item.instantWins),
+        reactionCounts: item.reactionCounts,
+        myReaction: item.myReaction,
         stats: item.stats,
         style: item.style,
+        user: item.user
+          ? {
+              id: item.user.id,
+              name: item.user.name ?? item.user.fullName ?? null,
+              avatar: item.user.avatar,
+              securityId: item.user.securityId ?? null,
+              publicId: item.user.publicId,
+              identityVerified: Boolean(item.user.identityVerified),
+              isBoosted: Boolean(item.user.isBoosted),
+              boostEndsAt: item.user.boostEndsAt,
+            }
+          : undefined,
       } satisfies Raffle;
     });
   } catch {
@@ -127,6 +189,8 @@ export async function fetchRaffle(id: string | number) {
   const total = data.totalTickets ?? data.ticketsTotal ?? data.stats?.total ?? 0;
   const sold = data.soldTickets ?? data._count?.tickets ?? data.stats?.sold ?? 0;
   const remaining = data.stats?.remaining ?? (total ? Math.max(total - sold, 0) : 0);
+  const digits = normalizeDigits(data.digits ?? data.ticketDigits);
+  const isSoldOut = Boolean(data.isSoldOut ?? (Number.isFinite(remaining) ? remaining <= 0 : total - sold <= 0));
 
   return {
     id: String(data.id ?? id),
@@ -135,10 +199,29 @@ export async function fetchRaffle(id: string | number) {
     ticketsAvailable: remaining,
     ticketsTotal: total || 1,
     drawDate: data.endDate ?? data.drawDate ?? "Por definir",
+    endDate: data.endDate ?? data.drawDate,
+    digits,
+    minTickets: normalizeMinTickets(data.minTickets),
     status: normalizeRaffleStatus(data.status),
     description: data.description,
+    isSoldOut,
+    instantWins: normalizeInstantWins(data.instantWins),
+    reactionCounts: data.reactionCounts,
+    myReaction: data.myReaction,
     stats: data.stats,
     style: data.style,
+    user: data.user
+      ? {
+          id: data.user.id,
+          name: data.user.name ?? data.user.fullName ?? null,
+          avatar: data.user.avatar,
+          securityId: data.user.securityId ?? null,
+          publicId: data.user.publicId,
+          identityVerified: Boolean(data.user.identityVerified),
+          isBoosted: Boolean(data.user.isBoosted),
+          boostEndsAt: data.user.boostEndsAt,
+        }
+      : undefined,
   } satisfies Raffle & {
     description?: string;
     stats?: { total?: number; sold?: number; remaining?: number };
@@ -287,7 +370,39 @@ export async function fetchMyRaffles() {
 }
 
 export async function fetchWallet() {
-  return safeFetch<{ balance?: number; transactions?: Array<Record<string, unknown>> }>("/wallet");
+  return safeFetch<{ balance?: number; transactions?: Array<Record<string, unknown>> }>('/wallet');
+}
+
+export async function fetchMyReferrals() {
+  return safeFetch<{ code?: string; referrals?: Array<{ name?: string; createdAt?: string; verified?: boolean }> }>(
+    '/me/referrals',
+  );
+}
+
+export async function fetchUserPublicRaffles(userId: string | number) {
+  return safeFetch<{ active?: Array<Record<string, unknown>>; closed?: Array<Record<string, unknown>> }>(
+    `/users/public/${userId}/raffles`,
+  );
+}
+
+export async function fetchBoostMe() {
+  return safeFetch<{ isBoosted?: boolean; activeBoosts?: Array<{ id?: string | number; startAt?: string; endAt?: string }>; nextEligibleAt?: string }>(
+    '/boosts/me',
+  );
+}
+
+export async function activateBoost() {
+  return safeFetch<{ message?: string; boost?: Record<string, unknown> }>('/boosts/activate', {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+}
+
+export async function submitKyc(payload: { documentType?: string; frontImage: string; backImage?: string | null; selfieImage: string }) {
+  return safeFetch<{ message?: string; id?: string | number }>('/kyc/submit', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function topupWallet(amount: number) {
@@ -384,13 +499,37 @@ export async function fetchWinners(): Promise<Winner[]> {
 }
 
 export async function updateProfile(payload: Partial<UserProfile> & { avatar?: string; avatarUrl?: string }) {
-  // El backend soporta: { name, avatar, bio, socials }
-  const body = {
+  const normalizeSocials = (socials: UserProfile['socials'] | undefined) => {
+    if (!socials) return undefined;
+    const clean: Record<string, string> = {};
+    const setIf = (key: string, value: unknown) => {
+      const v = String(value ?? '').trim();
+      if (v) clean[key] = v;
+    };
+
+    if ((socials as any).whatsapp != null) {
+      const digits = String((socials as any).whatsapp).replace(/\D/g, '');
+      if (digits) clean.whatsapp = digits;
+    }
+    if ((socials as any).instagram != null) setIf('instagram', String((socials as any).instagram).replace(/^@/, ''));
+    if ((socials as any).tiktok != null) setIf('tiktok', String((socials as any).tiktok).replace(/^@/, ''));
+    if ((socials as any).telegram != null) setIf('telegram', String((socials as any).telegram).replace(/^@/, ''));
+    if (Array.isArray((socials as any).links)) (clean as any).links = (socials as any).links;
+    return clean as any;
+  };
+
+  const body: Record<string, unknown> = {
     name: payload?.name,
     avatar: payload?.avatar ?? payload?.avatarUrl ?? (payload as any)?.avatarUrl,
     bio: payload?.bio,
-    socials: payload?.socials,
+    socials: normalizeSocials(payload?.socials),
   };
+
+  // El backend puede soportar más campos en algunos entornos; enviamos si vienen definidos.
+  if (payload?.phone != null) body.phone = payload.phone;
+  if ((payload as any)?.address != null) body.address = (payload as any).address;
+  if ((payload as any)?.cedula != null) body.cedula = (payload as any).cedula;
+
   return safeFetch<UserProfile>("/me", {
     method: "PATCH",
     body: JSON.stringify(body),
