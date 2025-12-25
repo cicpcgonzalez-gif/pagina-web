@@ -553,7 +553,7 @@ export default function PerfilPage() {
 
         <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
           <div className="flex items-center gap-3">
-            <div className="grid h-20 w-20 place-items-center overflow-hidden rounded-full border border-white/15 bg-white/5">
+            <div className="grid h-16 w-16 place-items-center overflow-hidden rounded-full border border-white/15 bg-white/5">
               {draft?.avatar || profile.avatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={String(draft?.avatar || profile.avatar)} alt="avatar" className="h-full w-full object-cover" />
@@ -583,12 +583,12 @@ export default function PerfilPage() {
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-white/10 bg-white/5 py-3 text-center">
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center">
               <p className="text-lg font-extrabold text-white">{tickets.length}</p>
               <p className="text-xs text-white/60">Tickets</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 py-3 text-center">
+            <div className="rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center">
               <p className="text-lg font-extrabold text-white">{profile.referrals?.length || 0}</p>
               <p className="text-xs text-white/60">Referidos</p>
             </div>
